@@ -14,10 +14,10 @@
   --shadow:0 2px 12px rgba(0,0,0,.4);
 }
 [data-theme="light"] {
-  --bg:#f0f2f8; --surface:#ffffff; --surface2:#eef0f8;
-  --border:#dde1f0; --text:#1a1a2e; --muted:#7a7a9a;
+  --bg:#f5f0e8; --surface:#fdfaf4; --surface2:#ede8dc;
+  --border:#d6cfc0; --text:#2c2416; --muted:#8a7d6b;
   --header-bg:linear-gradient(135deg,#4f46e5,#7c3aed,#6366f1);
-  --shadow:0 2px 12px rgba(0,0,0,.08);
+  --shadow:0 2px 12px rgba(0,0,0,.06);
 }
 :root { --accent:#7c6cfc; --accent2:#fc6c8f; --green:#10b981; --yellow:#f59e0b; --red:#ef4444; --radius:14px; }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -213,11 +213,22 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       <div><label>Ville</label><input type="text" id="fVille" placeholder="Tunis"></div>
       <div><label>N° Client</label><input type="text" id="fClient" placeholder="C-0001"></div>
       <div><label>Quantité</label><input type="number" id="fQty" placeholder="1" min="1"></div>
+      <div><label>Fournisseur</label>
+        <select id="fFourn" onchange="filterCartesByFourn(this.value,'fCarte')">
+          <option value="">— Fournisseur —</option>
+        </select>
+      </div>
+      <div class="form-full"><label>Carte utilisée</label>
+        <select id="fCarte">
+          <option value="">— Carte —</option>
+        </select>
+      </div>
       <div><label>Prix Vente (DT/u)</label><input type="number" id="fPrix" placeholder="42.500" step="0.001"></div>
       <div><label>Coût Achat (DT/u)</label><input type="number" id="fCout" placeholder="11.450" step="0.001"></div>
       <div class="form-full"><label>Frais Envoi (DT)</label><input type="number" id="fEnvoi" placeholder="9.150" step="0.001"></div>
     </div>
     <button class="btn-add" onclick="addSale()">✅ Enregistrer la vente</button>
+    <button onclick="openFournModal()" style="width:100%;margin-top:10px;padding:11px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:12px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">⚙️ Gérer les fournisseurs</button>
   </div>
 </div>
 
@@ -261,6 +272,10 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     <div class="dash-title">📱 Par Modèle</div>
     <div class="city-list" id="modelList"></div>
   </div>
+  <div class="dash-section">
+    <div class="dash-title">🧑‍💼 Par Fournisseur</div>
+    <div class="city-list" id="fournList"></div>
+  </div>
 </div>
 
 <!-- BACKUP -->
@@ -300,6 +315,14 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       <div><label>Ville</label><input type="text" id="eVille" style="margin-top:5px"></div>
       <div><label>N° Client</label><input type="text" id="eClient" style="margin-top:5px"></div>
       <div><label>Quantité</label><input type="number" id="eQty" min="1" style="margin-top:5px"></div>
+      <div><label>Fournisseur</label>
+        <select id="eFourn" style="margin-top:5px" onchange="filterCartesByFourn(this.value,'eCarte')">
+          <option value="">— Fournisseur —</option>
+        </select>
+      </div>
+      <div class="edit-full"><label>Carte utilisée</label>
+        <select id="eCarte" style="margin-top:5px"><option value="">— Carte —</option></select>
+      </div>
       <div><label>Prix Vente (DT/u)</label><input type="number" id="ePrix" step="0.001" style="margin-top:5px"></div>
       <div><label>Coût Achat (DT/u)</label><input type="number" id="eCout" step="0.001" style="margin-top:5px"></div>
       <div class="edit-full"><label>Frais Envoi (DT)</label><input type="number" id="eEnvoi" step="0.001" style="margin-top:5px"></div>
@@ -324,10 +347,69 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
   </div>
 </div>
 
+<!-- MODAL FOURNISSEURS -->
+<div class="modal-overlay" id="fournModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-title">🧑‍💼 Fournisseurs & Cartes</div>
+    <div id="fournListModal" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;max-height:55vh;overflow-y:auto"></div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px">
+      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">➕ Nouveau Fournisseur</div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="newFournInput" placeholder="Nom (ex: Kais)" style="flex:1">
+        <button onclick="addFourn()" style="padding:12px 16px;background:var(--accent);border:none;color:#fff;border-radius:12px;font-size:15px;cursor:pointer;font-weight:700;white-space:nowrap">+ Ajouter</button>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-save" style="flex:1" onclick="closeFournModal()">✅ Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AJOUTER CARTE -->
+<div class="modal-overlay" id="carteModal">
+  <div class="modal">
+    <div class="modal-title">💳 Nouvelle Carte</div>
+    <input type="hidden" id="carteFournId">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><label>Label de la carte</label><input type="text" id="carteLabel" placeholder="ex: Carte Avril, Carte #3..." style="margin-top:5px"></div>
+      <div><label>Montant chargé (DT)</label><input type="number" id="carteMontant" placeholder="500.000" step="0.001" style="margin-top:5px"></div>
+      <div><label>Date</label><input type="date" id="carteDate" style="margin-top:5px"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeCarteModal()">Annuler</button>
+      <button class="btn-save" onclick="saveCarte()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MODIFIER CARTE -->
+<div class="modal-overlay" id="editCarteModal">
+  <div class="modal">
+    <div class="modal-title">✏️ Modifier la Carte</div>
+    <input type="hidden" id="editCarteFournId">
+    <input type="hidden" id="editCarteId">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><label>Label de la carte</label><input type="text" id="editCarteLabel" placeholder="ex: Carte Avril" style="margin-top:5px"></div>
+      <div><label>Montant chargé (DT)</label><input type="number" id="editCarteMontant" placeholder="500.000" step="0.001" style="margin-top:5px"></div>
+      <div><label>Date</label><input type="date" id="editCarteDate" style="margin-top:5px"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeEditCarteModal()">Annuler</button>
+      <button class="btn-save" onclick="saveEditCarte()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let sales  = JSON.parse(localStorage.getItem('coquesSales')  || '[]');
 let invest = parseFloat(localStorage.getItem('coquesInvest') || '0');
 let theme  = localStorage.getItem('coquesTheme') || 'dark';
+let fourns = JSON.parse(localStorage.getItem('coquesFourns') || '[]');
+// Migration: si anciens fourns étaient des strings, on les convertit
+if(fourns.length && typeof fourns[0]==='string'){
+  fourns = fourns.map(f=>({id:Date.now()+Math.random(),nom:f,cartes:[]}));
+  localStorage.setItem('coquesFourns',JSON.stringify(fourns));
+}
 let currentSort = 'newest';
 let editingId = null;
 
@@ -336,13 +418,51 @@ document.documentElement.setAttribute('data-theme', theme);
 document.getElementById('themeBtn').textContent = theme==='dark'?'🌙':'☀️';
 document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
 buildMonthSelect();
+refreshFournSelects();
 updateKPIs();
 
 // Helpers
 function fmt(n){ return (n||0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' DT'; }
 function fmtP(n){ return ((n||0)*100).toFixed(1)+'%'; }
-function save(){ localStorage.setItem('coquesSales',JSON.stringify(sales)); localStorage.setItem('coquesInvest',invest); localStorage.setItem('coquesTheme',theme); }
+function save(){ localStorage.setItem('coquesSales',JSON.stringify(sales)); localStorage.setItem('coquesInvest',invest); localStorage.setItem('coquesTheme',theme); localStorage.setItem('coquesFourns',JSON.stringify(fourns)); }
 function calc(qty,prix,cout,envoi){ const r=qty*prix,c=qty*cout+envoi,b=r-c; return {revenu:r,coutTotal:c,benef:b,marge:r>0?b/r:0}; }
+function uid(){ return Date.now()+'-'+Math.random().toString(36).slice(2); }
+
+// Retourne toutes les cartes à plat avec le nom du fournisseur
+function allCartes(){
+  const res=[];
+  fourns.forEach(f=> f.cartes.forEach(c=> res.push({...c, fournNom:f.nom, fournId:f.id})));
+  return res;
+}
+
+function refreshFournSelects(){
+  ['fFourn','eFourn'].forEach(id=>{
+    const sel=document.getElementById(id); if(!sel) return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">— Fournisseur —</option>';
+    fourns.forEach(f=>{ const o=document.createElement('option'); o.value=f.id; o.textContent=f.nom; sel.appendChild(o); });
+    sel.value=cur;
+  });
+  // Sélecteur carte
+  ['fCarte','eCarte'].forEach(id=>{
+    const sel=document.getElementById(id); if(!sel) return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">— Carte —</option>';
+    allCartes().forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=`${c.fournNom} · ${c.label} (${fmt(c.montant)})`; sel.appendChild(o); });
+    sel.value=cur;
+  });
+}
+
+// Filtre cartes par fournisseur sélectionné
+function filterCartesByFourn(fournId, selectId){
+  const sel=document.getElementById(selectId); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Carte —</option>';
+  // cherche par id ou par nom (compatibilité anciennes données)
+  const f=fourns.find(x=>x.id===fournId||x.nom===fournId);
+  if(f) f.cartes.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=`${c.label} · ${fmt(c.montant)}`; sel.appendChild(o); });
+  sel.value=cur;
+}
 
 // Theme
 function toggleTheme(){
@@ -374,10 +494,14 @@ function addSale(){
   const prix=parseFloat(document.getElementById('fPrix').value)||0;
   const cout=parseFloat(document.getElementById('fCout').value)||0;
   const envoi=parseFloat(document.getElementById('fEnvoi').value)||0;
+  const fourn=document.getElementById('fFourn').value;
+  const carteId=document.getElementById('fCarte').value;
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
-  sales.push({id:Date.now(),date,model,color,ville,client,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)});
+  sales.push({id:Date.now(),date,model,color,ville,client,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)});
   save(); updateKPIs();
   ['fModel','fColor','fVille','fClient','fEnvoi','fQty','fPrix','fCout'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('fFourn').value='';
+  document.getElementById('fCarte').value='';
   document.getElementById('fDate').value=new Date().toISOString().split('T')[0];
   const btn=document.querySelector('.btn-add');
   btn.textContent='✅ Enregistrée!'; btn.style.background='linear-gradient(135deg,#059669,#10b981)';
@@ -424,7 +548,7 @@ function sorted(list){
 function filtered(){
   const q=(document.getElementById('searchInput').value||'').toLowerCase().trim();
   if(!q) return sales;
-  return sales.filter(s=>(s.model||'').toLowerCase().includes(q)||(s.ville||'').toLowerCase().includes(q)||(s.client||'').toLowerCase().includes(q)||(s.color||'').toLowerCase().includes(q));
+  return sales.filter(s=>(s.model||'').toLowerCase().includes(q)||(s.ville||'').toLowerCase().includes(q)||(s.client||'').toLowerCase().includes(q)||(s.color||'').toLowerCase().includes(q)||(s.fourn||'').toLowerCase().includes(q));
 }
 function hl(t,q){
   if(!q||!t) return t||'';
@@ -478,6 +602,8 @@ function cardHTML(s,q=''){
       ${s.color?`<span class="tag">🎨 ${hl(s.color,q)}</span>`:''}
       ${s.ville?`<span class="tag city">📍 ${hl(s.ville,q)}</span>`:''}
       ${s.client?`<span class="tag client">👤 ${hl(s.client,q)}</span>`:''}
+      ${s.fourn?(()=>{const f=fourns.find(x=>x.id===s.fourn);return f?`<span class="tag" style="color:#f472b6;border-color:rgba(244,114,182,.3);background:rgba(244,114,182,.08)">🧑‍💼 ${hl(f.nom,q)}</span>`:''})():''}
+      ${s.carteId?(()=>{const c=allCartes().find(x=>x.id===s.carteId);return c?`<span class="tag" style="color:#38bdf8;border-color:rgba(56,189,248,.3);background:rgba(56,189,248,.08)">💳 ${c.label}</span>`:''})():''}
       <span class="tag">x${s.qty}</span>
     </div>
     <div class="sale-nums">
@@ -529,40 +655,110 @@ function renderRapport(){
 
 // Dashboard
 function renderDash(){
-  const cm={},mm={};
+  const cm={},mm={},fm={};
   sales.forEach(s=>{
-    const v=s.ville||'Non spécifié',m=s.model||'Autre';
-    if(!cm[v]) cm[v]={count:0,revenu:0,benef:0};
-    cm[v].count++;cm[v].revenu+=s.revenu;cm[v].benef+=s.benef;
-    if(!mm[m]) mm[m]={count:0,revenu:0,benef:0};
-    mm[m].count++;mm[m].revenu+=s.revenu;mm[m].benef+=s.benef;
+    const v=s.ville||'Non spécifié',m=s.model||'Autre',f=s.fourn||'Non spécifié';
+    if(!cm[v]) cm[v]={count:0,revenu:0,benef:0,cout:0};
+    cm[v].count++;cm[v].revenu+=s.revenu;cm[v].benef+=s.benef;cm[v].cout+=s.coutTotal;
+    if(!mm[m]) mm[m]={count:0,revenu:0,benef:0,cout:0};
+    mm[m].count++;mm[m].revenu+=s.revenu;mm[m].benef+=s.benef;mm[m].cout+=s.coutTotal;
+    if(!fm[f]) fm[f]={count:0,revenu:0,benef:0,cout:0};
+    fm[f].count++;fm[f].revenu+=s.revenu;fm[f].benef+=s.benef;fm[f].cout+=s.coutTotal;
   });
-  const rg=map=>{
+  const rg=(map,showCout=false)=>{
     const mx=Math.max(...Object.values(map).map(c=>c.benef),1);
     return Object.entries(map).sort((a,b)=>b[1].benef-a[1].benef).map(([n,d])=>`
       <div class="city-row">
         <div>
           <div class="city-name">${n}</div>
-          <div class="city-stats">${d.count} vente${d.count>1?'s':''} · ${fmt(d.revenu)}</div>
+          <div class="city-stats">${d.count} vente${d.count>1?'s':''} · ${fmt(d.revenu)}${showCout?' · Coût: '+fmt(d.cout):''}</div>
           <div class="bar-wrap"><div class="bar-fill" style="width:${Math.max(4,(d.benef/mx)*100)}%"></div></div>
         </div>
         <div class="city-benef">${fmt(d.benef)}</div>
       </div>`).join('');
   };
   const c1=document.getElementById('cityList'),c2=document.getElementById('modelList');
-  if(!sales.length){c1.innerHTML='<div class="empty"><div class="empty-icon">🗺️</div><div class="empty-text">Aucune donnée.</div></div>';c2.innerHTML='';return;}
-  c1.innerHTML=rg(cm); c2.innerHTML=rg(mm);
+  if(!sales.length){
+    c1.innerHTML='<div class="empty"><div class="empty-icon">🗺️</div><div class="empty-text">Aucune donnée.</div></div>';
+    c2.innerHTML='';
+  } else {
+    c1.innerHTML=rg(cm); c2.innerHTML=rg(mm);
+  }
+  const c3=document.getElementById('fournList');
+  if(!sales.length||!fourns.length){
+    c3.innerHTML='<div class="empty"><div class="empty-icon">🧑‍💼</div><div class="empty-text">Aucun fournisseur.<br>Ajoute un fournisseur et ses cartes.</div></div>';
+  } else {
+    c3.innerHTML=fourns.map(f=>{
+      const cartesHTML=f.cartes.map(c=>{
+        const ventes=sales.filter(s=>s.carteId===c.id);
+        const depense=ventes.reduce((a,s)=>a+s.coutTotal,0);
+        const benef=ventes.reduce((a,s)=>a+s.benef,0);
+        const reste=c.montant-depense;
+        const pct=c.montant>0?Math.min(100,(depense/c.montant)*100):0;
+        const barColor=reste<0?'var(--red)':reste<c.montant*0.2?'var(--yellow)':'var(--green)';
+        return `
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:6px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:13px;font-weight:600">💳 ${c.label}</span>
+            <span style="font-size:11px;color:var(--muted)">${ventes.length} vente${ventes.length>1?'s':''}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:7px">
+            <div style="text-align:center;background:var(--surface2);border-radius:7px;padding:5px">
+              <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Montant</div>
+              <div style="font-size:12px;font-weight:700;color:var(--accent)">${fmt(c.montant)}</div>
+            </div>
+            <div style="text-align:center;background:var(--surface2);border-radius:7px;padding:5px">
+              <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Dépensé</div>
+              <div style="font-size:12px;font-weight:700;color:var(--yellow)">${fmt(depense)}</div>
+            </div>
+            <div style="text-align:center;background:var(--surface2);border-radius:7px;padding:5px">
+              <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Restant</div>
+              <div style="font-size:12px;font-weight:700;color:${barColor}">${fmt(reste)}</div>
+            </div>
+          </div>
+          <div style="height:5px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:5px">
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px"></div>
+          </div>
+          <div style="font-size:11px;color:var(--green);text-align:right">✅ Bénéfice: ${fmt(benef)}</div>
+        </div>`;
+      }).join('');
+      const totalDep=f.cartes.reduce((a,c)=>{const v=sales.filter(s=>s.carteId===c.id);return a+v.reduce((b,s)=>b+s.coutTotal,0);},0);
+      const totalBen=f.cartes.reduce((a,c)=>{const v=sales.filter(s=>s.carteId===c.id);return a+v.reduce((b,s)=>b+s.benef,0);},0);
+      const totalMont=f.cartes.reduce((a,c)=>a+c.montant,0);
+      return `
+      <div class="city-row" style="flex-direction:column;align-items:stretch">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="city-name">🧑‍💼 ${f.nom}</div>
+          <div style="font-size:11px;color:var(--muted)">${f.cartes.length} carte${f.cartes.length>1?'s':''} · ${fmt(totalMont)}</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px">
+          <span style="color:var(--yellow)">Dépensé: ${fmt(totalDep)}</span>
+          <span style="color:var(--green)">Bénéfice: ${fmt(totalBen)}</span>
+        </div>
+        ${cartesHTML||'<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px">Aucune carte</div>'}
+      </div>`;
+    }).join('');
+  }
 }
 
-// Edit modal
 function openEditModal(id){
   const s=sales.find(x=>x.id===id); if(!s) return;
   editingId=id;
-  ['Date','Model','Color','Ville','Client','Qty','Prix','Cout','Envoi'].forEach(k=>{
-    const el=document.getElementById('e'+k);
-    if(el) el.value=s[k.toLowerCase()]||s[k]||'';
-  });
   document.getElementById('eDate').value=s.date||'';
+  document.getElementById('eModel').value=s.model||'';
+  document.getElementById('eColor').value=s.color||'';
+  document.getElementById('eVille').value=s.ville||'';
+  document.getElementById('eClient').value=s.client||'';
+  document.getElementById('eQty').value=s.qty||1;
+  // compatibilité: fourn peut être un id ou un nom
+  const fournObj=fourns.find(x=>x.id===s.fourn||x.nom===s.fourn);
+  const fournVal=fournObj?fournObj.id:'';
+  document.getElementById('eFourn').value=fournVal;
+  filterCartesByFourn(fournVal,'eCarte');
+  setTimeout(()=>{ document.getElementById('eCarte').value=s.carteId||''; },50);
+  document.getElementById('ePrix').value=s.prix||'';
+  document.getElementById('eCout').value=s.cout||'';
+  document.getElementById('eEnvoi').value=s.envoi||'';
   document.getElementById('editModal').classList.add('open');
 }
 function closeEditModal(){document.getElementById('editModal').classList.remove('open');editingId=null;}
@@ -574,14 +770,157 @@ function saveEdit(){
   const color=document.getElementById('eColor').value.trim();
   const ville=document.getElementById('eVille').value.trim();
   const client=document.getElementById('eClient').value.trim();
+  const fourn=document.getElementById('eFourn').value;
+  const carteId=document.getElementById('eCarte').value;
   const qty=parseFloat(document.getElementById('eQty').value)||1;
   const prix=parseFloat(document.getElementById('ePrix').value)||0;
   const cout=parseFloat(document.getElementById('eCout').value)||0;
   const envoi=parseFloat(document.getElementById('eEnvoi').value)||0;
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
-  sales[idx]={...sales[idx],date,model,color,ville,client,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)};
+  sales[idx]={...sales[idx],date,model,color,ville,client,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)};
   save(); updateKPIs(); renderSales(); closeEditModal();
   showToast('✅ Vente modifiée!');
+}
+
+// Fournisseurs & Cartes
+function openFournModal(){ renderFournList(); document.getElementById('fournModal').classList.add('open'); }
+function closeFournModal(){ document.getElementById('fournModal').classList.remove('open'); refreshFournSelects(); }
+
+function renderFournList(){
+  const el=document.getElementById('fournListModal');
+  if(!fourns.length){
+    el.innerHTML='<div style="color:var(--muted);font-size:14px;text-align:center;padding:20px">Aucun fournisseur.<br>Ajoute ton premier fournisseur 👇</div>';
+    return;
+  }
+  el.innerHTML=fourns.map((f,fi)=>{
+    // Calcul dépensé et bénéfice par carte
+    const cartesHTML=f.cartes.map((c,ci)=>{
+      const ventes=sales.filter(s=>s.carteId===c.id);
+      const depense=ventes.reduce((a,s)=>a+s.coutTotal,0);
+      const benef=ventes.reduce((a,s)=>a+s.benef,0);
+      const reste=c.montant-depense;
+      const pct=c.montant>0?Math.min(100,(depense/c.montant)*100):0;
+      const barColor=reste<0?'var(--red)':reste<c.montant*0.2?'var(--yellow)':'var(--green)';
+      return `
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:6px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:13px;font-weight:600">💳 ${c.label}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.date||'—'} · ${ventes.length} vente${ventes.length>1?'s':''}</div>
+            </div>
+            <div style="display:flex;gap:5px">
+              <button onclick="openEditCarteModal('${f.id}','${c.id}')" style="background:rgba(124,108,252,.12);border:1px solid rgba(124,108,252,.25);color:var(--accent);width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:13px">✏️</button>
+              <button onclick="deleteCarte('${f.id}','${c.id}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red);width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:13px">✕</button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
+            <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:6px">
+              <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Montant</div>
+              <div style="font-size:12px;font-weight:700;color:var(--accent)">${fmt(c.montant)}</div>
+            </div>
+            <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:6px">
+              <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Dépensé</div>
+              <div style="font-size:12px;font-weight:700;color:var(--yellow)">${fmt(depense)}</div>
+            </div>
+            <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:6px">
+              <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Restant</div>
+              <div style="font-size:12px;font-weight:700" style="color:${barColor}">${fmt(reste)}</div>
+            </div>
+          </div>
+          <div style="margin-top:7px">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px">
+              <span>Utilisation</span><span>${pct.toFixed(0)}%</span>
+            </div>
+            <div style="height:5px;background:var(--border);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px;transition:width .5s"></div>
+            </div>
+          </div>
+          <div style="margin-top:6px;font-size:11px;color:var(--green);text-align:right">✅ Bénéfice: ${fmt(benef)}</div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:16px;font-weight:700">🧑‍💼 ${f.nom}</div>
+          <div style="display:flex;gap:6px">
+            <button onclick="openCarteModal('${f.id}')" style="background:rgba(124,108,252,.15);border:1px solid rgba(124,108,252,.3);color:var(--accent);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">+ Carte</button>
+            <button onclick="deleteFourn(${fi})" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:13px">✕</button>
+          </div>
+        </div>
+        ${cartesHTML||'<div style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">Aucune carte — appuie sur "+ Carte"</div>'}
+      </div>`;
+  }).join('');
+}
+
+function addFourn(){
+  const val=document.getElementById('newFournInput').value.trim();
+  if(!val){showToast('⚠️ Entre un nom!',true);return;}
+  if(fourns.find(f=>f.nom===val)){showToast('⚠️ Déjà existant!',true);return;}
+  fourns.push({id:uid(),nom:val,cartes:[]});
+  save(); renderFournList();
+  document.getElementById('newFournInput').value='';
+  showToast('✅ Fournisseur ajouté!');
+}
+
+function deleteFourn(i){
+  if(!confirm(`Supprimer "${fourns[i].nom}" et toutes ses cartes?`)) return;
+  fourns.splice(i,1);
+  save(); renderFournList();
+}
+
+// Cartes
+function openCarteModal(fournId){
+  document.getElementById('carteFournId').value=fournId;
+  document.getElementById('carteLabel').value='';
+  document.getElementById('carteMontant').value='';
+  document.getElementById('carteDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('carteModal').classList.add('open');
+}
+function closeCarteModal(){ document.getElementById('carteModal').classList.remove('open'); }
+function saveCarte(){
+  const fournId=document.getElementById('carteFournId').value;
+  const label=document.getElementById('carteLabel').value.trim();
+  const montant=parseFloat(document.getElementById('carteMontant').value)||0;
+  const date=document.getElementById('carteDate').value;
+  if(!label||!montant){showToast('⚠️ Label et Montant obligatoires!',true);return;}
+  const f=fourns.find(x=>x.id===fournId); if(!f) return;
+  f.cartes.push({id:uid(),label,montant,date});
+  save(); renderFournList(); closeCarteModal(); refreshFournSelects();
+  showToast('✅ Carte ajoutée!');
+}
+function deleteCarte(fournId,carteId){
+  if(!confirm('Supprimer cette carte?')) return;
+  const f=fourns.find(x=>x.id===fournId); if(!f) return;
+  f.cartes=f.cartes.filter(c=>c.id!==carteId);
+  save(); renderFournList(); refreshFournSelects();
+  showToast('✅ Carte supprimée!');
+}
+
+// Modifier carte
+function openEditCarteModal(fournId, carteId){
+  const f=fourns.find(x=>x.id===fournId); if(!f) return;
+  const c=f.cartes.find(x=>x.id===carteId); if(!c) return;
+  document.getElementById('editCarteFournId').value=fournId;
+  document.getElementById('editCarteId').value=carteId;
+  document.getElementById('editCarteLabel').value=c.label||'';
+  document.getElementById('editCarteMontant').value=c.montant||'';
+  document.getElementById('editCarteDate').value=c.date||'';
+  document.getElementById('editCarteModal').classList.add('open');
+}
+function closeEditCarteModal(){ document.getElementById('editCarteModal').classList.remove('open'); }
+function saveEditCarte(){
+  const fournId=document.getElementById('editCarteFournId').value;
+  const carteId=document.getElementById('editCarteId').value;
+  const label=document.getElementById('editCarteLabel').value.trim();
+  const montant=parseFloat(document.getElementById('editCarteMontant').value)||0;
+  const date=document.getElementById('editCarteDate').value;
+  if(!label||!montant){showToast('⚠️ Label et Montant obligatoires!',true);return;}
+  const f=fourns.find(x=>x.id===fournId); if(!f) return;
+  const ci=f.cartes.findIndex(x=>x.id===carteId); if(ci===-1) return;
+  f.cartes[ci]={...f.cartes[ci],label,montant,date};
+  save(); renderFournList(); refreshFournSelects(); closeEditCarteModal();
+  showToast('✅ Carte modifiée!');
 }
 
 // Invest modal
@@ -613,7 +952,7 @@ function exportExcel(){
   if(!sales.length){showToast('⚠️ Aucune vente!',true);return;}
   const rows=sales.map((s,i)=>({
     'N°':i+1,'Date':s.date||'','Modèle':s.model||'','Couleur':s.color||'',
-    'Ville':s.ville||'','N° Client':s.client||'','Quantité':s.qty||1,
+    'Ville':s.ville||'','N° Client':s.client||'','Fournisseur':s.fourn||'','Quantité':s.qty||1,
     'Prix Vente (DT)':+(s.prix||0).toFixed(3),'Coût Achat (DT)':+(s.cout||0).toFixed(3),
     'Frais Envoi (DT)':+(s.envoi||0).toFixed(3),'Revenu Brut (DT)':+(s.revenu||0).toFixed(3),
     'Coût Total (DT)':+(s.coutTotal||0).toFixed(3),'Bénéfice Net (DT)':+(s.benef||0).toFixed(3),
