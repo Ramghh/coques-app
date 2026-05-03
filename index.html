@@ -214,7 +214,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="cartesTotalRevenu">0 DT</div>
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 8px;text-align:center">
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">À récupérer</div>
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px" id="cartesRecLabel">À récupérer</div>
       <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="cartesTotalRec">0 DT</div>
     </div>
   </div>
@@ -588,8 +588,16 @@ function updateKPIs(){
     document.getElementById('cartesTotalMontant').textContent=fmt(totalMont);
     document.getElementById('cartesTotalRevenu').textContent=fmt(totalRevCartes);
     const recEl=document.getElementById('cartesTotalRec');
-    recEl.textContent=aRec>0?fmt(aRec):'✅ +'+fmt(Math.abs(aRec));
-    recEl.style.color=aRec>0?'var(--red)':'var(--green)';
+    const recLabelEl=document.getElementById('cartesRecLabel');
+    if(aRec>0){
+      recLabelEl.textContent='À récupérer';
+      recEl.textContent=fmt(aRec);
+      recEl.style.color='var(--red)';
+    } else {
+      recLabelEl.textContent='Récupéré ✅';
+      recEl.textContent='+'+fmt(Math.abs(aRec));
+      recEl.style.color='var(--green)';
+    }
     document.getElementById('cartesPct').textContent=pct.toFixed(0)+'%';
 
     // Barre progressive rouge→vert
@@ -902,8 +910,8 @@ function renderDash(){
             <div style="font-size:12px;font-weight:700;color:var(--green)">${fmt(revenu)}</div>
           </div>
           <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:7px">
-            <div style="font-size:9px;color:var(--muted);text-transform:uppercase">À récupérer</div>
-            <div style="font-size:12px;font-weight:700;color:${recColor}">${aRecuperer>0?fmt(aRecuperer):'✅ '+fmt(Math.abs(aRecuperer))}</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase">${aRecuperer<=0?'Récupéré ✅':'À récupérer'}</div>
+            <div style="font-size:12px;font-weight:700;color:${recColor}">${aRecuperer>0?fmt(aRecuperer):'+'+fmt(Math.abs(aRecuperer))}</div>
           </div>
         </div>
         <div style="margin-top:8px">
@@ -927,7 +935,9 @@ function renderDash(){
         <div style="font-size:11px;color:var(--muted)">${f.cartes.length} carte${f.cartes.length>1?'s':''} · ${fmt(totalMont)}</div>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:5px">
-        <span style="color:${totalRec>0?'var(--red)':'var(--green)'}">À récupérer: ${totalRec>0?fmt(totalRec):'✅ '+fmt(Math.abs(totalRec))}</span>
+        <span style="color:${totalRec>0?'var(--red)':'var(--green)'}">
+          ${totalRec>0?'À récupérer: '+fmt(totalRec):'Récupéré ✅ +'+fmt(Math.abs(totalRec))}
+        </span>
         <span style="color:var(--green)">Bénéfice: ${fmt(totalBen)}</span>
       </div>
       ${cartesHTML||'<div style="font-size:13px;color:var(--muted);text-align:center;padding:10px">Aucune carte — appuie sur "+ Carte" dans Gérer</div>'}
@@ -1004,7 +1014,9 @@ function renderFournList(){
         </div>
         <div style="display:flex;justify-content:space-between;font-size:11px;margin:5px 0 3px">
           <span style="color:var(--green)">Revenu: ${fmt(revenu)}</span>
-          <span style="color:${aRec>0?'var(--red)':'var(--green)'}">À récupérer: ${aRec>0?fmt(aRec):'✅ '+fmt(Math.abs(aRec))}</span>
+          <span style="color:${aRec>0?'var(--red)':'var(--green)'}">
+            ${aRec>0?'À récupérer: '+fmt(aRec):'Récupéré ✅ +'+fmt(Math.abs(aRec))}
+          </span>
         </div>
         <div style="height:5px;background:var(--border);border-radius:4px;overflow:hidden">
           <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px"></div>
