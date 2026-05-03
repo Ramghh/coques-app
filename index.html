@@ -273,6 +273,63 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     <span class="search-icon">🔍</span>
     <input type="text" class="search-input" id="searchInput" placeholder="Rechercher modèle, ville, client..." oninput="renderSales()">
   </div>
+
+  <!-- FILTRES -->
+  <div style="margin-bottom:12px">
+    <!-- Ligne 1: Fournisseur + Carte -->
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <div style="flex:1">
+        <select id="filterFourn" onchange="onFilterFournChange()" style="font-size:14px;padding:10px 12px">
+          <option value="">🧑‍💼 Tous fournisseurs</option>
+        </select>
+      </div>
+      <div style="flex:1">
+        <select id="filterCarte" onchange="renderSales()" style="font-size:14px;padding:10px 12px">
+          <option value="">💳 Toutes cartes</option>
+        </select>
+      </div>
+    </div>
+    <!-- Ligne 2: Ville + Modèle -->
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <div style="flex:1">
+        <select id="filterVille" onchange="renderSales()" style="font-size:14px;padding:10px 12px">
+          <option value="">📍 Toutes villes</option>
+        </select>
+      </div>
+      <div style="flex:1">
+        <select id="filterModel" onchange="renderSales()" style="font-size:14px;padding:10px 12px">
+          <option value="">📱 Tous modèles</option>
+        </select>
+      </div>
+    </div>
+    <!-- Ligne 3: Date de → Date à -->
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+      <div style="flex:1">
+        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">📅 Du</label>
+        <input type="date" id="filterDateFrom" onchange="renderSales()" style="font-size:13px;padding:9px 10px">
+      </div>
+      <div style="flex:1">
+        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">📅 Au</label>
+        <input type="date" id="filterDateTo" onchange="renderSales()" style="font-size:13px;padding:9px 10px">
+      </div>
+    </div>
+    <!-- Ligne 4: Bénéfice min → max -->
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+      <div style="flex:1">
+        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">💰 Bénéfice min (DT)</label>
+        <input type="number" id="filterBenefMin" placeholder="0" step="0.001" onchange="renderSales()" style="font-size:13px;padding:9px 10px">
+      </div>
+      <div style="flex:1">
+        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">💰 Bénéfice max (DT)</label>
+        <input type="number" id="filterBenefMax" placeholder="∞" step="0.001" onchange="renderSales()" style="font-size:13px;padding:9px 10px">
+      </div>
+    </div>
+    <!-- Bouton reset -->
+    <button onclick="resetFilters()" style="width:100%;padding:9px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">🔄 Réinitialiser les filtres</button>
+  </div>
+
+  <div id="filterInfo" style="display:none;margin-bottom:10px;padding:10px 14px;background:rgba(124,108,252,.1);border:1px solid rgba(124,108,252,.25);border-radius:10px;font-size:13px;color:var(--accent)"></div>
+
   <div class="sort-bar">
     <div class="sort-label">Trier :</div>
     <div class="sort-btns">
@@ -519,7 +576,7 @@ function showTab(id,btn){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
   btn.classList.add('active');
-  if(id==='ventes') renderSales();
+  if(id==='ventes') { refreshFilterSelects(); renderSales(); }
   if(id==='top') renderTop();
   if(id==='rapport') renderRapport();
   if(id==='annuel') renderAnnuel();
@@ -541,7 +598,7 @@ function addSale(){
   const envoi=parseFloat(document.getElementById('fEnvoi').value)||0;
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
   sales.push({id:Date.now(),date,model,color,ville,client,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)});
-  save(); updateKPIs();
+  save(); updateKPIs(); refreshFilterSelects();
   ['fModel','fColor','fVille','fClient','fEnvoi','fQty','fPrix','fCout'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('fFourn').value='';
   document.getElementById('fCarte').value='';
@@ -620,6 +677,27 @@ function refreshFournSelects(){
     fourns.forEach(f=>{const o=document.createElement('option');o.value=f.id;o.textContent=f.nom;sel.appendChild(o);});
     sel.value=cur;
   });
+  // Filtre fournisseur dans ventes
+  const ff=document.getElementById('filterFourn'); if(!ff) return;
+  const curF=ff.value;
+  ff.innerHTML='<option value="">🧑‍💼 Tous les fournisseurs</option>';
+  fourns.forEach(f=>{const o=document.createElement('option');o.value=f.id;o.textContent='🧑‍💼 '+f.nom;ff.appendChild(o);});
+  ff.value=curF;
+  // Remettre cartes du filtre
+  onFilterFournChange();
+}
+
+function onFilterFournChange(){
+  const fournId=document.getElementById('filterFourn').value;
+  const sel=document.getElementById('filterCarte');
+  sel.innerHTML='<option value="">💳 Toutes les cartes</option>';
+  if(fournId){
+    const f=fourns.find(x=>x.id===fournId);
+    if(f) f.cartes.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent='💳 '+c.label+' ('+fmt(c.montant)+')';sel.appendChild(o);});
+  } else {
+    allCartes().forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent='💳 '+c.fournNom+' · '+c.label;sel.appendChild(o);});
+  }
+  renderSales();
 }
 function filterCartesByFourn(fournId,selectId){
   const sel=document.getElementById(selectId); if(!sel) return;
@@ -644,14 +722,70 @@ function getSorted(list){
   else c.sort((a,b)=>(b.benef||b.benefBrut||0)-(a.benef||a.benefBrut||0));
   return c;
 }
+function refreshFilterSelects(){
+  // Villes
+  const villes=[...new Set(sales.map(s=>s.ville).filter(Boolean))].sort();
+  const fv=document.getElementById('filterVille'); if(!fv) return;
+  const curV=fv.value;
+  fv.innerHTML='<option value="">📍 Toutes villes</option>';
+  villes.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent='📍 '+v;fv.appendChild(o);});
+  fv.value=curV;
+  // Modèles
+  const models=[...new Set(sales.map(s=>s.model).filter(Boolean))].sort();
+  const fm=document.getElementById('filterModel'); if(!fm) return;
+  const curM=fm.value;
+  fm.innerHTML='<option value="">📱 Tous modèles</option>';
+  models.forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent='📱 '+m;fm.appendChild(o);});
+  fm.value=curM;
+}
+
+function resetFilters(){
+  ['filterFourn','filterCarte','filterVille','filterModel'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
+  ['filterDateFrom','filterDateTo','filterBenefMin','filterBenefMax'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
+  renderSales();
+}
+
 function getFiltered(){
   const q=(document.getElementById('searchInput').value||'').toLowerCase().trim();
-  if(!q) return sales;
-  return sales.filter(s=>{
-    const fObj=fourns.find(x=>x.id===s.fourn);
+  const filterCarteId=document.getElementById('filterCarte')?document.getElementById('filterCarte').value:'';
+  const filterFournId=document.getElementById('filterFourn')?document.getElementById('filterFourn').value:'';
+  const filterVille=document.getElementById('filterVille')?document.getElementById('filterVille').value:'';
+  const filterModel=document.getElementById('filterModel')?document.getElementById('filterModel').value:'';
+  const filterFrom=document.getElementById('filterDateFrom')?document.getElementById('filterDateFrom').value:'';
+  const filterTo=document.getElementById('filterDateTo')?document.getElementById('filterDateTo').value:'';
+  const filterBenefMin=document.getElementById('filterBenefMin')?parseFloat(document.getElementById('filterBenefMin').value)||null:null;
+  const filterBenefMax=document.getElementById('filterBenefMax')?parseFloat(document.getElementById('filterBenefMax').value)||null:null;
+
+  let result=sales.filter(s=>{
+    const fObj=fourns.find(x=>x.id===s.fourn||x.nom===s.fourn);
     const fNom=fObj?fObj.nom:'';
-    return (s.model||'').toLowerCase().includes(q)||(s.ville||'').toLowerCase().includes(q)||(s.client||'').toLowerCase().includes(q)||(s.color||'').toLowerCase().includes(q)||fNom.toLowerCase().includes(q);
+    const benef=s.benef||s.benefBrut||0;
+    const matchQ=!q||(s.model||'').toLowerCase().includes(q)||(s.ville||'').toLowerCase().includes(q)||(s.client||'').toLowerCase().includes(q)||(s.color||'').toLowerCase().includes(q)||fNom.toLowerCase().includes(q);
+    const matchCarte=!filterCarteId||s.carteId===filterCarteId;
+    const matchFourn=!filterFournId||s.fourn===filterFournId||(fObj&&fObj.id===filterFournId);
+    const matchVille=!filterVille||s.ville===filterVille;
+    const matchModel=!filterModel||s.model===filterModel;
+    const matchFrom=!filterFrom||s.date>=filterFrom;
+    const matchTo=!filterTo||s.date<=filterTo;
+    const matchBenefMin=filterBenefMin===null||benef>=filterBenefMin;
+    const matchBenefMax=filterBenefMax===null||benef<=filterBenefMax;
+    return matchQ&&matchCarte&&matchFourn&&matchVille&&matchModel&&matchFrom&&matchTo&&matchBenefMin&&matchBenefMax;
   });
+
+  // Afficher résumé
+  const infoEl=document.getElementById('filterInfo');
+  const hasFilter=filterCarteId||filterFournId||filterVille||filterModel||filterFrom||filterTo||filterBenefMin!==null||filterBenefMax!==null||q;
+  if(infoEl){
+    if(hasFilter){
+      const tv=result.reduce((a,s)=>a+s.revenu,0);
+      const tb=result.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
+      infoEl.style.display='block';
+      infoEl.innerHTML=`🔍 <strong>${result.length}</strong> résultat${result.length>1?'s':''} · Revenu: <strong>${fmt(tv)}</strong> · Bénéfice: <strong style="color:var(--green)">${fmt(tb)}</strong>`;
+    } else {
+      infoEl.style.display='none';
+    }
+  }
+  return result;
 }
 function hl(t,q){
   if(!q||!t) return t||'';
