@@ -191,16 +191,41 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
   <div class="kpi"><div class="kpi-label">Marge</div><div class="kpi-value purple" id="kpiMarge">0%</div></div>
 </div>
 
-<div class="rec-banner neutre" id="recBanner">
+<div style="margin:14px 18px;background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.3);border-radius:var(--radius);padding:16px 18px;display:flex;align-items:center;justify-content:space-between">
   <div>
-    <div class="rec-title" id="recTitle" style="color:var(--muted)">💳 À récupérer</div>
-    <div class="rec-amount" id="recAmount">— DT</div>
+    <div style="font-size:12px;color:var(--yellow);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:4px">🛒 Coût Total Achats</div>
+    <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--yellow)" id="kpiCout">0.000 DT</div>
   </div>
-  <div class="rec-right">
-    <div class="rec-sub-label">Total Investi</div>
-    <div class="rec-sub-val" style="color:var(--accent)" id="recInvesti">0 DT</div>
-    <div class="rec-sub-label" style="margin-top:6px">Bénéfice brut</div>
-    <div class="rec-sub-val" style="color:var(--yellow)" id="recBenefBrut">0 DT</div>
+  <div style="text-align:right">
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Nb Ventes</div>
+    <div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:700;color:var(--text);margin-top:3px" id="kpiNbVentes">0</div>
+  </div>
+</div>
+
+<div id="cartesBanner" style="margin:0 18px 14px;border-radius:var(--radius);padding:16px 18px;display:none">
+  <div style="font-size:12px;text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:12px;color:var(--accent)">💳 Suivi Cartes</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 8px;text-align:center">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Total Investi</div>
+      <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="cartesTotalMontant">0 DT</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 8px;text-align:center">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Revenu</div>
+      <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="cartesTotalRevenu">0 DT</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 8px;text-align:center">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">À récupérer</div>
+      <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="cartesTotalRec">0 DT</div>
+    </div>
+  </div>
+  <div style="margin-top:12px">
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px">
+      <span>Récupération globale</span>
+      <span id="cartesPct">0%</span>
+    </div>
+    <div style="height:7px;background:var(--border);border-radius:4px;overflow:hidden">
+      <div id="cartesBar" style="height:100%;width:0%;border-radius:4px;transition:width .6s ease"></div>
+    </div>
   </div>
 </div>
 
@@ -530,42 +555,51 @@ function addSale(){
 function updateKPIs(){
   const tv=sales.reduce((a,s)=>a+s.revenu,0);
   const benef=sales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
+  const cout=sales.reduce((a,s)=>a+s.coutTotal,0);
   const mg=tv>0?benef/tv:0;
-  const investi=totalInvesti();
-  const aRec=calcARecuperer(); // positif = encore à récupérer, négatif = en profit
-
   document.getElementById('kpiVentes').textContent=fmt(tv);
   document.getElementById('kpiBenef').textContent=fmt(benef);
   document.getElementById('kpiMarge').textContent=fmtP(mg);
+  document.getElementById('kpiCout').textContent=fmt(cout);
+  document.getElementById('kpiNbVentes').textContent=sales.length;
   document.getElementById('totalCount').textContent=sales.length+' vente'+(sales.length>1?'s':'');
-  document.getElementById('recInvesti').textContent=fmt(investi);
-  document.getElementById('recBenefBrut').textContent=fmt(benef);
 
-  const banner=document.getElementById('recBanner');
-  const amountEl=document.getElementById('recAmount');
-  const titleEl=document.getElementById('recTitle');
+  // Cartes banner
+  const totalMont=fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>b+c.montant,0),0);
+  const totalRevCartes=fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>{
+    const v=sales.filter(s=>s.carteId===c.id);
+    return b+v.reduce((x,s)=>x+s.revenu,0);
+  },0),0);
+  const aRec=totalMont-totalRevCartes;
+  const pct=totalMont>0?Math.min(100,(totalRevCartes/totalMont)*100):0;
 
-  if(investi===0){
-    // Pas de cartes — pas d'affichage investissement
-    banner.className='rec-banner neutre';
-    titleEl.style.color='var(--muted)';
-    amountEl.style.color='var(--muted)';
-    titleEl.textContent='💳 À récupérer';
-    amountEl.textContent='— DT';
-  } else if(aRec>0){
-    // Encore à récupérer (signe négatif pour montrer qu'on est dans le déficit)
-    banner.className='rec-banner rouge';
-    titleEl.style.color='var(--red)';
-    amountEl.style.color='var(--red)';
-    titleEl.textContent='💳 À récupérer';
-    amountEl.textContent='-'+fmt(aRec);
+  const banner=document.getElementById('cartesBanner');
+  if(totalMont>0){
+    banner.style.display='block';
+    // Couleur du banner selon état
+    const isProfit=aRec<=0;
+    banner.style.background=isProfit
+      ?'linear-gradient(135deg,rgba(16,185,129,.12),rgba(16,185,129,.05))'
+      :'linear-gradient(135deg,rgba(124,108,252,.12),rgba(124,108,252,.05))';
+    banner.style.border=isProfit
+      ?'1px solid rgba(16,185,129,.3)'
+      :'1px solid rgba(124,108,252,.3)';
+
+    document.getElementById('cartesTotalMontant').textContent=fmt(totalMont);
+    document.getElementById('cartesTotalRevenu').textContent=fmt(totalRevCartes);
+    const recEl=document.getElementById('cartesTotalRec');
+    recEl.textContent=aRec>0?fmt(aRec):'✅ +'+fmt(Math.abs(aRec));
+    recEl.style.color=aRec>0?'var(--red)':'var(--green)';
+    document.getElementById('cartesPct').textContent=pct.toFixed(0)+'%';
+
+    // Barre progressive rouge→vert
+    const r=Math.round(239*(1-pct/100)+16*(pct/100));
+    const g=Math.round(68*(1-pct/100)+185*(pct/100));
+    const bar=document.getElementById('cartesBar');
+    bar.style.width=pct+'%';
+    bar.style.background=`rgb(${r},${g},68)`;
   } else {
-    // En profit!
-    banner.className='rec-banner vert';
-    titleEl.style.color='var(--green)';
-    amountEl.style.color='var(--green)';
-    titleEl.textContent='✅ Bénéfice net';
-    amountEl.textContent='+'+fmt(Math.abs(aRec));
+    banner.style.display='none';
   }
 }
 
@@ -836,15 +870,17 @@ function renderDash(){
   c3.innerHTML=fourns.map(f=>{
     const cartesHTML=f.cartes.map(c=>{
       const ventes=sales.filter(s=>s.carteId===c.id);
-      const depense=ventes.reduce((a,s)=>a+s.coutTotal,0);
-      const benef=ventes.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
-      const reste=c.montant-depense;
-      const pct=c.montant>0?Math.min(100,(depense/c.montant)*100):0;
+      // Revenu = total des ventes liées à cette carte
+      const revenu=ventes.reduce((a,s)=>a+s.revenu,0);
+      const benef=ventes.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
+      // À récupérer = montant carte - revenu généré
+      const aRecuperer=c.montant-revenu;
+      const pct=c.montant>0?Math.min(100,(revenu/c.montant)*100):0;
       // Couleur progressive rouge → jaune → vert
       const r=Math.round(239*(1-pct/100)+16*(pct/100));
       const g=Math.round(68*(1-pct/100)+185*(pct/100));
       const barColor=`rgb(${r},${g},68)`;
-      const textColor=reste>0?'var(--red)':'var(--green)';
+      const recColor=aRecuperer>0?'var(--red)':'var(--green)';
       return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:6px">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div>
@@ -862,35 +898,36 @@ function renderDash(){
             <div style="font-size:12px;font-weight:700;color:var(--accent)">${fmt(c.montant)}</div>
           </div>
           <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:7px">
-            <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Dépensé</div>
-            <div style="font-size:12px;font-weight:700;color:var(--yellow)">${fmt(depense)}</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Revenu</div>
+            <div style="font-size:12px;font-weight:700;color:var(--green)">${fmt(revenu)}</div>
           </div>
           <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:7px">
-            <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Restant</div>
-            <div style="font-size:12px;font-weight:700;color:${textColor}">${fmt(reste)}</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase">À récupérer</div>
+            <div style="font-size:12px;font-weight:700;color:${recColor}">${aRecuperer>0?fmt(aRecuperer):'✅ '+fmt(Math.abs(aRecuperer))}</div>
           </div>
         </div>
         <div style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px">
-            <span>Remboursement</span><span>${pct.toFixed(0)}%</span>
+            <span>Récupération</span><span>${pct.toFixed(0)}%</span>
           </div>
           <div style="height:6px;background:var(--border);border-radius:4px;overflow:hidden">
             <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px;transition:width .5s"></div>
           </div>
         </div>
-        <div style="margin-top:7px;font-size:12px;text-align:right;color:${benef>0?'var(--green)':'var(--muted)'}">✅ Bénéfice: ${fmt(benef)}</div>
+        <div style="margin-top:7px;font-size:12px;text-align:right;color:${benef>0?'var(--green)':'var(--muted)'}">💰 Bénéfice: ${fmt(benef)}</div>
       </div>`;
     }).join('');
-    const totalDep=f.cartes.reduce((a,c)=>{const v=sales.filter(s=>s.carteId===c.id);return a+v.reduce((b,s)=>b+s.coutTotal,0);},0);
-    const totalBen=f.cartes.reduce((a,c)=>{const v=sales.filter(s=>s.carteId===c.id);return a+v.reduce((b,s)=>b+(s.benefBrut||s.benef||0),0);},0);
+    const totalRev=f.cartes.reduce((a,c)=>{const v=sales.filter(s=>s.carteId===c.id);return a+v.reduce((b,s)=>b+s.revenu,0);},0);
+    const totalBen=f.cartes.reduce((a,c)=>{const v=sales.filter(s=>s.carteId===c.id);return a+v.reduce((b,s)=>b+(s.benef||s.benefBrut||0),0);},0);
     const totalMont=f.cartes.reduce((a,c)=>a+c.montant,0);
+    const totalRec=totalMont-totalRev;
     return `<div class="city-row" style="flex-direction:column;align-items:stretch">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div class="city-name">🧑‍💼 ${f.nom}</div>
         <div style="font-size:11px;color:var(--muted)">${f.cartes.length} carte${f.cartes.length>1?'s':''} · ${fmt(totalMont)}</div>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:5px">
-        <span style="color:var(--yellow)">Dépensé: ${fmt(totalDep)}</span>
+        <span style="color:${totalRec>0?'var(--red)':'var(--green)'}">À récupérer: ${totalRec>0?fmt(totalRec):'✅ '+fmt(Math.abs(totalRec))}</span>
         <span style="color:var(--green)">Bénéfice: ${fmt(totalBen)}</span>
       </div>
       ${cartesHTML||'<div style="font-size:13px;color:var(--muted);text-align:center;padding:10px">Aucune carte — appuie sur "+ Carte" dans Gérer</div>'}
@@ -948,9 +985,9 @@ function renderFournList(){
   el.innerHTML=fourns.map((f,fi)=>{
     const cartesHTML=f.cartes.map((c)=>{
       const ventes=sales.filter(s=>s.carteId===c.id);
-      const depense=ventes.reduce((a,s)=>a+s.coutTotal,0);
-      const reste=c.montant-depense;
-      const pct=c.montant>0?Math.min(100,(depense/c.montant)*100):0;
+      const revenu=ventes.reduce((a,s)=>a+s.revenu,0);
+      const aRec=c.montant-revenu;
+      const pct=c.montant>0?Math.min(100,(revenu/c.montant)*100):0;
       const r=Math.round(239*(1-pct/100)+16*(pct/100));
       const g=Math.round(68*(1-pct/100)+185*(pct/100));
       const barColor=`rgb(${r},${g},68)`;
@@ -965,12 +1002,14 @@ function renderFournList(){
             <button onclick="deleteCarte('${f.id}','${c.id}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red);width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:13px">✕</button>
           </div>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin:5px 0 3px">
-          <span>Remboursé: ${fmt(depense)}</span><span style="color:${reste>0?'var(--red)':'var(--green)'}">Restant: ${fmt(reste)}</span>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin:5px 0 3px">
+          <span style="color:var(--green)">Revenu: ${fmt(revenu)}</span>
+          <span style="color:${aRec>0?'var(--red)':'var(--green)'}">À récupérer: ${aRec>0?fmt(aRec):'✅ '+fmt(Math.abs(aRec))}</span>
         </div>
         <div style="height:5px;background:var(--border);border-radius:4px;overflow:hidden">
           <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px"></div>
         </div>
+        <div style="font-size:10px;color:var(--muted);text-align:right;margin-top:3px">${pct.toFixed(0)}% récupéré</div>
       </div>`;
     }).join('');
     return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px">
