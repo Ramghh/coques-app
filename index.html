@@ -232,6 +232,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 <div class="nav-tabs">
   <button class="tab-btn active" onclick="showTab('ajouter',this)">➕ Ajouter</button>
   <button class="tab-btn" onclick="showTab('ventes',this)">📋 Ventes</button>
+  <button class="tab-btn" onclick="showTab('achats',this)">📦 Achats</button>
   <button class="tab-btn" onclick="showTab('top',this)">🏆 Top Ventes</button>
   <button class="tab-btn" onclick="showTab('rapport',this)">📊 Rapport</button>
   <button class="tab-btn" onclick="showTab('annuel',this)">📅 Annuel</button>
@@ -265,6 +266,55 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     <button class="btn-add" onclick="addSale()">✅ Enregistrer la vente</button>
     <button onclick="openFournModal()" style="width:100%;margin-top:12px;padding:13px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:12px;font-size:15px;cursor:pointer;font-family:'DM Sans',sans-serif;">⚙️ Gérer les fournisseurs</button>
   </div>
+</div>
+
+<!-- ACHATS -->
+<div class="section" id="tab-achats">
+  <!-- Form ajout achat -->
+  <div class="form-card">
+    <div class="form-title">📦 Nouvel Achat</div>
+    <div class="form-grid">
+      <div><label>Date</label><input type="date" id="aDate"></div>
+      <div><label>Produit</label><input type="text" id="aProduit" placeholder="Coque iPhone 15 Pro"></div>
+      <div><label>Modèle Téléphone</label><input type="text" id="aModel" placeholder="iPhone 15 Pro"></div>
+      <div><label>Quantité</label><input type="number" id="aQty" placeholder="10" min="1"></div>
+      <div><label>Prix unitaire (DT)</label><input type="number" id="aPrix" placeholder="11.450" step="0.001"></div>
+      <div><label>Frais livraison (DT)</label><input type="number" id="aLivraison" placeholder="0" step="0.001"></div>
+      <div><label>Fournisseur</label>
+        <select id="aFourn" onchange="filterCartesByFourn(this.value,'aCarte')">
+          <option value="">— Fournisseur —</option>
+        </select>
+      </div>
+      <div><label>Carte utilisée</label>
+        <select id="aCarte"><option value="">— Carte —</option></select>
+      </div>
+      <div class="form-full"><label>Notes</label>
+        <input type="text" id="aNotes" placeholder="Commande AliExpress #123...">
+      </div>
+    </div>
+    <button class="btn-add" onclick="addAchat()" style="background:linear-gradient(135deg,#059669,#10b981)">📦 Enregistrer l'achat</button>
+  </div>
+
+  <!-- Résumé -->
+  <div id="achatsResume" style="display:none;margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div style="text-align:center;background:var(--surface2);border-radius:10px;padding:10px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Total Achats</div>
+        <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--red)" id="achatsTotalCout">0 DT</div>
+      </div>
+      <div style="text-align:center;background:var(--surface2);border-radius:10px;padding:10px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Unités</div>
+        <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--accent)" id="achatsTotalQty">0</div>
+      </div>
+      <div style="text-align:center;background:var(--surface2);border-radius:10px;padding:10px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Commandes</div>
+        <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--yellow)" id="achatsTotalNb">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste achats -->
+  <div class="sales-list" id="achatsList"></div>
 </div>
 
 <!-- VENTES -->
@@ -502,8 +552,22 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 
 <script>
 // ── STATE ──────────────────────────────────────────────────────────────────
-let sales  = JSON.parse(localStorage.getItem('flousFlowSales') || localStorage.getItem('coquesSales') || '[]');
-let fourns = JSON.parse(localStorage.getItem('flousFlowFourns') || localStorage.getItem('coquesFourns') || '[]');
+// Migration: charge depuis ancien ou nouveau key
+function loadData(newKey, oldKey, def='[]'){
+  const newData=localStorage.getItem(newKey);
+  if(newData) return JSON.parse(newData);
+  const oldData=localStorage.getItem(oldKey);
+  if(oldData){
+    // Migre vers nouveau key
+    localStorage.setItem(newKey, oldData);
+    return JSON.parse(oldData);
+  }
+  return JSON.parse(def);
+}
+
+let sales  = loadData('flousFlowSales', 'coquesSales');
+let fourns = loadData('flousFlowFourns', 'coquesFourns');
+let achats = JSON.parse(localStorage.getItem('flousFlowAchats') || '[]');
 let theme  = localStorage.getItem('flousFlowTheme') || localStorage.getItem('coquesTheme') || 'dark';
 
 // Migration: si anciens fourns étaient des strings
@@ -517,8 +581,10 @@ let currentSort='newest', editingId=null;
 document.documentElement.setAttribute('data-theme',theme);
 document.getElementById('themeBtn').textContent=theme==='dark'?'🌙':'☀️';
 document.getElementById('fDate').value=new Date().toISOString().split('T')[0];
+document.getElementById('aDate').value=new Date().toISOString().split('T')[0];
 buildMonthSelect();
 refreshFournSelects();
+refreshAchatFournSelect();
 updateKPIs();
 // Re-build year select after data is loaded
 setTimeout(()=>{
@@ -570,6 +636,84 @@ function toggleTheme(){
   save();
 }
 
+// ── ACHATS ────────────────────────────────────────────────────────────────
+function saveAchats(){ localStorage.setItem('flousFlowAchats',JSON.stringify(achats)); }
+
+function addAchat(){
+  const date=document.getElementById('aDate').value;
+  const produit=document.getElementById('aProduit').value.trim();
+  const model=document.getElementById('aModel').value.trim();
+  const qty=parseFloat(document.getElementById('aQty').value)||1;
+  const prix=parseFloat(document.getElementById('aPrix').value)||0;
+  const livraison=parseFloat(document.getElementById('aLivraison').value)||0;
+  const fourn=document.getElementById('aFourn').value;
+  const carteId=document.getElementById('aCarte').value;
+  const notes=document.getElementById('aNotes').value.trim();
+  if(!produit||!prix){showToast('⚠️ Produit et Prix obligatoires!',true);return;}
+  const coutTotal=qty*prix+livraison;
+  achats.unshift({id:Date.now(),date,produit,model,qty,prix,livraison,coutTotal,fourn,carteId,notes});
+  saveAchats();
+  ['aProduit','aModel','aLivraison','aNotes','aQty','aPrix'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('aFourn').value=''; document.getElementById('aCarte').value='';
+  document.getElementById('aDate').value=new Date().toISOString().split('T')[0];
+  renderAchats();
+  const btn=document.querySelector('#tab-achats .btn-add');
+  btn.textContent='✅ Enregistré!';
+  setTimeout(()=>{btn.textContent="📦 Enregistrer l'achat";},1800);
+}
+
+function renderAchats(){
+  const el=document.getElementById('achatsList');
+  const resume=document.getElementById('achatsResume');
+  if(!achats.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">Aucun achat enregistré.<br>Ajoute ton premier achat!</div></div>';
+    if(resume) resume.style.display='none'; return;
+  }
+  const totalCout=achats.reduce((a,x)=>a+x.coutTotal,0);
+  const totalQty=achats.reduce((a,x)=>a+x.qty,0);
+  if(resume){
+    resume.style.display='block';
+    document.getElementById('achatsTotalCout').textContent=fmt(totalCout);
+    document.getElementById('achatsTotalQty').textContent=totalQty;
+    document.getElementById('achatsTotalNb').textContent=achats.length;
+  }
+  el.innerHTML=achats.map(a=>{
+    const fObj=fourns.find(x=>x.id===a.fourn||x.nom===a.fourn);
+    const fNom=fObj?fObj.nom:'';
+    const carteObj=allCartes().find(x=>x.id===a.carteId);
+    const dateStr=a.date?new Date(a.date+'T00:00:00').toLocaleDateString('fr-TN'):'—';
+    return `<div class="sale-card">
+      <div class="sale-top">
+        <div class="sale-model">${a.produit}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:var(--red);padding:4px 10px;border-radius:8px;background:rgba(239,68,68,.1);white-space:nowrap">-${fmt(a.coutTotal)}</div>
+      </div>
+      <div class="sale-meta">
+        <span class="tag">📅 ${dateStr}</span>
+        ${a.model?`<span class="tag">📱 ${a.model}</span>`:''}
+        <span class="tag">x${a.qty} u</span>
+        ${fNom?`<span class="tag fourn">🧑‍💼 ${fNom}</span>`:''}
+        ${carteObj?`<span class="tag carte">💳 ${carteObj.label}</span>`:''}
+        ${a.notes?`<span class="tag">📝 ${a.notes}</span>`:''}
+      </div>
+      <div class="sale-nums">
+        <div class="num-item"><div class="num-label">Prix/u</div><div class="num-val" style="color:var(--yellow)">${fmt(a.prix)}</div></div>
+        <div class="num-item"><div class="num-label">Quantité</div><div class="num-val" style="color:var(--accent)">${a.qty}</div></div>
+        <div class="num-item"><div class="num-label">Livraison</div><div class="num-val" style="color:var(--muted)">${fmt(a.livraison)}</div></div>
+      </div>
+      <div class="sale-actions">
+        <button class="btn-del-card" onclick="deleteAchat(${a.id})">🗑️ Supprimer</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteAchat(id){
+  if(!confirm('Supprimer cet achat?')) return;
+  achats=achats.filter(a=>a.id!==id);
+  saveAchats(); renderAchats();
+  showToast('✅ Achat supprimé!');
+}
+
 // ── TABS ───────────────────────────────────────────────────────────────────
 function showTab(id,btn){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
@@ -577,6 +721,7 @@ function showTab(id,btn){
   document.getElementById('tab-'+id).classList.add('active');
   btn.classList.add('active');
   if(id==='ventes') { refreshFilterSelects(); renderSales(); }
+  if(id==='achats') { refreshAchatFournSelect(); renderAchats(); }
   if(id==='top') renderTop();
   if(id==='rapport') renderRapport();
   if(id==='annuel') renderAnnuel();
@@ -668,6 +813,14 @@ function updateKPIs(){
   }
 }
 
+// ── THEME ──────────────────────────────────────────────────────────────────
+function toggleTheme(){
+  theme=theme==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',theme);
+  document.getElementById('themeBtn').textContent=theme==='dark'?'🌙':'☀️';
+  save();
+}
+
 // ── FOURNISSEURS ───────────────────────────────────────────────────────────
 function refreshFournSelects(){
   ['fFourn','eFourn'].forEach(id=>{
@@ -687,6 +840,13 @@ function refreshFournSelects(){
   onFilterFournChange();
 }
 
+function refreshAchatFournSelect(){
+  const sel=document.getElementById('aFourn'); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Fournisseur —</option>';
+  fourns.forEach(f=>{const o=document.createElement('option');o.value=f.id;o.textContent=f.nom;sel.appendChild(o);});
+  sel.value=cur;
+}
 function onFilterFournChange(){
   const fournId=document.getElementById('filterFourn').value;
   const sel=document.getElementById('filterCarte');
