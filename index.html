@@ -171,6 +171,16 @@ input::placeholder{color:var(--muted)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.error{background:var(--red)}
 mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
+
+/* BELL */
+.bell-wrap{position:relative;cursor:pointer}
+.bell-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;position:relative}
+.bell-dot{position:absolute;top:6px;right:6px;width:9px;height:9px;background:var(--red);border-radius:50%;border:2px solid var(--header-bg, #1a1a2e);display:none}
+.bell-popup{position:absolute;top:46px;right:0;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;width:240px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:200;display:none}
+.bell-popup.open{display:block}
+.bell-popup-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:6px}
+.bell-popup-msg{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px}
+.bell-popup-btn{width:100%;padding:9px;background:var(--accent);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif}
 </style>
 </head>
 <body>
@@ -180,6 +190,14 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     <div class="logo">💰 Flous<span>Flow</span></div>
     <div class="header-right">
       <div class="badge" id="totalCount">0 ventes</div>
+      <div class="bell-wrap" onclick="toggleBell()">
+        <button class="bell-btn" id="bellBtn">🔔<span class="bell-dot" id="bellDot"></span></button>
+        <div class="bell-popup" id="bellPopup">
+          <div class="bell-popup-title" id="bellTitle">🔔 Sauvegarde</div>
+          <div class="bell-popup-msg" id="bellMsg">Chargement...</div>
+          <button class="bell-popup-btn" onclick="exportJSON();toggleBell()">⬇️ Sauvegarder maintenant</button>
+        </div>
+      </div>
       <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
     </div>
   </div>
@@ -586,6 +604,14 @@ buildMonthSelect();
 refreshFournSelects();
 refreshAchatFournSelect();
 updateKPIs();
+checkBackupReminder();
+
+// Restaurer dernier onglet
+const lastTab=localStorage.getItem('flousFlowLastTab');
+if(lastTab){
+  const btn=document.querySelector(`.tab-btn[onclick="showTab('${lastTab}',this)"]`);
+  if(btn) showTab(lastTab, btn);
+}
 // Re-build year select after data is loaded
 setTimeout(()=>{
   const ysel=document.getElementById('yearSelect'); ysel.innerHTML='';
@@ -674,7 +700,7 @@ function renderAchats(){
   if(resume){
     resume.style.display='block';
     document.getElementById('achatsTotalCout').textContent=fmt(totalCout);
-    document.getElementById('achatsTotalQty').textContent=totalQty;
+    document.getElementById('achatsTotalQty').textContent=totalQty+' u';
     document.getElementById('achatsTotalNb').textContent=achats.length;
   }
   el.innerHTML=achats.map(a=>{
@@ -697,7 +723,7 @@ function renderAchats(){
       </div>
       <div class="sale-nums">
         <div class="num-item"><div class="num-label">Prix/u</div><div class="num-val" style="color:var(--yellow)">${fmt(a.prix)}</div></div>
-        <div class="num-item"><div class="num-label">Quantité</div><div class="num-val" style="color:var(--accent)">${a.qty}</div></div>
+        <div class="num-item"><div class="num-label">Quantité</div><div class="num-val" style="color:var(--accent)">${a.qty} u</div></div>
         <div class="num-item"><div class="num-label">Livraison</div><div class="num-val" style="color:var(--muted)">${fmt(a.livraison)}</div></div>
       </div>
       <div class="sale-actions">
@@ -720,6 +746,7 @@ function showTab(id,btn){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
   btn.classList.add('active');
+  localStorage.setItem('flousFlowLastTab', id);
   if(id==='ventes') { refreshFilterSelects(); renderSales(); }
   if(id==='achats') { refreshAchatFournSelect(); renderAchats(); }
   if(id==='top') renderTop();
@@ -821,7 +848,52 @@ function toggleTheme(){
   save();
 }
 
-// ── FOURNISSEURS ───────────────────────────────────────────────────────────
+// ── BELL / BACKUP REMINDER ─────────────────────────────────────────────────
+function checkBackupReminder(){
+  const lastBackup=localStorage.getItem('flousFlowLastBackup');
+  const dot=document.getElementById('bellDot');
+  const title=document.getElementById('bellTitle');
+  const msg=document.getElementById('bellMsg');
+  if(!lastBackup){
+    dot.style.display='block';
+    title.textContent='⚠️ Aucune sauvegarde';
+    msg.textContent='Tu n\'as jamais fait de sauvegarde. Exporte tes données maintenant pour ne rien perdre!';
+    return;
+  }
+  const days=Math.floor((Date.now()-parseInt(lastBackup))/(1000*60*60*24));
+  if(days>=7){
+    dot.style.display='block';
+    title.textContent='⚠️ Sauvegarde requise';
+    msg.textContent=`Dernière sauvegarde il y a ${days} jours. Pense à exporter tes données!`;
+  } else if(days>=3){
+    dot.style.display='block';
+    dot.style.background='var(--yellow)';
+    title.textContent='🟡 Sauvegarde bientôt';
+    msg.textContent=`Dernière sauvegarde il y a ${days} jours.`;
+  } else {
+    dot.style.display='none';
+    title.textContent='✅ Sauvegarde OK';
+    msg.textContent=`Dernière sauvegarde il y a ${days} jour${days>1?'s':''}.`;
+  }
+}
+
+function toggleBell(){
+  const popup=document.getElementById('bellPopup');
+  popup.classList.toggle('open');
+  // Fermer si on clique ailleurs
+  if(popup.classList.contains('open')){
+    setTimeout(()=>{
+      document.addEventListener('click', function closeBell(e){
+        if(!e.target.closest('.bell-wrap')){
+          popup.classList.remove('open');
+          document.removeEventListener('click',closeBell);
+        }
+      });
+    },100);
+  }
+}
+
+// ── TABS ───────────────────────────────────────────────────────────────────
 function refreshFournSelects(){
   ['fFourn','eFourn'].forEach(id=>{
     const sel=document.getElementById(id); if(!sel) return;
@@ -1404,14 +1476,16 @@ function showToast(msg,err=false){
   setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-// ── EXPORT JSON ────────────────────────────────────────────────────────────
+// Export JSON — sauvegarde la date
 function exportJSON(){
   if(!sales.length){showToast('⚠️ Aucune vente!',true);return;}
-  const blob=new Blob([JSON.stringify({version:2,exportDate:new Date().toISOString(),sales,fourns},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({version:2,exportDate:new Date().toISOString(),sales,fourns,achats},null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download=`flousflow-${new Date().toISOString().split('T')[0]}.json`;
   a.click(); URL.revokeObjectURL(a.href);
+  localStorage.setItem('flousFlowLastBackup', Date.now().toString());
+  checkBackupReminder();
   showToast('✅ JSON téléchargé!');
 }
 
