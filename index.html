@@ -411,8 +411,17 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 
 <!-- TOP VENTES -->
 <div class="section" id="tab-top">
+  <div class="form-card" style="margin-bottom:14px">
+    <div class="form-title">📊 Graphique — Top Modèles</div>
+    <div style="margin-bottom:10px;display:flex;gap:8px">
+      <button class="sort-btn active" id="chartByBenef" onclick="setChartMode('benef',this)">💰 Bénéfice</button>
+      <button class="sort-btn" id="chartByVentes" onclick="setChartMode('ventes',this)">📦 Ventes</button>
+      <button class="sort-btn" id="chartByRevenu" onclick="setChartMode('revenu',this)">💵 Revenu</button>
+    </div>
+    <canvas id="topChart" style="width:100%;max-height:280px"></canvas>
+  </div>
   <div class="form-card">
-    <div class="form-title">🏆 Top Ventes</div>
+    <div class="form-title">🏆 Classement</div>
     <div id="topList" class="sales-list"></div>
   </div>
 </div>
@@ -1096,34 +1105,129 @@ function deleteSale(id){
   save(); updateKPIs(); renderSales();
 }
 
-// ── TOP VENTES ─────────────────────────────────────────────────────────────
+// ── TOP VENTES + CHART ────────────────────────────────────────────────────
+let chartMode='benef';
+let chartInstance=null;
+
+function setChartMode(mode, btn){
+  chartMode=mode;
+  document.querySelectorAll('#tab-top .sort-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTop();
+}
+
 function renderTop(){
   const el=document.getElementById('topList');
-  if(!sales.length){el.innerHTML='<div class="empty"><div class="empty-icon">🏆</div><div class="empty-text">Aucune vente pour le moment.</div></div>';return;}
-
-  // Top par modèle
+  if(!sales.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🏆</div><div class="empty-text">Aucune vente pour le moment.</div></div>';
+    drawChart([],[]);
+    return;
+  }
   const map={};
   sales.forEach(s=>{
     const m=s.model||'Autre';
     if(!map[m]) map[m]={count:0,revenu:0,benef:0,marge:[]};
     map[m].count++;
     map[m].revenu+=s.revenu;
-    map[m].benef+=(s.benefBrut||s.benef||0);
+    map[m].benef+=(s.benef||s.benefBrut||0);
     map[m].marge.push(s.marge||0);
   });
-  const sorted=Object.entries(map).sort((a,b)=>b[1].benef-a[1].benef).slice(0,10);
-  const medals=['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
+
+  const getValue=d=>chartMode==='benef'?d.benef:chartMode==='ventes'?d.count:d.revenu;
+  const sorted=Object.entries(map).sort((a,b)=>getValue(b[1])-getValue(a[1])).slice(0,8);
+  const medals=['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
+
+  // Draw chart
+  const labels=sorted.map(([m])=>m.length>12?m.slice(0,12)+'…':m);
+  const values=sorted.map(([,d])=>getValue(d));
+  drawChart(labels,values);
+
+  // Ranking list
   el.innerHTML='<div style="display:flex;flex-direction:column;gap:10px">'+sorted.map(([model,d],i)=>{
     const avgMarge=d.marge.reduce((a,b)=>a+b,0)/d.marge.length;
     return `<div class="top-card">
       <div class="top-rank">${medals[i]||i+1}</div>
       <div class="top-info">
         <div class="top-model">${model}</div>
-        <div class="top-sub">${d.count} vente${d.count>1?'s':''} · Marge moy. ${fmtP(avgMarge)}</div>
+        <div class="top-sub">${d.count} vente${d.count>1?'s':''} · Marge ${fmtP(avgMarge)}</div>
       </div>
-      <div class="top-benef">${fmt(d.benef)}</div>
+      <div class="top-benef">${chartMode==='ventes'?d.count+' u':fmt(getValue(d))}</div>
     </div>`;
   }).join('')+'</div>';
+}
+
+function drawChart(labels, values){
+  const canvas=document.getElementById('topChart');
+  if(!canvas) return;
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const textColor=isDark?'#6b6b8a':'#8a7d6b';
+  const gridColor=isDark?'#2a2a3d':'#d6cfc0';
+
+  // Set canvas size
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth||320;
+  const H=240;
+  canvas.width=W*dpr;
+  canvas.height=H*dpr;
+  canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+
+  if(!labels.length) return;
+
+  const pad={top:16,right:12,bottom:56,left:16};
+  const chartW=W-pad.left-pad.right;
+  const chartH=H-pad.top-pad.bottom;
+  const maxVal=Math.max(...values,1);
+  const barW=chartW/labels.length;
+  const gap=barW*0.22;
+
+  // Grid lines
+  ctx.strokeStyle=gridColor;
+  ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.top+chartH*(1-i/4);
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
+  }
+
+  // Bars
+  const colors=['#7c6cfc','#fc6c8f','#10b981','#f59e0b','#38bdf8','#a78bfa','#34d399','#fb923c'];
+  labels.forEach((label,i)=>{
+    const barH=(values[i]/maxVal)*chartH;
+    const x=pad.left+i*barW+gap/2;
+    const y=pad.top+chartH-barH;
+    const bw=barW-gap;
+
+    // Gradient
+    const grad=ctx.createLinearGradient(0,y,0,y+barH);
+    grad.addColorStop(0,colors[i%colors.length]);
+    grad.addColorStop(1,colors[i%colors.length]+'55');
+    ctx.fillStyle=grad;
+
+    // Rounded top
+    const r=Math.min(6,bw/2);
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.lineTo(x+bw-r,y);
+    ctx.quadraticCurveTo(x+bw,y,x+bw,y+r);
+    ctx.lineTo(x+bw,y+barH);
+    ctx.lineTo(x,y+barH);
+    ctx.lineTo(x,y+r);
+    ctx.quadraticCurveTo(x,y,x+r,y);
+    ctx.closePath();
+    ctx.fill();
+
+    // Label
+    ctx.fillStyle=textColor;
+    ctx.font=`${Math.min(11,bw/1.5)}px DM Sans,sans-serif`;
+    ctx.textAlign='center';
+    ctx.save();
+    ctx.translate(x+bw/2, H-pad.bottom+10);
+    ctx.rotate(-0.5);
+    ctx.fillText(label,0,0);
+    ctx.restore();
+  });
 }
 
 // ── RAPPORT MENSUEL ────────────────────────────────────────────────────────
