@@ -250,7 +250,6 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 <div class="nav-tabs">
   <button class="tab-btn active" onclick="showTab('ajouter',this)">➕ Ajouter</button>
   <button class="tab-btn" onclick="showTab('ventes',this)">📋 Ventes</button>
-  <button class="tab-btn" onclick="showTab('achats',this)">📦 Achats</button>
   <button class="tab-btn" onclick="showTab('top',this)">🏆 Top Ventes</button>
   <button class="tab-btn" onclick="showTab('rapport',this)">📊 Rapport</button>
   <button class="tab-btn" onclick="showTab('annuel',this)">📅 Annuel</button>
@@ -434,6 +433,11 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       <select id="monthSelect" onchange="renderRapport()"></select>
     </div>
     <div class="month-cards" id="monthKpis"></div>
+    <!-- Chart -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">📈 Bénéfice par jour</div>
+      <canvas id="rapportChart" style="width:100%;max-height:180px"></canvas>
+    </div>
     <div class="month-sales-title">📋 Ventes du mois</div>
     <div class="sales-list" id="monthSalesList"></div>
   </div>
@@ -758,8 +762,8 @@ function showTab(id,btn){
   localStorage.setItem('flousFlowLastTab', id);
   if(id==='ventes') { refreshFilterSelects(); renderSales(); }
   if(id==='achats') { refreshAchatFournSelect(); renderAchats(); }
-  if(id==='top') renderTop();
-  if(id==='rapport') renderRapport();
+  if(id==='top') setTimeout(()=>renderTop(), 50);
+  if(id==='rapport') setTimeout(()=>renderRapport(), 50);
   if(id==='annuel') renderAnnuel();
   if(id==='dashboard') renderDash();
 }
@@ -1308,12 +1312,117 @@ function renderRapport(){
   const tc=ms.reduce((a,s)=>a+s.coutTotal,0);
   document.getElementById('monthKpis').innerHTML=`
     <div class="month-kpi"><div class="month-kpi-label">💰 Total Ventes</div><div class="month-kpi-val" style="color:var(--yellow)">${fmt(tv)}</div></div>
-    <div class="month-kpi"><div class="month-kpi-label">✅ Bénéfice Brut</div><div class="month-kpi-val" style="color:var(--green)">${fmt(tb)}</div></div>
+    <div class="month-kpi"><div class="month-kpi-label">✅ Bénéfice</div><div class="month-kpi-val" style="color:var(--green)">${fmt(tb)}</div></div>
     <div class="month-kpi"><div class="month-kpi-label">🛒 Coût Total</div><div class="month-kpi-val" style="color:var(--red)">${fmt(tc)}</div></div>
     <div class="month-kpi"><div class="month-kpi-label">📈 Marge Moy.</div><div class="month-kpi-val" style="color:var(--accent)">${fmtP(tv>0?tb/tv:0)}</div></div>`;
+
+  // Chart par jour
+  const [year,month]=val.split('-').map(Number);
+  const daysInMonth=new Date(year,month,0).getDate();
+  const dailyBenef=Array(daysInMonth).fill(0);
+  ms.forEach(s=>{
+    if(s.date){
+      const day=parseInt(s.date.split('-')[2])-1;
+      if(day>=0&&day<daysInMonth) dailyBenef[day]+=(s.benef||s.benefBrut||0);
+    }
+  });
+  // Only show days with data or compress to active days
+  const activeDays=dailyBenef.map((v,i)=>({day:i+1,val:v})).filter(d=>d.val>0);
+  if(activeDays.length>=2){
+    drawLineChart('rapportChart', activeDays.map(d=>d.day+''), activeDays.map(d=>d.val));
+  } else {
+    drawLineChart('rapportChart', Array.from({length:daysInMonth},(_,i)=>String(i+1)), dailyBenef);
+  }
+
   const listEl=document.getElementById('monthSalesList');
-  if(!ms.length){listEl.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Aucune vente ce mois.</div></div>';return;}
+  if(!ms.length){
+    listEl.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Aucune vente ce mois.</div></div>';
+    return;
+  }
   listEl.innerHTML=getSorted(ms).map(s=>cardHTML(s)).join('');
+}
+
+function drawLineChart(canvasId, labels, values){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas) return;
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const textColor=isDark?'#6b6b8a':'#8a7d6b';
+  const gridColor=isDark?'#2a2a3d':'#d6cfc0';
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth||320;
+  const H=180;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+
+  const maxVal=Math.max(...values,1);
+  const pad={top:14,right:14,bottom:30,left:14};
+  const cW=W-pad.left-pad.right;
+  const cH=H-pad.top-pad.bottom;
+
+  if(values.every(v=>v===0)){
+    ctx.fillStyle=textColor;
+    ctx.font='13px DM Sans,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('Aucune vente ce mois',W/2,H/2);
+    return;
+  }
+
+  // Grid
+  ctx.strokeStyle=gridColor; ctx.lineWidth=1;
+  for(let i=0;i<=3;i++){
+    const y=pad.top+cH*(1-i/3);
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
+  }
+
+  // Gradient fill
+  const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+cH);
+  grad.addColorStop(0,'rgba(124,108,252,0.35)');
+  grad.addColorStop(1,'rgba(124,108,252,0.02)');
+
+  const pts=values.map((v,i)=>({
+    x:pad.left+(i/(labels.length-1||1))*cW,
+    y:pad.top+cH*(1-v/maxVal)
+  }));
+
+  // Fill area
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pad.top+cH);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x, pad.top+cH);
+  ctx.closePath();
+  ctx.fillStyle=grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle='#7c6cfc'; ctx.lineWidth=2.5;
+  ctx.lineJoin='round'; ctx.stroke();
+
+  // Dots on non-zero points
+  pts.forEach((p,i)=>{
+    if(values[i]>0){
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,4,0,Math.PI*2);
+      ctx.fillStyle='#7c6cfc'; ctx.fill();
+      ctx.strokeStyle=isDark?'#0a0a0f':'#fdfaf4';
+      ctx.lineWidth=2; ctx.stroke();
+    }
+  });
+
+  // Labels (show only some to avoid crowding)
+  ctx.fillStyle=textColor;
+  ctx.font='10px DM Sans,sans-serif';
+  ctx.textAlign='center';
+  const step=Math.ceil(labels.length/8);
+  labels.forEach((l,i)=>{
+    if(i%step===0||i===labels.length-1){
+      ctx.fillText(l, pts[i].x, H-pad.bottom+14);
+    }
+  });
 }
 
 // ── DASHBOARD ──────────────────────────────────────────────────────────────
