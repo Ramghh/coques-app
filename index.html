@@ -201,6 +201,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
     </div>
   </div>
+  <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;letter-spacing:.5px">👤 Gharbi Ramzi</div>
 </header>
 
 <div class="kpi-strip">
@@ -405,7 +406,30 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       <button class="sort-btn" onclick="setSort('benef',this)">💰 Bénéfice</button>
     </div>
   </div>
+
+  <!-- PAGINATION TOP -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px">
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:12px;color:var(--muted)">Afficher :</span>
+      <select id="perPageSelect" onchange="currentPage=1;renderSales()" style="font-size:13px;padding:6px 10px;width:auto">
+        <option value="25">25</option>
+        <option value="50" selected>50</option>
+        <option value="100">100</option>
+        <option value="150">150</option>
+        <option value="999999">Tout</option>
+      </select>
+    </div>
+    <div style="font-size:12px;color:var(--muted)" id="pageInfo"></div>
+  </div>
+
   <div class="sales-list" id="salesList"></div>
+
+  <!-- PAGINATION BOTTOM -->
+  <div id="paginationBar" style="display:none;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px">
+    <button onclick="goPage(-1)" id="btnPrev" style="padding:9px 16px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif">◀ Précédent</button>
+    <div id="pageNumbers" style="display:flex;gap:6px"></div>
+    <button onclick="goPage(1)" id="btnNext" style="padding:9px 16px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif">Suivant ▶</button>
+  </div>
 </div>
 
 <!-- TOP VENTES -->
@@ -606,7 +630,7 @@ if(fourns.length && typeof fourns[0]==='string'){
   fourns=fourns.map(f=>({id:uid(),nom:f,cartes:[]}));
 }
 
-let currentSort='newest', editingId=null;
+let currentSort='newest', editingId=null, currentPage=1;
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 document.documentElement.setAttribute('data-theme',theme);
@@ -1078,22 +1102,82 @@ function cardHTML(s,q=''){
   </div>`;
 }
 
+// ── SORT ───────────────────────────────────────────────────────────────────
+function setSort(mode,btn){
+  currentSort=mode; currentPage=1;
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSales();
+}
+
+function goPage(dir){
+  currentPage+=dir;
+  renderSales();
+  window.scrollTo(0,0);
+}
+
 // ── RENDER SALES ───────────────────────────────────────────────────────────
 function renderSales(){
   const el=document.getElementById('salesList');
   const q=(document.getElementById('searchInput').value||'').toLowerCase().trim();
   const f=getFiltered();
+  const perPageEl=document.getElementById('perPageSelect');
+  const perPage=parseInt(perPageEl?perPageEl.value:50);
+  const totalPages=Math.ceil(f.length/perPage);
+  currentPage=Math.max(1,Math.min(currentPage,totalPages||1));
+
   if(!f.length){
     el.innerHTML=q?`<div class="no-results">🔍 Aucun résultat pour "<strong>${q}</strong>"</div>`:'<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">Aucune vente.<br>Ajoute ta première vente!</div></div>';
+    const pi=document.getElementById('pageInfo'); if(pi) pi.textContent='';
+    const pb=document.getElementById('paginationBar'); if(pb) pb.style.display='none';
     return;
   }
-  const s=getSorted(f); let html='',last=null;
-  s.forEach(v=>{
+
+  const sorted=getSorted(f);
+  const pageData=perPage>=999999?sorted:sorted.slice((currentPage-1)*perPage, currentPage*perPage);
+
+  // Page info
+  const pi=document.getElementById('pageInfo');
+  if(pi){
+    const from=(currentPage-1)*perPage+1;
+    const to=Math.min(currentPage*perPage,f.length);
+    pi.textContent=perPage>=999999?`${f.length} ventes`:`${from}-${to} sur ${f.length}`;
+  }
+
+  // Pagination bar
+  const bar=document.getElementById('paginationBar');
+  if(bar){
+    if(totalPages>1&&perPage<999999){
+      bar.style.display='flex';
+      const btnPrev=document.getElementById('btnPrev');
+      const btnNext=document.getElementById('btnNext');
+      if(btnPrev){ btnPrev.disabled=currentPage===1; btnPrev.style.opacity=currentPage===1?'0.4':'1'; }
+      if(btnNext){ btnNext.disabled=currentPage===totalPages; btnNext.style.opacity=currentPage===totalPages?'0.4':'1'; }
+      const nums=document.getElementById('pageNumbers');
+      if(nums){
+        let pagesHTML='';
+        for(let i=1;i<=totalPages;i++){
+          if(i===1||i===totalPages||Math.abs(i-currentPage)<=1){
+            pagesHTML+=`<button onclick="currentPage=${i};renderSales()" style="width:34px;height:34px;border-radius:8px;border:1px solid ${i===currentPage?'var(--accent)':'var(--border)'};background:${i===currentPage?'var(--accent)':'var(--surface2)'};color:${i===currentPage?'#fff':'var(--text)'};font-size:13px;cursor:pointer">${i}</button>`;
+          } else if(Math.abs(i-currentPage)===2&&i!==1&&i!==totalPages){
+            pagesHTML+=`<span style="color:var(--muted);padding:0 2px;line-height:34px">…</span>`;
+          }
+        }
+        nums.innerHTML=pagesHTML;
+      }
+    } else {
+      bar.style.display='none';
+    }
+  }
+
+  // Render cards
+  let html='',last=null;
+  pageData.forEach(v=>{
     if(currentSort!=='benef'){
       const dk=v.date||'';
       if(dk!==last){
-        const db=s.filter(x=>x.date===dk).reduce((a,x)=>a+(x.benefBrut||x.benef||0),0);
-        const dc=s.filter(x=>x.date===dk).length;
+        const db=sorted.filter(x=>x.date===dk).reduce((a,x)=>a+(x.benefBrut||x.benef||0),0);
+        const dc=sorted.filter(x=>x.date===dk).length;
         html+=`<div class="date-group-header">📅 ${fmtDate(dk)}<span>${dc} vente${dc>1?'s':''} · ${fmt(db)}</span></div>`;
         last=dk;
       }
