@@ -251,11 +251,49 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 <div class="nav-tabs">
   <button class="tab-btn active" onclick="showTab('ajouter',this)">➕ Ajouter</button>
   <button class="tab-btn" onclick="showTab('ventes',this)">📋 Ventes</button>
+  <button class="tab-btn" onclick="showTab('stock',this)">📦 Stock</button>
   <button class="tab-btn" onclick="showTab('top',this)">🏆 Top Ventes</button>
   <button class="tab-btn" onclick="showTab('rapport',this)">📊 Rapport</button>
   <button class="tab-btn" onclick="showTab('annuel',this)">📅 Annuel</button>
   <button class="tab-btn" onclick="showTab('dashboard',this)">🗺️ Dashboard</button>
   <button class="tab-btn" onclick="showTab('backup',this)">💾 Sauvegarde</button>
+</div>
+
+<!-- STOCK -->
+<div class="section" id="tab-stock">
+  <!-- Ajouter produit au stock -->
+  <div class="form-card">
+    <div class="form-title">📦 Gérer le Stock</div>
+    <div class="form-grid">
+      <div class="form-full">
+        <label>Modèle Téléphone</label>
+        <input type="text" id="stockModel" placeholder="ex: HTC, iPhone 15 Pro..." list="stockModelsList">
+        <datalist id="stockModelsList"></datalist>
+      </div>
+      <div>
+        <label>Quantité à ajouter</label>
+        <input type="number" id="stockQty" placeholder="31" min="1">
+      </div>
+      <div>
+        <label>Prix achat (DT/u)</label>
+        <input type="number" id="stockPrix" placeholder="11.450" step="0.001">
+      </div>
+      <div class="form-full">
+        <label>Notes (optionnel)</label>
+        <input type="text" id="stockNotes" placeholder="Commande AliExpress #123...">
+      </div>
+    </div>
+    <button class="btn-add" onclick="addStock()" style="background:linear-gradient(135deg,#059669,#10b981)">➕ Ajouter au Stock</button>
+  </div>
+
+  <!-- Résumé stock total -->
+  <div id="stockResume" style="display:none;margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)">
+    <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">📊 Vue d'ensemble</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="stockOverview"></div>
+  </div>
+
+  <!-- Liste stock par modèle -->
+  <div id="stockList"></div>
 </div>
 
 <!-- AJOUTER -->
@@ -623,6 +661,7 @@ function loadData(newKey, oldKey, def='[]'){
 let sales  = loadData('flousFlowSales', 'coquesSales');
 let fourns = loadData('flousFlowFourns', 'coquesFourns');
 let achats = JSON.parse(localStorage.getItem('flousFlowAchats') || '[]');
+let stockItems = JSON.parse(localStorage.getItem('flousFlowStock') || '[]');
 let theme  = localStorage.getItem('flousFlowTheme') || localStorage.getItem('coquesTheme') || 'dark';
 
 // Migration: si anciens fourns étaient des strings
@@ -697,6 +736,141 @@ function toggleTheme(){
   document.documentElement.setAttribute('data-theme',theme);
   document.getElementById('themeBtn').textContent=theme==='dark'?'🌙':'☀️';
   save();
+}
+
+// ── STOCK ─────────────────────────────────────────────────────────────────
+function saveStock(){ localStorage.setItem('flousFlowStock', JSON.stringify(stockItems)); }
+
+function addStock(){
+  const model=document.getElementById('stockModel').value.trim();
+  const qty=parseFloat(document.getElementById('stockQty').value)||0;
+  const prix=parseFloat(document.getElementById('stockPrix').value)||0;
+  const notes=document.getElementById('stockNotes').value.trim();
+  if(!model||!qty){showToast('⚠️ Modèle et Quantité obligatoires!',true);return;}
+
+  // Cherche si ce modèle existe déjà
+  const existing=stockItems.find(s=>s.model.toLowerCase()===model.toLowerCase());
+  if(existing){
+    existing.qty+=qty;
+    existing.history.push({date:new Date().toISOString().split('T')[0],qty,prix,notes,type:'ajout'});
+  } else {
+    stockItems.push({
+      id:uid(), model, qty,
+      prix: prix||0,
+      history:[{date:new Date().toISOString().split('T')[0],qty,prix,notes,type:'ajout'}]
+    });
+  }
+  saveStock();
+  ['stockModel','stockQty','stockPrix','stockNotes'].forEach(i=>document.getElementById(i).value='');
+  renderStock();
+  showToast(`✅ +${qty} ${model} ajouté au stock!`);
+}
+
+function removeStock(model, qty){
+  const item=stockItems.find(s=>s.model.toLowerCase()===model.toLowerCase());
+  if(!item) return;
+  item.qty=Math.max(0,item.qty-qty);
+  item.history.push({date:new Date().toISOString().split('T')[0],qty:-qty,type:'vente'});
+  saveStock();
+}
+
+function deleteStockItem(id){
+  if(!confirm('Supprimer ce produit du stock?')) return;
+  stockItems=stockItems.filter(s=>s.id!==id);
+  saveStock(); renderStock();
+  showToast('✅ Produit supprimé!');
+}
+
+function renderStock(){
+  const el=document.getElementById('stockList');
+  const resume=document.getElementById('stockResume');
+  const overview=document.getElementById('stockOverview');
+
+  // Update datalist for model suggestions
+  const dl=document.getElementById('stockModelsList');
+  if(dl){
+    dl.innerHTML=stockItems.map(s=>`<option value="${s.model}">`).join('');
+  }
+
+  if(!stockItems.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">Aucun produit en stock.<br>Ajoute ton premier produit!</div></div>';
+    if(resume) resume.style.display='none';
+    return;
+  }
+
+  // Calcul stock réel = qty ajoutée - ventes
+  const stockWithReal=stockItems.map(item=>{
+    const vendu=sales.filter(s=>s.model&&s.model.toLowerCase()===item.model.toLowerCase()).reduce((a,s)=>a+(s.qty||1),0);
+    const restant=Math.max(0,item.qty-vendu);
+    return {...item, vendu, restant};
+  });
+
+  // Résumé
+  const totalUnites=stockWithReal.reduce((a,s)=>a+s.qty,0);
+  const totalRestant=stockWithReal.reduce((a,s)=>a+s.restant,0);
+  const totalVendu=stockWithReal.reduce((a,s)=>a+s.vendu,0);
+  if(resume){
+    resume.style.display='block';
+    overview.innerHTML=`
+      <div style="text-align:center;background:var(--surface2);border-radius:10px;padding:10px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Total Achetées</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--accent)">${totalUnites} u</div>
+      </div>
+      <div style="text-align:center;background:var(--surface2);border-radius:10px;padding:10px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Vendues</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--yellow)">${totalVendu} u</div>
+      </div>
+      <div style="text-align:center;background:var(--surface2);border-radius:10px;padding:10px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Restantes</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${totalRestant===0?'var(--muted)':totalRestant<=5?'var(--red)':'var(--green)'}">${totalRestant} u</div>
+      </div>`;
+  }
+
+  // Liste par modèle
+  el.innerHTML=stockWithReal.sort((a,b)=>b.restant-a.restant).map(item=>{
+    const pct=item.qty>0?Math.min(100,(item.vendu/item.qty)*100):0;
+    const restColor=item.restant===0?'var(--muted)':item.restant<=3?'var(--red)':'var(--green)';
+    const r=Math.round(16*(pct/100)+239*(1-pct/100));
+    const g=Math.round(185*(pct/100)+68*(1-pct/100));
+    const barColor=`rgb(${r},${g},68)`;
+    return `<div class="sale-card" style="margin-bottom:10px">
+      <div class="sale-top">
+        <div class="sale-model">📱 ${item.model}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${restColor};padding:4px 10px;border-radius:8px;background:${item.restant===0?'rgba(107,107,138,.1)':item.restant<=3?'rgba(239,68,68,.1)':'rgba(16,185,129,.1)'}">
+          ${item.restant===0?'Épuisé ✅':item.restant+' restantes'}
+        </div>
+      </div>
+      <div class="sale-nums" style="margin-top:10px">
+        <div class="num-item"><div class="num-label">En stock</div><div class="num-val" style="color:var(--accent)">${item.qty} u</div></div>
+        <div class="num-item"><div class="num-label">Vendues</div><div class="num-val" style="color:var(--yellow)">${item.vendu} u</div></div>
+        <div class="num-item"><div class="num-label">Restantes</div><div class="num-val" style="color:${restColor}">${item.restant} u</div></div>
+      </div>
+      <div style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">
+          <span>Vendues</span><span>${pct.toFixed(0)}%</span>
+        </div>
+        <div style="height:6px;background:var(--border);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px;transition:width .5s"></div>
+        </div>
+      </div>
+      <div class="sale-actions" style="margin-top:12px">
+        <button onclick="openAddStockModal('${item.id}')" class="btn-edit-card">➕ Ajouter des unités</button>
+        <button onclick="deleteStockItem('${item.id}')" class="btn-del-card">🗑️ Supprimer</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Modal pour ajouter des unités à un produit existant
+function openAddStockModal(id){
+  const item=stockItems.find(s=>s.id===id); if(!item) return;
+  const qty=prompt(`Combien d'unités ajouter pour "${item.model}"?`);
+  if(!qty||isNaN(qty)||parseInt(qty)<=0) return;
+  const prix=prompt(`Prix unitaire (DT)? (optionnel)`)||'0';
+  item.qty+=parseInt(qty);
+  item.history.push({date:new Date().toISOString().split('T')[0],qty:parseInt(qty),prix:parseFloat(prix)||0,type:'ajout'});
+  saveStock(); renderStock();
+  showToast(`✅ +${qty} unités ajoutées à ${item.model}!`);
 }
 
 // ── ACHATS ────────────────────────────────────────────────────────────────
@@ -784,6 +958,7 @@ function showTab(id,btn){
   document.getElementById('tab-'+id).classList.add('active');
   btn.classList.add('active');
   localStorage.setItem('flousFlowLastTab', id);
+  if(id==='stock') renderStock();
   if(id==='ventes') { refreshFilterSelects(); renderSales(); }
   if(id==='achats') { refreshAchatFournSelect(); renderAchats(); }
   if(id==='top') setTimeout(()=>renderTop(), 50);
@@ -1776,7 +1951,7 @@ function showToast(msg,err=false){
 // Export JSON — sauvegarde la date
 function exportJSON(){
   if(!sales.length){showToast('⚠️ Aucune vente!',true);return;}
-  const blob=new Blob([JSON.stringify({version:2,exportDate:new Date().toISOString(),sales,fourns,achats},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({version:2,exportDate:new Date().toISOString(),sales,fourns,achats,stockItems},null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download=`flousflow-${new Date().toISOString().split('T')[0]}.json`;
@@ -1832,6 +2007,8 @@ function importData(event){
       if(!confirm(`Importer ${data.sales.length} vente(s)?\n⚠️ Données actuelles remplacées.`)) return;
       sales=data.sales;
       if(data.fourns) fourns=data.fourns;
+      if(data.achats) achats=data.achats;
+      if(data.stockItems){ stockItems=data.stockItems; saveStock(); }
       save(); updateKPIs(); renderSales(); refreshFournSelects();
       showToast(`✅ ${sales.length} vente(s) importée(s)!`);
     } catch{showToast('❌ Fichier invalide!',true);}
