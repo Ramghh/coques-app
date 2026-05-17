@@ -302,7 +302,11 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     <div class="form-title">🛍️ Nouvelle Vente</div>
     <div class="form-grid">
       <div><label>Date</label><input type="date" id="fDate"></div>
-      <div><label>Modèle</label><input type="text" id="fModel" placeholder="iPhone 15 Pro"></div>
+      <div><label>Modèle</label>
+        <input type="text" id="fModel" placeholder="iPhone 15 Pro" list="fModelList" oninput="checkStockForModel()">
+        <datalist id="fModelList"></datalist>
+        <div id="stockIndicator" style="display:none;margin-top:5px;font-size:12px;padding:6px 10px;border-radius:8px;font-family:'DM Mono',monospace;font-weight:600"></div>
+      </div>
       <div><label>Couleur</label><input type="text" id="fColor" placeholder="Noir"></div>
       <div><label>Ville</label><input type="text" id="fVille" placeholder="Tunis"></div>
       <div><label>N° Client</label><input type="text" id="fClient" placeholder="C-0001"></div>
@@ -679,6 +683,7 @@ document.getElementById('aDate').value=new Date().toISOString().split('T')[0];
 buildMonthSelect();
 refreshFournSelects();
 refreshAchatFournSelect();
+refreshStockModelList();
 updateKPIs();
 checkBackupReminder();
 
@@ -833,6 +838,22 @@ function renderStock(){
     const r=Math.round(16*(pct/100)+239*(1-pct/100));
     const g=Math.round(185*(pct/100)+68*(1-pct/100));
     const barColor=`rgb(${r},${g},68)`;
+
+    // Historique des ajouts
+    const ajouts=(item.history||[]).filter(h=>h.type==='ajout');
+    const histHTML=ajouts.length?`
+      <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">📋 Historique des dépôts</div>
+        ${ajouts.map(h=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--surface2);border-radius:8px;margin-bottom:5px">
+            <div>
+              <span style="font-size:12px;color:var(--muted)">📅 ${h.date||'—'}</span>
+              <span style="font-size:13px;font-weight:600;color:var(--green);margin-left:8px">+${h.qty} u</span>
+            </div>
+            <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--yellow)">${h.prix?fmt(h.prix)+'/u':'—'}</span>
+          </div>`).join('')}
+      </div>`:''
+
     return `<div class="sale-card" style="margin-bottom:10px">
       <div class="sale-top">
         <div class="sale-model">📱 ${item.model}</div>
@@ -853,18 +874,28 @@ function renderStock(){
           <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px;transition:width .5s"></div>
         </div>
       </div>
+      ${histHTML}
       <div class="sale-actions" style="margin-top:12px">
-        <button onclick="openAddStockModal('${item.id}')" class="btn-edit-card">➕ Ajouter des unités</button>
-        <button onclick="deleteStockItem('${item.id}')" class="btn-del-card">🗑️ Supprimer</button>
+        <button onclick="openEditStockModal('${item.id}')" class="btn-edit-card">✏️ Modifier</button>
+        <button onclick="openAddStockModal('${item.id}')" class="btn-edit-card" style="background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.2);color:var(--green)">➕ Ajouter</button>
+        <button onclick="deleteStockItem('${item.id}')" class="btn-del-card">🗑️</button>
       </div>
     </div>`;
   }).join('');
 }
 
+// Modal pour modifier un produit stock existant
+function openEditStockModal(id){
+  const item=stockItems.find(s=>s.id===id); if(!item) return;
+  const newModel=prompt(`Nouveau nom pour "${item.model}":`, item.model);
+  if(!newModel||!newModel.trim()) return;
+  item.model=newModel.trim();
+  saveStock(); renderStock(); refreshStockModelList();
+  showToast(`✅ Modèle renommé en "${item.model}"!`);
+}
 // Modal pour ajouter des unités à un produit existant
 function openAddStockModal(id){
   const item=stockItems.find(s=>s.id===id); if(!item) return;
-  const qty=prompt(`Combien d'unités ajouter pour "${item.model}"?`);
   if(!qty||isNaN(qty)||parseInt(qty)<=0) return;
   const prix=prompt(`Prix unitaire (DT)? (optionnel)`)||'0';
   item.qty+=parseInt(qty);
@@ -967,6 +998,40 @@ function showTab(id,btn){
   if(id==='dashboard') renderDash();
 }
 
+// ── STOCK INDICATOR IN FORM ────────────────────────────────────────────────
+function checkStockForModel(){
+  const model=document.getElementById('fModel').value.trim().toLowerCase();
+  const indic=document.getElementById('stockIndicator');
+  if(!model){indic.style.display='none';return;}
+  const item=stockItems.find(s=>s.model.toLowerCase()===model);
+  if(!item){indic.style.display='none';return;}
+  const vendu=sales.filter(s=>s.model&&s.model.toLowerCase()===item.model.toLowerCase()).reduce((a,s)=>a+(s.qty||1),0);
+  const restant=Math.max(0,item.qty-vendu);
+  indic.style.display='block';
+  if(restant===0){
+    indic.style.background='rgba(239,68,68,.1)';
+    indic.style.color='var(--red)';
+    indic.style.border='1px solid rgba(239,68,68,.2)';
+    indic.textContent='⚠️ Stock épuisé!';
+  } else if(restant<=3){
+    indic.style.background='rgba(245,158,11,.1)';
+    indic.style.color='var(--yellow)';
+    indic.style.border='1px solid rgba(245,158,11,.2)';
+    indic.textContent=`⚠️ Stock faible: ${restant} restante${restant>1?'s':''}`;
+  } else {
+    indic.style.background='rgba(16,185,129,.1)';
+    indic.style.color='var(--green)';
+    indic.style.border='1px solid rgba(16,185,129,.2)';
+    indic.textContent=`📦 En stock: ${restant} unité${restant>1?'s':''}`;
+  }
+}
+
+function refreshStockModelList(){
+  const dl=document.getElementById('fModelList');
+  if(!dl) return;
+  dl.innerHTML=stockItems.map(s=>`<option value="${s.model}">`).join('');
+}
+
 // ── ADD SALE ───────────────────────────────────────────────────────────────
 function addSale(){
   const date=document.getElementById('fDate').value;
@@ -982,7 +1047,16 @@ function addSale(){
   const envoi=parseFloat(document.getElementById('fEnvoi').value)||0;
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
   sales.push({id:Date.now(),date,model,color,ville,client,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)});
-  save(); updateKPIs(); refreshFilterSelects();
+  // Mettre à jour stock si ce modèle existe
+  const stockItem=stockItems.find(s=>s.model.toLowerCase()===model.toLowerCase());
+  if(stockItem){
+    stockItem.history=stockItem.history||[];
+    stockItem.history.push({date,qty:-qty,type:'vente'});
+    saveStock();
+    // Refresh indicateur
+    checkStockForModel();
+  }
+  save(); updateKPIs(); refreshFilterSelects(); refreshStockModelList();
   ['fModel','fColor','fVille','fClient','fEnvoi','fQty','fPrix','fCout'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('fFourn').value='';
   document.getElementById('fCarte').value='';
