@@ -526,10 +526,12 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 <div class="section" id="tab-dashboard">
   <div class="dash-section">
     <div class="dash-title">🏙️ Par Ville</div>
+    <div id="dashVilleChart"></div>
     <div class="city-list" id="cityList"></div>
   </div>
   <div class="dash-section">
     <div class="dash-title">📱 Par Modèle</div>
+    <div id="dashModelChart"></div>
     <div class="city-list" id="modelList"></div>
   </div>
   <div class="dash-section">
@@ -563,6 +565,40 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- MODAL MODIFIER STOCK -->
+<div class="modal-overlay" id="editStockModal">
+  <div class="modal">
+    <div class="modal-title">✏️ Modifier le Stock</div>
+    <input type="hidden" id="editStockId">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><label>Modèle</label><input type="text" id="editStockModel" style="margin-top:5px"></div>
+      <div><label>Quantité totale</label><input type="number" id="editStockQty" min="0" style="margin-top:5px"></div>
+      <div><label>Prix unitaire (DT)</label><input type="number" id="editStockPrix" step="0.001" style="margin-top:5px"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeEditStockModal()">Annuler</button>
+      <button class="btn-save" onclick="saveEditStock()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AJOUTER UNITS STOCK -->
+<div class="modal-overlay" id="addStockModal">
+  <div class="modal">
+    <div class="modal-title" id="addStockTitle">➕ Ajouter des unités</div>
+    <input type="hidden" id="addStockId">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><label>Date</label><input type="date" id="addStockDate" style="margin-top:5px"></div>
+      <div><label>Quantité à ajouter</label><input type="number" id="addStockQty" min="1" placeholder="10" style="margin-top:5px"></div>
+      <div><label>Prix unitaire (DT)</label><input type="number" id="addStockPrix" step="0.001" placeholder="23.450" style="margin-top:5px"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeAddStockModal()">Annuler</button>
+      <button class="btn-save" onclick="saveAddStock()">➕ Ajouter</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL EDIT VENTE -->
 <div class="modal-overlay" id="editModal">
@@ -884,23 +920,50 @@ function renderStock(){
   }).join('');
 }
 
-// Modal pour modifier un produit stock existant
+// Modifier stock — modal complet
 function openEditStockModal(id){
   const item=stockItems.find(s=>s.id===id); if(!item) return;
-  const newModel=prompt(`Nouveau nom pour "${item.model}":`, item.model);
-  if(!newModel||!newModel.trim()) return;
-  item.model=newModel.trim();
-  saveStock(); renderStock(); refreshStockModelList();
-  showToast(`✅ Modèle renommé en "${item.model}"!`);
+  document.getElementById('editStockId').value=id;
+  document.getElementById('editStockModel').value=item.model;
+  document.getElementById('editStockQty').value=item.qty;
+  document.getElementById('editStockPrix').value=item.prix||'';
+  document.getElementById('editStockModal').classList.add('open');
 }
-// Modal pour ajouter des unités à un produit existant
+function closeEditStockModal(){ document.getElementById('editStockModal').classList.remove('open'); }
+function saveEditStock(){
+  const id=document.getElementById('editStockId').value;
+  const item=stockItems.find(s=>s.id===id); if(!item) return;
+  const model=document.getElementById('editStockModel').value.trim();
+  const qty=parseFloat(document.getElementById('editStockQty').value)||0;
+  const prix=parseFloat(document.getElementById('editStockPrix').value)||0;
+  if(!model||!qty){showToast('⚠️ Modèle et Quantité obligatoires!',true);return;}
+  item.model=model; item.qty=qty; item.prix=prix;
+  saveStock(); renderStock(); refreshStockModelList(); closeEditStockModal();
+  showToast('✅ Stock modifié!');
+}
+
+// Ajouter unités — modal complet
 function openAddStockModal(id){
   const item=stockItems.find(s=>s.id===id); if(!item) return;
-  if(!qty||isNaN(qty)||parseInt(qty)<=0) return;
-  const prix=prompt(`Prix unitaire (DT)? (optionnel)`)||'0';
-  item.qty+=parseInt(qty);
-  item.history.push({date:new Date().toISOString().split('T')[0],qty:parseInt(qty),prix:parseFloat(prix)||0,type:'ajout'});
-  saveStock(); renderStock();
+  document.getElementById('addStockId').value=id;
+  document.getElementById('addStockQty').value='';
+  document.getElementById('addStockPrix').value=item.prix||'';
+  document.getElementById('addStockDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('addStockTitle').textContent=`➕ Ajouter à "${item.model}"`;
+  document.getElementById('addStockModal').classList.add('open');
+}
+function closeAddStockModal(){ document.getElementById('addStockModal').classList.remove('open'); }
+function saveAddStock(){
+  const id=document.getElementById('addStockId').value;
+  const item=stockItems.find(s=>s.id===id); if(!item) return;
+  const qty=parseFloat(document.getElementById('addStockQty').value)||0;
+  const prix=parseFloat(document.getElementById('addStockPrix').value)||0;
+  const date=document.getElementById('addStockDate').value;
+  if(!qty){showToast('⚠️ Quantité obligatoire!',true);return;}
+  item.qty+=qty;
+  item.history=item.history||[];
+  item.history.push({date,qty,prix,type:'ajout'});
+  saveStock(); renderStock(); closeAddStockModal();
   showToast(`✅ +${qty} unités ajoutées à ${item.model}!`);
 }
 
@@ -1502,10 +1565,11 @@ function drawChart(labels, values){
 
   // Set canvas size
   const dpr=window.devicePixelRatio||1;
-  const W=canvas.offsetWidth||320;
-  const H=240;
+  const W=canvas.parentElement?.offsetWidth||canvas.offsetWidth||320;
+  const H=200;
   canvas.width=W*dpr;
   canvas.height=H*dpr;
+  canvas.style.width='100%';
   canvas.style.height=H+'px';
   const ctx=canvas.getContext('2d');
   ctx.scale(dpr,dpr);
@@ -1780,9 +1844,43 @@ function renderDash(){
         <div class="city-benef">${fmt(d.benef)}</div>
       </div>`).join('');
   };
+
+  const colors=['#7c6cfc','#fc6c8f','#10b981','#f59e0b','#38bdf8','#a78bfa'];
+  function cssBarChart(map){
+    const entries=Object.entries(map).sort((a,b)=>b[1].benef-a[1].benef).slice(0,6);
+    const maxVal=Math.max(...entries.map(([,d])=>d.benef),1);
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:12px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${entries.map(([name,d],i)=>{
+          const pct=Math.max(3,(d.benef/maxVal)*100);
+          return `<div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span style="font-size:13px;font-weight:600">${name.length>18?name.slice(0,18)+'…':name}</span>
+              <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:${colors[i%colors.length]}">${fmt(d.benef)}</span>
+            </div>
+            <div style="height:8px;background:var(--border);border-radius:6px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${colors[i%colors.length]};border-radius:6px"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">${d.count} vente${d.count>1?'s':''} · ${fmt(d.revenu)}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
   const c1=document.getElementById('cityList'),c2=document.getElementById('modelList');
-  if(!sales.length){c1.innerHTML='<div class="empty"><div class="empty-icon">🗺️</div><div class="empty-text">Aucune donnée.</div></div>';c2.innerHTML='';
-  } else {c1.innerHTML=rg(cm);c2.innerHTML=rg(mm);}
+  const vc1=document.getElementById('dashVilleChart'),vc2=document.getElementById('dashModelChart');
+  if(!sales.length){
+    c1.innerHTML='<div class="empty"><div class="empty-icon">🗺️</div><div class="empty-text">Aucune donnée.</div></div>';
+    c2.innerHTML='';
+    if(vc1) vc1.innerHTML='';
+    if(vc2) vc2.innerHTML='';
+  } else {
+    if(vc1) vc1.innerHTML=cssBarChart(cm);
+    if(vc2) vc2.innerHTML=cssBarChart(mm);
+    c1.innerHTML=rg(cm);
+    c2.innerHTML=rg(mm);
+  }
 
   // Fournisseurs avec barre rouge→verte
   const c3=document.getElementById('fournList');
