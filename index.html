@@ -292,6 +292,20 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="stockOverview"></div>
   </div>
 
+  <!-- Filtre Stock -->
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <div class="search-wrap" style="flex:1;margin-bottom:0">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="stockSearch" placeholder="Rechercher modèle..." oninput="renderStock()">
+    </div>
+    <select id="stockFilter" onchange="renderStock()" style="font-size:13px;padding:10px 12px;width:auto;flex-shrink:0">
+      <option value="all">Tous</option>
+      <option value="dispo">🟢 Disponible</option>
+      <option value="faible">🟡 Faible</option>
+      <option value="epuise">🔴 Épuisé</option>
+    </select>
+  </div>
+
   <!-- Liste stock par modèle -->
   <div id="stockList"></div>
 </div>
@@ -528,6 +542,11 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     <div class="dash-title">🏙️ Par Ville</div>
     <div id="dashVilleChart"></div>
     <div class="city-list" id="cityList"></div>
+  </div>
+  <div class="dash-section">
+    <div class="dash-title">🏷️ Par Marque</div>
+    <div id="dashMarqueChart"></div>
+    <div class="city-list" id="marqueList"></div>
   </div>
   <div class="dash-section">
     <div class="dash-title">📱 Par Modèle</div>
@@ -846,7 +865,19 @@ function renderStock(){
     return {...item, vendu, restant};
   });
 
-  // Résumé
+  // Filtre
+  const q=(document.getElementById('stockSearch')?.value||'').toLowerCase().trim();
+  const statusFilter=document.getElementById('stockFilter')?.value||'all';
+  const filtered=stockWithReal.filter(item=>{
+    const matchQ=!q||item.model.toLowerCase().includes(q);
+    const matchStatus=statusFilter==='all'||
+      (statusFilter==='epuise'&&item.restant===0)||
+      (statusFilter==='faible'&&item.restant>0&&item.restant<=3)||
+      (statusFilter==='dispo'&&item.restant>3);
+    return matchQ&&matchStatus;
+  });
+
+  // Résumé (toujours basé sur tout le stock)
   const totalUnites=stockWithReal.reduce((a,s)=>a+s.qty,0);
   const totalRestant=stockWithReal.reduce((a,s)=>a+s.restant,0);
   const totalVendu=stockWithReal.reduce((a,s)=>a+s.vendu,0);
@@ -867,8 +898,13 @@ function renderStock(){
       </div>`;
   }
 
-  // Liste par modèle
-  el.innerHTML=stockWithReal.sort((a,b)=>b.restant-a.restant).map(item=>{
+  if(!filtered.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">${q?'Aucun résultat pour "'+q+'"':'Aucun produit dans cette catégorie.'}</div></div>`;
+    return;
+  }
+
+  // Liste par modèle (filtré)
+  el.innerHTML=filtered.sort((a,b)=>b.restant-a.restant).map(item=>{
     const pct=item.qty>0?Math.min(100,(item.vendu/item.qty)*100):0;
     const restColor=item.restant===0?'var(--muted)':item.restant<=3?'var(--red)':'var(--green)';
     const r=Math.round(16*(pct/100)+239*(1-pct/100));
@@ -1823,14 +1859,25 @@ function drawLineChart(canvasId, labels, values){
 }
 
 // ── DASHBOARD ──────────────────────────────────────────────────────────────
+function getMarque(model){
+  if(!model) return 'Autre';
+  // Prend le premier mot comme marque
+  const m=model.trim().split(' ')[0];
+  return m.charAt(0).toUpperCase()+m.slice(1).toLowerCase();
+}
+
 function renderDash(){
-  const cm={},mm={};
+  const cm={},mm={},mq={};
   sales.forEach(s=>{
-    const v=s.ville||'Non spécifié',m=s.model||'Autre';
+    const v=s.ville||'Non spécifié';
+    const m=s.model||'Autre';
+    const q=getMarque(s.model);
     if(!cm[v]) cm[v]={count:0,revenu:0,benef:0};
     cm[v].count++;cm[v].revenu+=s.revenu;cm[v].benef+=(s.benefBrut||s.benef||0);
     if(!mm[m]) mm[m]={count:0,revenu:0,benef:0};
     mm[m].count++;mm[m].revenu+=s.revenu;mm[m].benef+=(s.benefBrut||s.benef||0);
+    if(!mq[q]) mq[q]={count:0,revenu:0,benef:0};
+    mq[q].count++;mq[q].revenu+=s.revenu;mq[q].benef+=(s.benefBrut||s.benef||0);
   });
   const rg=map=>{
     const mx=Math.max(...Object.values(map).map(c=>c.benef),1);
@@ -1869,21 +1916,27 @@ function renderDash(){
   }
 
   const c1=document.getElementById('cityList'),c2=document.getElementById('modelList');
+  const c3=document.getElementById('marqueList');
   const vc1=document.getElementById('dashVilleChart'),vc2=document.getElementById('dashModelChart');
+  const vmc=document.getElementById('dashMarqueChart');
+
   if(!sales.length){
     c1.innerHTML='<div class="empty"><div class="empty-icon">🗺️</div><div class="empty-text">Aucune donnée.</div></div>';
-    c2.innerHTML='';
+    c2.innerHTML=''; if(c3) c3.innerHTML='';
     if(vc1) vc1.innerHTML='';
     if(vc2) vc2.innerHTML='';
+    if(vmc) vmc.innerHTML='';
   } else {
     if(vc1) vc1.innerHTML=cssBarChart(cm);
+    if(vmc) vmc.innerHTML=cssBarChart(mq);
     if(vc2) vc2.innerHTML=cssBarChart(mm);
     c1.innerHTML=rg(cm);
+    if(c3) c3.innerHTML=rg(mq);
     c2.innerHTML=rg(mm);
   }
 
-  // Fournisseurs avec barre rouge→verte
-  const c3=document.getElementById('fournList');
+  // Fournisseurs
+  const cf=document.getElementById('fournList');
   if(!fourns.length){c3.innerHTML='<div class="empty"><div class="empty-icon">🧑‍💼</div><div class="empty-text">Aucun fournisseur.</div></div>';return;}
   c3.innerHTML=fourns.map(f=>{
     const cartesHTML=f.cartes.map(c=>{
