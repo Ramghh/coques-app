@@ -6,10 +6,8 @@
 <title>💰 FlousFlow</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- Leaflet pour la carte -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 [data-theme="dark"]{
@@ -186,13 +184,6 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 .bell-popup-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:6px}
 .bell-popup-msg{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px}
 .bell-popup-btn{width:100%;padding:9px;background:var(--accent);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif}
-
-/* Nouveaux styles pour carte et graphique groupé */
-.map-container{height:400px;width:100%;border-radius:var(--radius);margin-top:14px;margin-bottom:14px;border:1px solid var(--border);overflow:hidden;background:var(--surface2);}
-.legend-map{background:var(--surface);padding:12px;border-radius:var(--radius);font-size:12px;margin-bottom:14px;border:1px solid var(--border);display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between}
-.legend-item{display:flex;align-items:center;gap:6px}
-.legend-color{width:20px;height:20px;border-radius:50%;background:#7c6cfc}
-.grouped-chart-container{height:300px;margin-top:15px;margin-bottom:15px;background:var(--surface);border-radius:var(--radius);padding:12px;border:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -263,18 +254,44 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 <div class="nav-tabs">
   <button class="tab-btn active" onclick="showTab('ajouter',this)">➕ Ajouter</button>
   <button class="tab-btn" onclick="showTab('ventes',this)">📋 Ventes</button>
+  <button class="tab-btn" onclick="showTab('clients',this)">👤 Clients</button>
   <button class="tab-btn" onclick="showTab('stock',this)">📦 Stock</button>
   <button class="tab-btn" onclick="showTab('top',this)">🏆 Top Ventes</button>
   <button class="tab-btn" onclick="showTab('rapport',this)">📊 Rapport</button>
   <button class="tab-btn" onclick="showTab('annuel',this)">📅 Annuel</button>
-  <button class="tab-btn" onclick="showTab('comparaison',this)">📊 Rev/Cost/Profit</button>
-  <button class="tab-btn" onclick="showTab('carte',this)">🗺️ Carte Tunisie</button>
   <button class="tab-btn" onclick="showTab('dashboard',this)">🗺️ Dashboard</button>
   <button class="tab-btn" onclick="showTab('backup',this)">💾 Sauvegarde</button>
 </div>
 
+<!-- CLIENTS -->
+<div class="section" id="tab-clients">
+  <!-- Form ajout client -->
+  <div class="form-card">
+    <div class="form-title">👤 Nouveau Client</div>
+    <div class="form-grid">
+      <div><label>Nom / Prénom</label><input type="text" id="cNom" placeholder="Ahmed Ben Ali"></div>
+      <div><label>N° Client</label><input type="text" id="cRef" placeholder="C-0001"></div>
+      <div><label>Téléphone</label><input type="tel" id="cTel" placeholder="+216 XX XXX XXX"></div>
+      <div><label>Ville</label><input type="text" id="cVille" placeholder="Tunis"></div>
+      <div class="form-full"><label>Adresse (optionnel)</label><input type="text" id="cAdresse" placeholder="Rue, Quartier..."></div>
+      <div class="form-full"><label>Notes (optionnel)</label><input type="text" id="cNotes" placeholder="Client fidèle..."></div>
+    </div>
+    <button class="btn-add" onclick="addClient()" style="background:linear-gradient(135deg,#7c6cfc,#fc6c8f)">➕ Enregistrer le client</button>
+  </div>
+
+  <!-- Recherche clients -->
+  <div class="search-wrap" style="margin-bottom:12px">
+    <span class="search-icon">🔍</span>
+    <input type="text" class="search-input" id="clientSearch" placeholder="Rechercher nom, téléphone, ville..." oninput="renderClients()">
+  </div>
+
+  <!-- Liste clients -->
+  <div id="clientsList"></div>
+</div>
+
 <!-- STOCK -->
 <div class="section" id="tab-stock">
+  <!-- Ajouter produit au stock -->
   <div class="form-card">
     <div class="form-title">📦 Gérer le Stock</div>
     <div class="form-grid">
@@ -299,11 +316,13 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     <button class="btn-add" onclick="addStock()" style="background:linear-gradient(135deg,#059669,#10b981)">➕ Ajouter au Stock</button>
   </div>
 
+  <!-- Résumé stock total -->
   <div id="stockResume" style="display:none;margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)">
     <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">📊 Vue d'ensemble</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="stockOverview"></div>
   </div>
 
+  <!-- Filtre Stock -->
   <div style="display:flex;gap:8px;margin-bottom:12px">
     <div class="search-wrap" style="flex:1;margin-bottom:0">
       <span class="search-icon">🔍</span>
@@ -317,6 +336,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     </select>
   </div>
 
+  <!-- Liste stock par modèle -->
   <div id="stockList"></div>
 </div>
 
@@ -354,6 +374,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 
 <!-- ACHATS -->
 <div class="section" id="tab-achats">
+  <!-- Form ajout achat -->
   <div class="form-card">
     <div class="form-title">📦 Nouvel Achat</div>
     <div class="form-grid">
@@ -378,6 +399,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     <button class="btn-add" onclick="addAchat()" style="background:linear-gradient(135deg,#059669,#10b981)">📦 Enregistrer l'achat</button>
   </div>
 
+  <!-- Résumé -->
   <div id="achatsResume" style="display:none;margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)">
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
       <div style="text-align:center;background:var(--surface2);border-radius:10px;padding:10px">
@@ -395,6 +417,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     </div>
   </div>
 
+  <!-- Liste achats -->
   <div class="sales-list" id="achatsList"></div>
 </div>
 
@@ -405,7 +428,9 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     <input type="text" class="search-input" id="searchInput" placeholder="Rechercher modèle, ville, client..." oninput="renderSales()">
   </div>
 
+  <!-- FILTRES -->
   <div style="margin-bottom:12px">
+    <!-- Ligne 1: Fournisseur + Carte -->
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <div style="flex:1">
         <select id="filterFourn" onchange="onFilterFournChange()" style="font-size:14px;padding:10px 12px">
@@ -418,6 +443,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
         </select>
       </div>
     </div>
+    <!-- Ligne 2: Ville + Modèle -->
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <div style="flex:1">
         <select id="filterVille" onchange="renderSales()" style="font-size:14px;padding:10px 12px">
@@ -430,6 +456,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
         </select>
       </div>
     </div>
+    <!-- Ligne 3: Date de → Date à -->
     <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
       <div style="flex:1">
         <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">📅 Du</label>
@@ -440,6 +467,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
         <input type="date" id="filterDateTo" onchange="renderSales()" style="font-size:13px;padding:9px 10px">
       </div>
     </div>
+    <!-- Ligne 4: Bénéfice min → max -->
     <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
       <div style="flex:1">
         <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">💰 Bénéfice min (DT)</label>
@@ -450,6 +478,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
         <input type="number" id="filterBenefMax" placeholder="∞" step="0.001" onchange="renderSales()" style="font-size:13px;padding:9px 10px">
       </div>
     </div>
+    <!-- Bouton reset -->
     <button onclick="resetFilters()" style="width:100%;padding:9px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">🔄 Réinitialiser les filtres</button>
   </div>
 
@@ -464,6 +493,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     </div>
   </div>
 
+  <!-- PAGINATION TOP -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px">
     <div style="display:flex;align-items:center;gap:6px">
       <span style="font-size:12px;color:var(--muted)">Afficher :</span>
@@ -480,6 +510,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 
   <div class="sales-list" id="salesList"></div>
 
+  <!-- PAGINATION BOTTOM -->
   <div id="paginationBar" style="display:none;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px">
     <button onclick="goPage(-1)" id="btnPrev" style="padding:9px 16px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif">◀ Précédent</button>
     <div id="pageNumbers" style="display:flex;gap:6px"></div>
@@ -512,6 +543,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       <select id="monthSelect" onchange="renderRapport()"></select>
     </div>
     <div class="month-cards" id="monthKpis"></div>
+    <!-- Chart -->
     <div style="margin-bottom:14px">
       <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">📈 Bénéfice par jour</div>
       <canvas id="rapportChart" style="width:100%;max-height:180px"></canvas>
@@ -534,39 +566,30 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
   </div>
 </div>
 
-<!-- NOUVEAU : GRAPHIQUE COMPARAISON REVENU / COUT / BENEFICE PAR MOIS -->
-<div class="section" id="tab-comparaison">
-  <div class="form-card">
-    <div class="form-title">📊 Revenu vs Coût vs Bénéfice (par mois)</div>
-    <div style="margin-bottom:12px; display:flex; gap:10px; align-items:center">
-      <label style="font-size:13px">Année :</label>
-      <select id="compYearSelect" onchange="updateGroupedChart()" style="padding:8px 12px; border-radius:10px; background:var(--surface2); border:1px solid var(--border); color:var(--text)"></select>
-    </div>
-    <div class="grouped-chart-container">
-      <canvas id="groupedBarChart" width="100%" height="260" style="max-height:260px; width:100%"></canvas>
-    </div>
-    <div class="backup-info" style="margin-top:8px">
-      💡 Chaque mois : barre bleue = Revenu total, barre rouge = Coût total, barre verte = Bénéfice brut.
-    </div>
-  </div>
-</div>
-
-<!-- NOUVEAU : CARTE TUNISIE AVEC VENTES PAR VILLE -->
-<div class="section" id="tab-carte">
-  <div class="form-card">
-    <div class="form-title">🗺️ Ventes par ville (Tunisie)</div>
-    <div class="legend-map">
-      <div class="legend-item"><div class="legend-color" style="background:#3b82f6;"></div><span>Volume de ventes (revenu)</span></div>
-      <div class="legend-item"><span>🔵 Cercle = plus de revenu</span></div>
-      <div class="legend-item"><span>📍 Cliquez sur un marqueur pour détails</span></div>
-    </div>
-    <div id="tunisiaMap" class="map-container"></div>
-    <div id="mapStats" style="margin-top:8px; font-size:13px; text-align:center; color:var(--muted)"></div>
-  </div>
-</div>
-
 <!-- DASHBOARD -->
 <div class="section" id="tab-dashboard">
+  <div class="dash-section">
+    <div class="dash-title">📊 Revenu vs Coût vs Bénéfice</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:8px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <label style="font-size:12px;color:var(--muted);text-transform:uppercase">Année :</label>
+        <select id="compYearSelect" onchange="updateGroupedChart()" style="font-size:14px;padding:8px 12px;width:auto"></select>
+      </div>
+      <canvas id="groupedBarChart" style="width:100%;max-height:260px"></canvas>
+    </div>
+  </div>
+  <div class="dash-section">
+    <div class="dash-title">🗺️ Ventes par Ville — Tunisie</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:8px;box-shadow:var(--shadow)">
+      <div style="background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13px;line-height:1.8">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="width:16px;height:16px;border-radius:50%;background:#ef4444;display:inline-block"></span>Volume de ventes élevé</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="width:12px;height:12px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Volume moyen</div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;display:inline-block"></span>Volume faible</div>
+      </div>
+      <div id="tunisiaMap" style="height:380px;border-radius:10px;overflow:hidden;border:1px solid var(--border)"></div>
+      <div id="mapStats" style="margin-top:10px;font-size:12px;color:var(--muted);text-align:center"></div>
+    </div>
+  </div>
   <div class="dash-section">
     <div class="dash-title">🏙️ Par Ville</div>
     <div id="dashVilleChart"></div>
@@ -614,53 +637,75 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 
 <div class="toast" id="toast"></div>
 
-<!-- MODALS -->
+<!-- MODAL MODIFIER STOCK -->
 <div class="modal-overlay" id="editStockModal">
   <div class="modal">
     <div class="modal-title">✏️ Modifier le Stock</div>
     <input type="hidden" id="editStockId">
-    <div><label>Modèle</label><input id="editStockModel"></div>
-    <div><label>Quantité totale</label><input id="editStockQty" type="number"></div>
-    <div><label>Prix unitaire (DT)</label><input id="editStockPrix" type="number" step="0.001"></div>
-    <div class="modal-btns"><button class="btn-cancel" onclick="closeEditStockModal()">Annuler</button><button class="btn-save" onclick="saveEditStock()">💾 Enregistrer</button></div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><label>Modèle</label><input type="text" id="editStockModel" style="margin-top:5px"></div>
+      <div><label>Quantité totale</label><input type="number" id="editStockQty" min="0" style="margin-top:5px"></div>
+      <div><label>Prix unitaire (DT)</label><input type="number" id="editStockPrix" step="0.001" style="margin-top:5px"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeEditStockModal()">Annuler</button>
+      <button class="btn-save" onclick="saveEditStock()">💾 Enregistrer</button>
+    </div>
   </div>
 </div>
 
+<!-- MODAL AJOUTER UNITS STOCK -->
 <div class="modal-overlay" id="addStockModal">
   <div class="modal">
     <div class="modal-title" id="addStockTitle">➕ Ajouter des unités</div>
     <input type="hidden" id="addStockId">
-    <div><label>Date</label><input type="date" id="addStockDate"></div>
-    <div><label>Quantité à ajouter</label><input type="number" id="addStockQty"></div>
-    <div><label>Prix unitaire (DT)</label><input type="number" id="addStockPrix" step="0.001"></div>
-    <div class="modal-btns"><button class="btn-cancel" onclick="closeAddStockModal()">Annuler</button><button class="btn-save" onclick="saveAddStock()">➕ Ajouter</button></div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><label>Date</label><input type="date" id="addStockDate" style="margin-top:5px"></div>
+      <div><label>Quantité à ajouter</label><input type="number" id="addStockQty" min="1" placeholder="10" style="margin-top:5px"></div>
+      <div><label>Prix unitaire (DT)</label><input type="number" id="addStockPrix" step="0.001" placeholder="23.450" style="margin-top:5px"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeAddStockModal()">Annuler</button>
+      <button class="btn-save" onclick="saveAddStock()">➕ Ajouter</button>
+    </div>
   </div>
 </div>
 
+<!-- MODAL EDIT VENTE -->
 <div class="modal-overlay" id="editModal">
   <div class="modal">
     <div class="modal-title">✏️ Modifier la vente</div>
     <div class="edit-grid">
-      <div><label>Date</label><input type="date" id="eDate"></div>
-      <div><label>Modèle</label><input id="eModel"></div>
-      <div><label>Couleur</label><input id="eColor"></div>
-      <div><label>Ville</label><input id="eVille"></div>
-      <div><label>N° Client</label><input id="eClient"></div>
-      <div><label>Quantité</label><input id="eQty" type="number"></div>
-      <div><label>Fournisseur</label><select id="eFourn"></select></div>
-      <div class="edit-full"><label>Carte utilisée</label><select id="eCarte"></select></div>
-      <div><label>Prix Vente (DT/u)</label><input id="ePrix" type="number" step="0.001"></div>
-      <div><label>Coût Achat (DT/u)</label><input id="eCout" type="number" step="0.001"></div>
-      <div class="edit-full"><label>Frais Envoi (DT)</label><input id="eEnvoi" type="number" step="0.001"></div>
+      <div><label>Date</label><input type="date" id="eDate" style="margin-top:5px"></div>
+      <div><label>Modèle</label><input type="text" id="eModel" style="margin-top:5px"></div>
+      <div><label>Couleur</label><input type="text" id="eColor" style="margin-top:5px"></div>
+      <div><label>Ville</label><input type="text" id="eVille" style="margin-top:5px"></div>
+      <div><label>N° Client</label><input type="text" id="eClient" style="margin-top:5px"></div>
+      <div><label>Quantité</label><input type="number" id="eQty" min="1" style="margin-top:5px"></div>
+      <div><label>Fournisseur</label>
+        <select id="eFourn" style="margin-top:5px" onchange="filterCartesByFourn(this.value,'eCarte')">
+          <option value="">— Fournisseur —</option>
+        </select>
+      </div>
+      <div class="edit-full"><label>Carte utilisée</label>
+        <select id="eCarte" style="margin-top:5px"><option value="">— Carte —</option></select>
+      </div>
+      <div><label>Prix Vente (DT/u)</label><input type="number" id="ePrix" step="0.001" style="margin-top:5px"></div>
+      <div><label>Coût Achat (DT/u)</label><input type="number" id="eCout" step="0.001" style="margin-top:5px"></div>
+      <div class="edit-full"><label>Frais Envoi (DT)</label><input type="number" id="eEnvoi" step="0.001" style="margin-top:5px"></div>
     </div>
-    <div class="modal-btns"><button class="btn-cancel" onclick="closeEditModal()">Annuler</button><button class="btn-save" onclick="saveEdit()">💾 Enregistrer</button></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeEditModal()">Annuler</button>
+      <button class="btn-save" onclick="saveEdit()">💾 Enregistrer</button>
+    </div>
   </div>
 </div>
 
+<!-- MODAL FOURNISSEURS -->
 <div class="modal-overlay" id="fournModal">
-  <div class="modal">
+  <div class="modal" style="max-width:440px">
     <div class="modal-title">🧑‍💼 Fournisseurs & Cartes</div>
-    <div id="fournListModal"></div>
+    <div id="fournListModal" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;max-height:55vh;overflow-y:auto"></div>
     <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px">
       <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">➕ Nouveau Fournisseur</div>
       <div style="display:flex;gap:8px">
@@ -668,40 +713,56 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
         <button onclick="addFourn()" style="padding:12px 16px;background:var(--accent);border:none;color:#fff;border-radius:12px;font-size:15px;cursor:pointer;font-weight:700;white-space:nowrap">+ Ajouter</button>
       </div>
     </div>
-    <div class="modal-btns"><button class="btn-save" style="flex:1" onclick="closeFournModal()">✅ Fermer</button></div>
+    <div class="modal-btns">
+      <button class="btn-save" style="flex:1" onclick="closeFournModal()">✅ Fermer</button>
+    </div>
   </div>
 </div>
 
+<!-- MODAL AJOUTER CARTE -->
 <div class="modal-overlay" id="carteModal">
   <div class="modal">
     <div class="modal-title">💳 Nouvelle Carte</div>
     <input type="hidden" id="carteFournId">
-    <div><label>Label de la carte</label><input id="carteLabel"></div>
-    <div><label>Montant chargé (DT)</label><input id="carteMontant" type="number" step="0.001"></div>
-    <div><label>Date</label><input type="date" id="carteDate"></div>
-    <div class="modal-btns"><button class="btn-cancel" onclick="closeCarteModal()">Annuler</button><button class="btn-save" onclick="saveCarte()">💾 Enregistrer</button></div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><label>Label de la carte</label><input type="text" id="carteLabel" placeholder="ex: Carte Avril" style="margin-top:5px"></div>
+      <div><label>Montant chargé (DT)</label><input type="number" id="carteMontant" placeholder="500.000" step="0.001" style="margin-top:5px"></div>
+      <div><label>Date</label><input type="date" id="carteDate" style="margin-top:5px"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeCarteModal()">Annuler</button>
+      <button class="btn-save" onclick="saveCarte()">💾 Enregistrer</button>
+    </div>
   </div>
 </div>
 
+<!-- MODAL MODIFIER CARTE -->
 <div class="modal-overlay" id="editCarteModal">
   <div class="modal">
     <div class="modal-title">✏️ Modifier la Carte</div>
     <input type="hidden" id="editCarteFournId">
     <input type="hidden" id="editCarteId">
-    <div><label>Label</label><input id="editCarteLabel"></div>
-    <div><label>Montant (DT)</label><input id="editCarteMontant" type="number" step="0.001"></div>
-    <div><label>Date</label><input type="date" id="editCarteDate"></div>
-    <div class="modal-btns"><button class="btn-cancel" onclick="closeEditCarteModal()">Annuler</button><button class="btn-save" onclick="saveEditCarte()">💾 Enregistrer</button></div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><label>Label de la carte</label><input type="text" id="editCarteLabel" placeholder="ex: Carte Avril" style="margin-top:5px"></div>
+      <div><label>Montant chargé (DT)</label><input type="number" id="editCarteMontant" placeholder="500.000" step="0.001" style="margin-top:5px"></div>
+      <div><label>Date</label><input type="date" id="editCarteDate" style="margin-top:5px"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeEditCarteModal()">Annuler</button>
+      <button class="btn-save" onclick="saveEditCarte()">💾 Enregistrer</button>
+    </div>
   </div>
 </div>
 
 <script>
 // ── STATE ──────────────────────────────────────────────────────────────────
+// Migration: charge depuis ancien ou nouveau key
 function loadData(newKey, oldKey, def='[]'){
   const newData=localStorage.getItem(newKey);
   if(newData) return JSON.parse(newData);
   const oldData=localStorage.getItem(oldKey);
   if(oldData){
+    // Migre vers nouveau key
     localStorage.setItem(newKey, oldData);
     return JSON.parse(oldData);
   }
@@ -712,8 +773,10 @@ let sales  = loadData('flousFlowSales', 'coquesSales');
 let fourns = loadData('flousFlowFourns', 'coquesFourns');
 let achats = JSON.parse(localStorage.getItem('flousFlowAchats') || '[]');
 let stockItems = JSON.parse(localStorage.getItem('flousFlowStock') || '[]');
+let clients = JSON.parse(localStorage.getItem('flousFlowClients') || '[]');
 let theme  = localStorage.getItem('flousFlowTheme') || localStorage.getItem('coquesTheme') || 'dark';
 
+// Migration: si anciens fourns étaient des strings
 if(fourns.length && typeof fourns[0]==='string'){
   fourns=fourns.map(f=>({id:uid(),nom:f,cartes:[]}));
 }
@@ -732,11 +795,13 @@ refreshStockModelList();
 updateKPIs();
 checkBackupReminder();
 
+// Restaurer dernier onglet
 const lastTab=localStorage.getItem('flousFlowLastTab');
 if(lastTab){
   const btn=document.querySelector(`.tab-btn[onclick="showTab('${lastTab}',this)"]`);
   if(btn) showTab(lastTab, btn);
 }
+// Re-build year select after data is loaded
 setTimeout(()=>{
   const ysel=document.getElementById('yearSelect'); ysel.innerHTML='';
   const now=new Date();
@@ -768,9 +833,11 @@ function allCartes(){
   fourns.forEach(f=>f.cartes.forEach(c=>res.push({...c,fournNom:f.nom,fournId:f.id})));
   return res;
 }
+// Total investi = somme de toutes les cartes
 function totalInvesti(){
   return fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>b+c.montant,0),0);
 }
+// À récupérer = total investi - bénéfice total (négatif = encore à récupérer, positif = profit)
 function calcARecuperer(){
   const benef=sales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
   return totalInvesti()-benef;
@@ -793,6 +860,8 @@ function addStock(){
   const prix=parseFloat(document.getElementById('stockPrix').value)||0;
   const notes=document.getElementById('stockNotes').value.trim();
   if(!model||!qty){showToast('⚠️ Modèle et Quantité obligatoires!',true);return;}
+
+  // Cherche si ce modèle existe déjà
   const existing=stockItems.find(s=>s.model.toLowerCase()===model.toLowerCase());
   if(existing){
     existing.qty+=qty;
@@ -829,20 +898,27 @@ function renderStock(){
   const el=document.getElementById('stockList');
   const resume=document.getElementById('stockResume');
   const overview=document.getElementById('stockOverview');
+
+  // Update datalist for model suggestions
   const dl=document.getElementById('stockModelsList');
   if(dl){
     dl.innerHTML=stockItems.map(s=>`<option value="${s.model}">`).join('');
   }
+
   if(!stockItems.length){
     el.innerHTML='<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">Aucun produit en stock.<br>Ajoute ton premier produit!</div></div>';
     if(resume) resume.style.display='none';
     return;
   }
+
+  // Calcul stock réel = qty ajoutée - ventes
   const stockWithReal=stockItems.map(item=>{
     const vendu=sales.filter(s=>s.model&&s.model.toLowerCase()===item.model.toLowerCase()).reduce((a,s)=>a+(s.qty||1),0);
     const restant=Math.max(0,item.qty-vendu);
     return {...item, vendu, restant};
   });
+
+  // Filtre
   const q=(document.getElementById('stockSearch')?.value||'').toLowerCase().trim();
   const statusFilter=document.getElementById('stockFilter')?.value||'all';
   const filtered=stockWithReal.filter(item=>{
@@ -853,6 +929,8 @@ function renderStock(){
       (statusFilter==='dispo'&&item.restant>3);
     return matchQ&&matchStatus;
   });
+
+  // Résumé (toujours basé sur tout le stock)
   const totalUnites=stockWithReal.reduce((a,s)=>a+s.qty,0);
   const totalRestant=stockWithReal.reduce((a,s)=>a+s.restant,0);
   const totalVendu=stockWithReal.reduce((a,s)=>a+s.vendu,0);
@@ -872,16 +950,21 @@ function renderStock(){
         <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${totalRestant===0?'var(--muted)':totalRestant<=5?'var(--red)':'var(--green)'}">${totalRestant} u</div>
       </div>`;
   }
+
   if(!filtered.length){
     el.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">${q?'Aucun résultat pour "'+q+'"':'Aucun produit dans cette catégorie.'}</div></div>`;
     return;
   }
+
+  // Liste par modèle (filtré)
   el.innerHTML=filtered.sort((a,b)=>b.restant-a.restant).map(item=>{
     const pct=item.qty>0?Math.min(100,(item.vendu/item.qty)*100):0;
     const restColor=item.restant===0?'var(--muted)':item.restant<=3?'var(--red)':'var(--green)';
     const r=Math.round(16*(pct/100)+239*(1-pct/100));
     const g=Math.round(185*(pct/100)+68*(1-pct/100));
     const barColor=`rgb(${r},${g},68)`;
+
+    // Historique des ajouts
     const ajouts=(item.history||[]).filter(h=>h.type==='ajout');
     const histHTML=ajouts.length?`
       <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
@@ -894,7 +977,8 @@ function renderStock(){
             </div>
             <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--yellow)">${h.prix?fmt(h.prix)+'/u':'—'}</span>
           </div>`).join('')}
-      </div>`:'';
+      </div>`:''
+
     return `<div class="sale-card" style="margin-bottom:10px">
       <div class="sale-top">
         <div class="sale-model">📱 ${item.model}</div>
@@ -925,6 +1009,7 @@ function renderStock(){
   }).join('');
 }
 
+// Modifier stock — modal complet
 function openEditStockModal(id){
   const item=stockItems.find(s=>s.id===id); if(!item) return;
   document.getElementById('editStockId').value=id;
@@ -946,6 +1031,7 @@ function saveEditStock(){
   showToast('✅ Stock modifié!');
 }
 
+// Ajouter unités — modal complet
 function openAddStockModal(id){
   const item=stockItems.find(s=>s.id===id); if(!item) return;
   document.getElementById('addStockId').value=id;
@@ -968,6 +1054,132 @@ function saveAddStock(){
   item.history.push({date,qty,prix,type:'ajout'});
   saveStock(); renderStock(); closeAddStockModal();
   showToast(`✅ +${qty} unités ajoutées à ${item.model}!`);
+}
+
+// ── CLIENTS CRM ────────────────────────────────────────────────────────────
+function saveClients(){ localStorage.setItem('flousFlowClients', JSON.stringify(clients)); }
+
+function addClient(){
+  const nom=document.getElementById('cNom').value.trim();
+  const ref=document.getElementById('cRef').value.trim();
+  const tel=document.getElementById('cTel').value.trim();
+  const ville=document.getElementById('cVille').value.trim();
+  const adresse=document.getElementById('cAdresse').value.trim();
+  const notes=document.getElementById('cNotes').value.trim();
+  if(!nom){showToast('⚠️ Nom obligatoire!',true);return;}
+  // Check doublon
+  if(ref && clients.find(c=>c.ref===ref)){showToast('⚠️ N° Client déjà existant!',true);return;}
+  clients.push({id:uid(),nom,ref,tel,ville,adresse,notes,createdAt:new Date().toISOString().split('T')[0]});
+  saveClients();
+  ['cNom','cRef','cTel','cVille','cAdresse','cNotes'].forEach(i=>document.getElementById(i).value='');
+  renderClients();
+  showToast(`✅ Client ${nom} ajouté!`);
+}
+
+function deleteClient(id){
+  if(!confirm('Supprimer ce client?')) return;
+  clients=clients.filter(c=>c.id!==id);
+  saveClients(); renderClients();
+  showToast('✅ Client supprimé!');
+}
+
+function getClientSales(client){
+  return sales.filter(s=>{
+    if(client.ref && s.client && s.client.toLowerCase()===client.ref.toLowerCase()) return true;
+    if(client.nom && s.client && s.client.toLowerCase()===client.nom.toLowerCase()) return true;
+    if(client.ville && s.ville && s.ville.toLowerCase()===client.ville.toLowerCase() && s.client && s.client.toLowerCase()===client.nom.toLowerCase()) return true;
+    return false;
+  });
+}
+
+function calcPoints(clientSales){
+  // 1 point par DT de revenu (arrondi)
+  return Math.floor(clientSales.reduce((a,s)=>a+s.revenu,0));
+}
+
+function renderClients(){
+  const el=document.getElementById('clientsList');
+  const q=(document.getElementById('clientSearch')?.value||'').toLowerCase().trim();
+
+  // Merge: clients manuels + clients détectés dans ventes
+  const allClientRefs=[...new Set(sales.map(s=>s.client).filter(Boolean))];
+  const manualRefs=new Set(clients.map(c=>c.ref||c.nom));
+
+  // Clients auto-détectés depuis ventes qui ne sont pas encore enregistrés
+  const autoClients=allClientRefs.filter(r=>!manualRefs.has(r)).map(r=>({
+    id:'auto-'+r, nom:r, ref:r, tel:'', ville:'', adresse:'', notes:'', auto:true
+  }));
+
+  const allClients=[...clients, ...autoClients];
+  const filtered=allClients.filter(c=>
+    !q || c.nom.toLowerCase().includes(q) ||
+    (c.tel||'').includes(q) ||
+    (c.ville||'').toLowerCase().includes(q) ||
+    (c.ref||'').toLowerCase().includes(q)
+  );
+
+  if(!filtered.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">👤</div><div class="empty-text">Aucun client enregistré.<br>Ajoute ton premier client!</div></div>';
+    return;
+  }
+
+  // Trier par revenu décroissant
+  filtered.sort((a,b)=>{
+    const aRev=getClientSales(a).reduce((x,s)=>x+s.revenu,0);
+    const bRev=getClientSales(b).reduce((x,s)=>x+s.revenu,0);
+    return bRev-aRev;
+  });
+
+  el.innerHTML=filtered.map(client=>{
+    const cSales=getClientSales(client);
+    const totalRevenu=cSales.reduce((a,s)=>a+s.revenu,0);
+    const totalBenef=cSales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
+    const points=calcPoints(cSales);
+    const niveau=points>=500?'🥇 VIP':points>=200?'🥈 Fidèle':points>=50?'🥉 Régulier':'🆕 Nouveau';
+    const niveauColor=points>=500?'var(--yellow)':points>=200?'var(--accent)':points>=50?'var(--green)':'var(--muted)';
+    const lastSale=cSales.length?cSales.sort((a,b)=>new Date(b.date||0)-new Date(a.date||0))[0]:null;
+
+    return `<div class="sale-card" style="margin-bottom:10px">
+      <div class="sale-top">
+        <div>
+          <div class="sale-model">👤 ${client.nom}</div>
+          ${client.ref?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${client.ref}</div>`:''}
+        </div>
+        <div style="font-size:13px;font-weight:700;color:${niveauColor};padding:4px 10px;border-radius:8px;background:${niveauColor}22;white-space:nowrap">${niveau}</div>
+      </div>
+      <div class="sale-meta" style="margin-top:8px">
+        ${client.tel?`<span class="tag">📞 ${client.tel}</span>`:''}
+        ${client.ville?`<span class="tag city">📍 ${client.ville}</span>`:''}
+        ${lastSale?`<span class="tag">🗓️ Dernier: ${lastSale.date||'—'}</span>`:''}
+        ${client.auto?`<span class="tag" style="color:var(--muted)">Auto-détecté</span>`:''}
+      </div>
+      <div class="sale-nums" style="margin-top:10px">
+        <div class="num-item"><div class="num-label">Achats</div><div class="num-val" style="color:var(--accent)">${cSales.length}</div></div>
+        <div class="num-item"><div class="num-label">Total</div><div class="num-val" style="color:var(--yellow)">${fmt(totalRevenu)}</div></div>
+        <div class="num-item"><div class="num-label">Points</div><div class="num-val" style="color:${niveauColor}">${points} pts</div></div>
+      </div>
+      ${cSales.length?`
+      <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">📋 Historique achats</div>
+        <div style="display:flex;flex-direction:column;gap:5px;max-height:160px;overflow-y:auto">
+          ${cSales.slice(0,5).map(s=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);padding:6px 10px;border-radius:8px;font-size:12px">
+              <div>
+                <span style="font-weight:600">${s.model||'—'}</span>
+                <span style="color:var(--muted);margin-left:6px">${s.date||'—'}</span>
+              </div>
+              <span style="font-family:'DM Mono',monospace;color:var(--yellow)">${fmt(s.revenu)}</span>
+            </div>`).join('')}
+          ${cSales.length>5?`<div style="text-align:center;font-size:11px;color:var(--muted);padding:4px">+${cSales.length-5} autre${cSales.length-5>1?'s':''}</div>`:''}
+        </div>
+      </div>`:''}
+      ${client.notes?`<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic">📝 ${client.notes}</div>`:''}
+      ${!client.auto?`
+      <div class="sale-actions" style="margin-top:10px">
+        <button class="btn-del-card" onclick="deleteClient('${client.id}')">🗑️ Supprimer</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
 }
 
 // ── ACHATS ────────────────────────────────────────────────────────────────
@@ -1055,15 +1267,13 @@ function showTab(id,btn){
   document.getElementById('tab-'+id).classList.add('active');
   btn.classList.add('active');
   localStorage.setItem('flousFlowLastTab', id);
-  if(id==='stock') renderStock();
+  if(id==='clients') renderClients();
   if(id==='ventes') { refreshFilterSelects(); renderSales(); }
   if(id==='achats') { refreshAchatFournSelect(); renderAchats(); }
   if(id==='top') setTimeout(()=>renderTop(), 50);
   if(id==='rapport') setTimeout(()=>renderRapport(), 50);
   if(id==='annuel') renderAnnuel();
-  if(id==='dashboard') renderDash();
-  if(id==='carte') setTimeout(()=>initTunisiaMap(), 100);
-  if(id==='comparaison') { buildYearSelectorForComp(); setTimeout(()=>updateGroupedChart(), 100); }
+  if(id==='dashboard') { renderDash(); setTimeout(()=>{ buildYearSelectorForComp(); updateGroupedChart(); initTunisiaMap(); },400); }
 }
 
 // ── STOCK INDICATOR IN FORM ────────────────────────────────────────────────
@@ -1115,11 +1325,13 @@ function addSale(){
   const envoi=parseFloat(document.getElementById('fEnvoi').value)||0;
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
   sales.push({id:Date.now(),date,model,color,ville,client,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)});
+  // Mettre à jour stock si ce modèle existe
   const stockItem=stockItems.find(s=>s.model.toLowerCase()===model.toLowerCase());
   if(stockItem){
     stockItem.history=stockItem.history||[];
     stockItem.history.push({date,qty:-qty,type:'vente'});
     saveStock();
+    // Refresh indicateur
     checkStockForModel();
   }
   save(); updateKPIs(); refreshFilterSelects(); refreshStockModelList();
@@ -1130,9 +1342,6 @@ function addSale(){
   const btn=document.querySelector('.btn-add');
   btn.textContent='✅ Enregistrée!'; btn.style.background='linear-gradient(135deg,#059669,#10b981)';
   setTimeout(()=>{btn.textContent='✅ Enregistrer la vente';btn.style.background='';},1800);
-  // Rafraîchir carte et graphique si actifs
-  if(document.getElementById('tab-carte').classList.contains('active')) initTunisiaMap();
-  if(document.getElementById('tab-comparaison').classList.contains('active')) updateGroupedChart();
 }
 
 // ── KPIs ───────────────────────────────────────────────────────────────────
@@ -1148,6 +1357,7 @@ function updateKPIs(){
   document.getElementById('kpiNbVentes').textContent=sales.length;
   document.getElementById('totalCount').textContent=sales.length+' vente'+(sales.length>1?'s':'');
 
+  // Cartes banner
   const totalMont=fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>b+c.montant,0),0);
   const totalRevCartes=fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>{
     const v=sales.filter(s=>s.carteId===c.id);
@@ -1159,6 +1369,7 @@ function updateKPIs(){
   const banner=document.getElementById('cartesBanner');
   if(totalMont>0){
     banner.style.display='block';
+    // Couleur du banner selon état
     const isProfit=aRec<=0;
     banner.style.background=isProfit
       ?'linear-gradient(135deg,rgba(16,185,129,.12),rgba(16,185,129,.05))'
@@ -1181,6 +1392,8 @@ function updateKPIs(){
       recEl.style.color='var(--green)';
     }
     document.getElementById('cartesPct').textContent=pct.toFixed(0)+'%';
+
+    // Barre progressive rouge→vert
     const r=Math.round(239*(1-pct/100)+16*(pct/100));
     const g=Math.round(68*(1-pct/100)+185*(pct/100));
     const bar=document.getElementById('cartesBar');
@@ -1189,6 +1402,14 @@ function updateKPIs(){
   } else {
     banner.style.display='none';
   }
+}
+
+// ── THEME ──────────────────────────────────────────────────────────────────
+function toggleTheme(){
+  theme=theme==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',theme);
+  document.getElementById('themeBtn').textContent=theme==='dark'?'🌙':'☀️';
+  save();
 }
 
 // ── BELL / BACKUP REMINDER ─────────────────────────────────────────────────
@@ -1223,6 +1444,7 @@ function checkBackupReminder(){
 function toggleBell(){
   const popup=document.getElementById('bellPopup');
   popup.classList.toggle('open');
+  // Fermer si on clique ailleurs
   if(popup.classList.contains('open')){
     setTimeout(()=>{
       document.addEventListener('click', function closeBell(e){
@@ -1235,7 +1457,7 @@ function toggleBell(){
   }
 }
 
-// ── FOURNISSEURS & CARTES ─────────────────────────────────────────────────
+// ── TABS ───────────────────────────────────────────────────────────────────
 function refreshFournSelects(){
   ['fFourn','eFourn'].forEach(id=>{
     const sel=document.getElementById(id); if(!sel) return;
@@ -1244,11 +1466,13 @@ function refreshFournSelects(){
     fourns.forEach(f=>{const o=document.createElement('option');o.value=f.id;o.textContent=f.nom;sel.appendChild(o);});
     sel.value=cur;
   });
+  // Filtre fournisseur dans ventes
   const ff=document.getElementById('filterFourn'); if(!ff) return;
   const curF=ff.value;
   ff.innerHTML='<option value="">🧑‍💼 Tous les fournisseurs</option>';
   fourns.forEach(f=>{const o=document.createElement('option');o.value=f.id;o.textContent='🧑‍💼 '+f.nom;ff.appendChild(o);});
   ff.value=curF;
+  // Remettre cartes du filtre
   onFilterFournChange();
 }
 
@@ -1259,7 +1483,6 @@ function refreshAchatFournSelect(){
   fourns.forEach(f=>{const o=document.createElement('option');o.value=f.id;o.textContent=f.nom;sel.appendChild(o);});
   sel.value=cur;
 }
-
 function onFilterFournChange(){
   const fournId=document.getElementById('filterFourn').value;
   const sel=document.getElementById('filterCarte');
@@ -1272,7 +1495,6 @@ function onFilterFournChange(){
   }
   renderSales();
 }
-
 function filterCartesByFourn(fournId,selectId){
   const sel=document.getElementById(selectId); if(!sel) return;
   const cur=sel.value;
@@ -1280,123 +1502,6 @@ function filterCartesByFourn(fournId,selectId){
   const f=fourns.find(x=>x.id===fournId||x.nom===fournId);
   if(f) f.cartes.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=`${c.label} · ${fmt(c.montant)}`;sel.appendChild(o);});
   sel.value=cur;
-}
-
-// ── FOURNISSEURS MODAL ─────────────────────────────────────────────────────
-function openFournModal(){renderFournList();document.getElementById('fournModal').classList.add('open');}
-function closeFournModal(){document.getElementById('fournModal').classList.remove('open');refreshFournSelects();}
-function renderFournList(){
-  const el=document.getElementById('fournListModal');
-  if(!fourns.length){el.innerHTML='<div style="color:var(--muted);font-size:14px;text-align:center;padding:20px">Aucun fournisseur 👇</div>';return;}
-  el.innerHTML=fourns.map((f,fi)=>{
-    const cartesHTML=f.cartes.map((c)=>{
-      const ventes=sales.filter(s=>s.carteId===c.id);
-      const revenu=ventes.reduce((a,s)=>a+s.revenu,0);
-      const aRec=c.montant-revenu;
-      const pct=c.montant>0?Math.min(100,(revenu/c.montant)*100):0;
-      const r=Math.round(239*(1-pct/100)+16*(pct/100));
-      const g=Math.round(68*(1-pct/100)+185*(pct/100));
-      const barColor=`rgb(${r},${g},68)`;
-      return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:9px 11px;margin-top:5px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-size:13px;font-weight:600">💳 ${c.label}</div>
-            <div style="font-size:11px;color:var(--muted)">${c.date||'—'} · ${fmt(c.montant)}</div>
-          </div>
-          <div style="display:flex;gap:5px">
-            <button onclick="openEditCarteModal('${f.id}','${c.id}')" style="background:rgba(124,108,252,.12);border:1px solid rgba(124,108,252,.25);color:var(--accent);width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:13px">✏️</button>
-            <button onclick="deleteCarte('${f.id}','${c.id}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red);width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:13px">✕</button>
-          </div>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:11px;margin:5px 0 3px">
-          <span style="color:var(--green)">Revenu: ${fmt(revenu)}</span>
-          <span style="color:${aRec>0?'var(--red)':'var(--green)'}">
-            ${aRec>0?'À récupérer: '+fmt(aRec):'Récupéré ✅ +'+fmt(Math.abs(aRec))}
-          </span>
-        </div>
-        <div style="height:5px;background:var(--border);border-radius:4px;overflow:hidden">
-          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px"></div>
-        </div>
-        <div style="font-size:10px;color:var(--muted);text-align:right;margin-top:3px">${pct.toFixed(0)}% récupéré</div>
-      </div>`;
-    }).join('');
-    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-size:16px;font-weight:700">🧑‍💼 ${f.nom}</div>
-        <div style="display:flex;gap:6px">
-          <button onclick="openCarteModal('${f.id}')" style="background:rgba(124,108,252,.15);border:1px solid rgba(124,108,252,.3);color:var(--accent);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">+ Carte</button>
-          <button onclick="deleteFourn(${fi})" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:13px">✕</button>
-        </div>
-      </div>
-      ${cartesHTML||'<div style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">Aucune carte — appuie sur "+ Carte"</div>'}
-    </div>`;
-  }).join('');
-}
-
-function addFourn(){
-  const val=document.getElementById('newFournInput').value.trim();
-  if(!val){showToast('⚠️ Entre un nom!',true);return;}
-  if(fourns.find(f=>f.nom===val)){showToast('⚠️ Déjà existant!',true);return;}
-  fourns.push({id:uid(),nom:val,cartes:[]});
-  save(); renderFournList();
-  document.getElementById('newFournInput').value='';
-  showToast('✅ Fournisseur ajouté!');
-}
-function deleteFourn(i){
-  if(!confirm(`Supprimer "${fourns[i].nom}" et toutes ses cartes?`)) return;
-  fourns.splice(i,1); save(); renderFournList();
-}
-
-// ── CARTES ─────────────────────────────────────────────────────────────────
-function openCarteModal(fournId){
-  document.getElementById('carteFournId').value=fournId;
-  document.getElementById('carteLabel').value='';
-  document.getElementById('carteMontant').value='';
-  document.getElementById('carteDate').value=new Date().toISOString().split('T')[0];
-  document.getElementById('carteModal').classList.add('open');
-}
-function closeCarteModal(){document.getElementById('carteModal').classList.remove('open');}
-function saveCarte(){
-  const fournId=document.getElementById('carteFournId').value;
-  const label=document.getElementById('carteLabel').value.trim();
-  const montant=parseFloat(document.getElementById('carteMontant').value)||0;
-  const date=document.getElementById('carteDate').value;
-  if(!label||!montant){showToast('⚠️ Label et Montant obligatoires!',true);return;}
-  const f=fourns.find(x=>x.id===fournId); if(!f) return;
-  f.cartes.push({id:uid(),label,montant,date});
-  save(); renderFournList(); refreshFournSelects(); closeCarteModal();
-  showToast('✅ Carte ajoutée!');
-}
-function openEditCarteModal(fournId,carteId){
-  const f=fourns.find(x=>x.id===fournId); if(!f) return;
-  const c=f.cartes.find(x=>x.id===carteId); if(!c) return;
-  document.getElementById('editCarteFournId').value=fournId;
-  document.getElementById('editCarteId').value=carteId;
-  document.getElementById('editCarteLabel').value=c.label||'';
-  document.getElementById('editCarteMontant').value=c.montant||'';
-  document.getElementById('editCarteDate').value=c.date||'';
-  document.getElementById('editCarteModal').classList.add('open');
-}
-function closeEditCarteModal(){document.getElementById('editCarteModal').classList.remove('open');}
-function saveEditCarte(){
-  const fournId=document.getElementById('editCarteFournId').value;
-  const carteId=document.getElementById('editCarteId').value;
-  const label=document.getElementById('editCarteLabel').value.trim();
-  const montant=parseFloat(document.getElementById('editCarteMontant').value)||0;
-  const date=document.getElementById('editCarteDate').value;
-  if(!label||!montant){showToast('⚠️ Label et Montant obligatoires!',true);return;}
-  const f=fourns.find(x=>x.id===fournId); if(!f) return;
-  const ci=f.cartes.findIndex(x=>x.id===carteId); if(ci===-1) return;
-  f.cartes[ci]={...f.cartes[ci],label,montant,date};
-  save(); renderFournList(); refreshFournSelects(); closeEditCarteModal(); updateKPIs();
-  showToast('✅ Carte modifiée!');
-}
-function deleteCarte(fournId,carteId){
-  if(!confirm('Supprimer cette carte?')) return;
-  const f=fourns.find(x=>x.id===fournId); if(!f) return;
-  f.cartes=f.cartes.filter(c=>c.id!==carteId);
-  save(); renderFournList(); refreshFournSelects(); updateKPIs();
-  showToast('✅ Carte supprimée!');
 }
 
 // ── SORT & FILTER ──────────────────────────────────────────────────────────
@@ -1414,12 +1519,14 @@ function getSorted(list){
   return c;
 }
 function refreshFilterSelects(){
+  // Villes
   const villes=[...new Set(sales.map(s=>s.ville).filter(Boolean))].sort();
   const fv=document.getElementById('filterVille'); if(!fv) return;
   const curV=fv.value;
   fv.innerHTML='<option value="">📍 Toutes villes</option>';
   villes.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent='📍 '+v;fv.appendChild(o);});
   fv.value=curV;
+  // Modèles
   const models=[...new Set(sales.map(s=>s.model).filter(Boolean))].sort();
   const fm=document.getElementById('filterModel'); if(!fm) return;
   const curM=fm.value;
@@ -1461,6 +1568,7 @@ function getFiltered(){
     return matchQ&&matchCarte&&matchFourn&&matchVille&&matchModel&&matchFrom&&matchTo&&matchBenefMin&&matchBenefMax;
   });
 
+  // Afficher résumé
   const infoEl=document.getElementById('filterInfo');
   const hasFilter=filterCarteId||filterFournId||filterVille||filterModel||filterFrom||filterTo||filterBenefMin!==null||filterBenefMax!==null||q;
   if(infoEl){
@@ -1494,7 +1602,7 @@ function cardHTML(s,q=''){
   const fObj=fourns.find(x=>x.id===s.fourn||x.nom===s.fourn);
   const fNom=fObj?fObj.nom:(s.fourn||'');
   const carteObj=allCartes().find(x=>x.id===s.carteId);
-  const bv=s.benefBrut||s.benef||0;
+  const bv=s.benefBrut||s.benef||0; // compatibilité
   return `<div class="sale-card">
     <div class="sale-top">
       <div class="sale-model">${hl(s.model,q)}</div>
@@ -1521,6 +1629,20 @@ function cardHTML(s,q=''){
   </div>`;
 }
 
+// ── SORT ───────────────────────────────────────────────────────────────────
+function setSort(mode,btn){
+  currentSort=mode; currentPage=1;
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSales();
+}
+
+function goPage(dir){
+  currentPage+=dir;
+  renderSales();
+  window.scrollTo(0,0);
+}
+
 // ── RENDER SALES ───────────────────────────────────────────────────────────
 function renderSales(){
   const el=document.getElementById('salesList');
@@ -1541,6 +1663,7 @@ function renderSales(){
   const sorted=getSorted(f);
   const pageData=perPage>=999999?sorted:sorted.slice((currentPage-1)*perPage, currentPage*perPage);
 
+  // Page info
   const pi=document.getElementById('pageInfo');
   if(pi){
     const from=(currentPage-1)*perPage+1;
@@ -1548,6 +1671,7 @@ function renderSales(){
     pi.textContent=perPage>=999999?`${f.length} ventes`:`${from}-${to} sur ${f.length}`;
   }
 
+  // Pagination bar
   const bar=document.getElementById('paginationBar');
   if(bar){
     if(totalPages>1&&perPage<999999){
@@ -1573,6 +1697,7 @@ function renderSales(){
     }
   }
 
+  // Render cards
   let html='',last=null;
   pageData.forEach(v=>{
     if(currentSort!=='benef'){
@@ -1627,10 +1752,12 @@ function renderTop(){
   const sorted=Object.entries(map).sort((a,b)=>getValue(b[1])-getValue(a[1])).slice(0,8);
   const medals=['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
 
+  // Draw chart
   const labels=sorted.map(([m])=>m.length>12?m.slice(0,12)+'…':m);
   const values=sorted.map(([,d])=>getValue(d));
   drawChart(labels,values);
 
+  // Ranking list
   el.innerHTML='<div style="display:flex;flex-direction:column;gap:10px">'+sorted.map(([model,d],i)=>{
     const avgMarge=d.marge.reduce((a,b)=>a+b,0)/d.marge.length;
     return `<div class="top-card">
@@ -1650,6 +1777,8 @@ function drawChart(labels, values){
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
   const textColor=isDark?'#6b6b8a':'#8a7d6b';
   const gridColor=isDark?'#2a2a3d':'#d6cfc0';
+
+  // Set canvas size
   const dpr=window.devicePixelRatio||1;
   const W=canvas.parentElement?.offsetWidth||canvas.offsetWidth||320;
   const H=200;
@@ -1660,29 +1789,39 @@ function drawChart(labels, values){
   const ctx=canvas.getContext('2d');
   ctx.scale(dpr,dpr);
   ctx.clearRect(0,0,W,H);
+
   if(!labels.length) return;
+
   const pad={top:16,right:12,bottom:56,left:16};
   const chartW=W-pad.left-pad.right;
   const chartH=H-pad.top-pad.bottom;
   const maxVal=Math.max(...values,1);
   const barW=chartW/labels.length;
   const gap=barW*0.22;
+
+  // Grid lines
   ctx.strokeStyle=gridColor;
   ctx.lineWidth=1;
   for(let i=0;i<=4;i++){
     const y=pad.top+chartH*(1-i/4);
     ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
   }
+
+  // Bars
   const colors=['#7c6cfc','#fc6c8f','#10b981','#f59e0b','#38bdf8','#a78bfa','#34d399','#fb923c'];
   labels.forEach((label,i)=>{
     const barH=(values[i]/maxVal)*chartH;
     const x=pad.left+i*barW+gap/2;
     const y=pad.top+chartH-barH;
     const bw=barW-gap;
+
+    // Gradient
     const grad=ctx.createLinearGradient(0,y,0,y+barH);
     grad.addColorStop(0,colors[i%colors.length]);
     grad.addColorStop(1,colors[i%colors.length]+'55');
     ctx.fillStyle=grad;
+
+    // Rounded top
     const r=Math.min(6,bw/2);
     ctx.beginPath();
     ctx.moveTo(x+r,y);
@@ -1694,6 +1833,8 @@ function drawChart(labels, values){
     ctx.quadraticCurveTo(x,y,x+r,y);
     ctx.closePath();
     ctx.fill();
+
+    // Label
     ctx.fillStyle=textColor;
     ctx.font=`${Math.min(11,bw/1.5)}px DM Sans,sans-serif`;
     ctx.textAlign='center';
@@ -1720,6 +1861,7 @@ function buildMonthSelect(){
       sel.appendChild(opt);
     }
   }
+  // Build year select from actual sales data
   const ysel=document.getElementById('yearSelect'); ysel.innerHTML='';
   const now2=new Date();
   const years=[...new Set(sales.map(s=>s.date?s.date.slice(0,4):null).filter(Boolean))];
@@ -1738,16 +1880,19 @@ function renderAnnuel(){
   const tv=ySales.reduce((a,s)=>a+s.revenu,0);
   const tb=ySales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
   const tc=ySales.reduce((a,s)=>a+s.coutTotal,0);
+
   document.getElementById('annuelKpis').innerHTML=`
     <div class="month-kpi"><div class="month-kpi-label">💰 Total Ventes</div><div class="month-kpi-val" style="color:var(--yellow)">${fmt(tv)}</div></div>
     <div class="month-kpi"><div class="month-kpi-label">✅ Bénéfice</div><div class="month-kpi-val" style="color:var(--green)">${fmt(tb)}</div></div>
     <div class="month-kpi"><div class="month-kpi-label">🛒 Coût Total</div><div class="month-kpi-val" style="color:var(--red)">${fmt(tc)}</div></div>
     <div class="month-kpi"><div class="month-kpi-label">📦 Ventes</div><div class="month-kpi-val" style="color:var(--accent)">${ySales.length}</div></div>`;
+
   const months=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const maxBenef=Math.max(...months.map((_,i)=>{
     const ms=`${year}-${String(i+1).padStart(2,'0')}`;
     return ySales.filter(s=>s.date&&s.date.startsWith(ms)).reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
   }),1);
+
   let html='';
   months.forEach((mname,i)=>{
     const ms=`${year}-${String(i+1).padStart(2,'0')}`;
@@ -1771,7 +1916,6 @@ function renderAnnuel(){
   });
   document.getElementById('annuelMonths').innerHTML=html||'<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Aucune vente en '+year+'.</div></div>';
 }
-
 function renderRapport(){
   const val=document.getElementById('monthSelect').value;
   const ms=sales.filter(s=>s.date&&s.date.startsWith(val));
@@ -1783,6 +1927,8 @@ function renderRapport(){
     <div class="month-kpi"><div class="month-kpi-label">✅ Bénéfice</div><div class="month-kpi-val" style="color:var(--green)">${fmt(tb)}</div></div>
     <div class="month-kpi"><div class="month-kpi-label">🛒 Coût Total</div><div class="month-kpi-val" style="color:var(--red)">${fmt(tc)}</div></div>
     <div class="month-kpi"><div class="month-kpi-label">📈 Marge Moy.</div><div class="month-kpi-val" style="color:var(--accent)">${fmtP(tv>0?tb/tv:0)}</div></div>`;
+
+  // Chart par jour
   const [year,month]=val.split('-').map(Number);
   const daysInMonth=new Date(year,month,0).getDate();
   const dailyBenef=Array(daysInMonth).fill(0);
@@ -1792,12 +1938,14 @@ function renderRapport(){
       if(day>=0&&day<daysInMonth) dailyBenef[day]+=(s.benef||s.benefBrut||0);
     }
   });
+  // Only show days with data or compress to active days
   const activeDays=dailyBenef.map((v,i)=>({day:i+1,val:v})).filter(d=>d.val>0);
   if(activeDays.length>=2){
     drawLineChart('rapportChart', activeDays.map(d=>d.day+''), activeDays.map(d=>d.val));
   } else {
     drawLineChart('rapportChart', Array.from({length:daysInMonth},(_,i)=>String(i+1)), dailyBenef);
   }
+
   const listEl=document.getElementById('monthSalesList');
   if(!ms.length){
     listEl.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Aucune vente ce mois.</div></div>';
@@ -1820,10 +1968,12 @@ function drawLineChart(canvasId, labels, values){
   const ctx=canvas.getContext('2d');
   ctx.scale(dpr,dpr);
   ctx.clearRect(0,0,W,H);
+
   const maxVal=Math.max(...values,1);
   const pad={top:14,right:14,bottom:30,left:14};
   const cW=W-pad.left-pad.right;
   const cH=H-pad.top-pad.bottom;
+
   if(values.every(v=>v===0)){
     ctx.fillStyle=textColor;
     ctx.font='13px DM Sans,sans-serif';
@@ -1831,18 +1981,25 @@ function drawLineChart(canvasId, labels, values){
     ctx.fillText('Aucune vente ce mois',W/2,H/2);
     return;
   }
+
+  // Grid
   ctx.strokeStyle=gridColor; ctx.lineWidth=1;
   for(let i=0;i<=3;i++){
     const y=pad.top+cH*(1-i/3);
     ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
   }
+
+  // Gradient fill
   const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+cH);
   grad.addColorStop(0,'rgba(124,108,252,0.35)');
   grad.addColorStop(1,'rgba(124,108,252,0.02)');
+
   const pts=values.map((v,i)=>({
     x:pad.left+(i/(labels.length-1||1))*cW,
     y:pad.top+cH*(1-v/maxVal)
   }));
+
+  // Fill area
   ctx.beginPath();
   ctx.moveTo(pts[0].x, pad.top+cH);
   pts.forEach(p=>ctx.lineTo(p.x,p.y));
@@ -1850,10 +2007,14 @@ function drawLineChart(canvasId, labels, values){
   ctx.closePath();
   ctx.fillStyle=grad;
   ctx.fill();
+
+  // Line
   ctx.beginPath();
   pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
   ctx.strokeStyle='#7c6cfc'; ctx.lineWidth=2.5;
   ctx.lineJoin='round'; ctx.stroke();
+
+  // Dots on non-zero points
   pts.forEach((p,i)=>{
     if(values[i]>0){
       ctx.beginPath();
@@ -1863,6 +2024,8 @@ function drawLineChart(canvasId, labels, values){
       ctx.lineWidth=2; ctx.stroke();
     }
   });
+
+  // Labels (show only some to avoid crowding)
   ctx.fillStyle=textColor;
   ctx.font='10px DM Sans,sans-serif';
   ctx.textAlign='center';
@@ -1877,6 +2040,7 @@ function drawLineChart(canvasId, labels, values){
 // ── DASHBOARD ──────────────────────────────────────────────────────────────
 function getMarque(model){
   if(!model) return 'Autre';
+  // Prend le premier mot comme marque
   const m=model.trim().split(' ')[0];
   return m.charAt(0).toUpperCase()+m.slice(1).toLowerCase();
 }
@@ -1906,6 +2070,7 @@ function renderDash(){
         <div class="city-benef">${fmt(d.benef)}</div>
       </div>`).join('');
   };
+
   const colors=['#7c6cfc','#fc6c8f','#10b981','#f59e0b','#38bdf8','#a78bfa'];
   function cssBarChart(map){
     const entries=Object.entries(map).sort((a,b)=>b[1].benef-a[1].benef).slice(0,6);
@@ -1928,10 +2093,12 @@ function renderDash(){
       </div>
     </div>`;
   }
+
   const c1=document.getElementById('cityList'),c2=document.getElementById('modelList');
   const c3=document.getElementById('marqueList');
   const vc1=document.getElementById('dashVilleChart'),vc2=document.getElementById('dashModelChart');
   const vmc=document.getElementById('dashMarqueChart');
+
   if(!sales.length){
     c1.innerHTML='<div class="empty"><div class="empty-icon">🗺️</div><div class="empty-text">Aucune donnée.</div></div>';
     c2.innerHTML=''; if(c3) c3.innerHTML='';
@@ -1946,15 +2113,23 @@ function renderDash(){
     if(c3) c3.innerHTML=rg(mq);
     c2.innerHTML=rg(mm);
   }
+
+  // Charts and map are called from showTab with setTimeout
+
+  // Fournisseurs
   const cf=document.getElementById('fournList');
-  if(!fourns.length){c3.innerHTML='<div class="empty"><div class="empty-icon">🧑‍💼</div><div class="empty-text">Aucun fournisseur.</div></div>';return;}
-  c3.innerHTML=fourns.map(f=>{
+  if(!cf) return;
+  if(!fourns.length){cf.innerHTML='<div class="empty"><div class="empty-icon">🧑‍💼</div><div class="empty-text">Aucun fournisseur.</div></div>';return;}
+  cf.innerHTML=fourns.map(f=>{
     const cartesHTML=f.cartes.map(c=>{
       const ventes=sales.filter(s=>s.carteId===c.id);
+      // Revenu = total des ventes liées à cette carte
       const revenu=ventes.reduce((a,s)=>a+s.revenu,0);
       const benef=ventes.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
+      // À récupérer = montant carte - revenu généré
       const aRecuperer=c.montant-revenu;
       const pct=c.montant>0?Math.min(100,(revenu/c.montant)*100):0;
+      // Couleur progressive rouge → jaune → vert
       const r=Math.round(239*(1-pct/100)+16*(pct/100));
       const g=Math.round(68*(1-pct/100)+185*(pct/100));
       const barColor=`rgb(${r},${g},68)`;
@@ -2056,6 +2231,235 @@ function saveEdit(){
   showToast('✅ Vente modifiée!');
 }
 
+// ── FOURNISSEURS MODAL ─────────────────────────────────────────────────────
+function openFournModal(){renderFournList();document.getElementById('fournModal').classList.add('open');}
+function closeFournModal(){document.getElementById('fournModal').classList.remove('open');refreshFournSelects();}
+function renderFournList(){
+  const el=document.getElementById('fournListModal');
+  if(!fourns.length){el.innerHTML='<div style="color:var(--muted);font-size:14px;text-align:center;padding:20px">Aucun fournisseur 👇</div>';return;}
+  el.innerHTML=fourns.map((f,fi)=>{
+    const cartesHTML=f.cartes.map((c)=>{
+      const ventes=sales.filter(s=>s.carteId===c.id);
+      const revenu=ventes.reduce((a,s)=>a+s.revenu,0);
+      const aRec=c.montant-revenu;
+      const pct=c.montant>0?Math.min(100,(revenu/c.montant)*100):0;
+      const r=Math.round(239*(1-pct/100)+16*(pct/100));
+      const g=Math.round(68*(1-pct/100)+185*(pct/100));
+      const barColor=`rgb(${r},${g},68)`;
+      return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:9px 11px;margin-top:5px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:13px;font-weight:600">💳 ${c.label}</div>
+            <div style="font-size:11px;color:var(--muted)">${c.date||'—'} · ${fmt(c.montant)}</div>
+          </div>
+          <div style="display:flex;gap:5px">
+            <button onclick="openEditCarteModal('${f.id}','${c.id}')" style="background:rgba(124,108,252,.12);border:1px solid rgba(124,108,252,.25);color:var(--accent);width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:13px">✏️</button>
+            <button onclick="deleteCarte('${f.id}','${c.id}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red);width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:13px">✕</button>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin:5px 0 3px">
+          <span style="color:var(--green)">Revenu: ${fmt(revenu)}</span>
+          <span style="color:${aRec>0?'var(--red)':'var(--green)'}">
+            ${aRec>0?'À récupérer: '+fmt(aRec):'Récupéré ✅ +'+fmt(Math.abs(aRec))}
+          </span>
+        </div>
+        <div style="height:5px;background:var(--border);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);text-align:right;margin-top:3px">${pct.toFixed(0)}% récupéré</div>
+      </div>`;
+    }).join('');
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:16px;font-weight:700">🧑‍💼 ${f.nom}</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="openCarteModal('${f.id}')" style="background:rgba(124,108,252,.15);border:1px solid rgba(124,108,252,.3);color:var(--accent);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">+ Carte</button>
+          <button onclick="deleteFourn(${fi})" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:13px">✕</button>
+        </div>
+      </div>
+      ${cartesHTML||'<div style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">Aucune carte — appuie sur "+ Carte"</div>'}
+    </div>`;
+  }).join('');
+}
+function addFourn(){
+  const val=document.getElementById('newFournInput').value.trim();
+  if(!val){showToast('⚠️ Entre un nom!',true);return;}
+  if(fourns.find(f=>f.nom===val)){showToast('⚠️ Déjà existant!',true);return;}
+  fourns.push({id:uid(),nom:val,cartes:[]});
+  save(); renderFournList();
+  document.getElementById('newFournInput').value='';
+  showToast('✅ Fournisseur ajouté!');
+}
+function deleteFourn(i){
+  if(!confirm(`Supprimer "${fourns[i].nom}" et toutes ses cartes?`)) return;
+  fourns.splice(i,1); save(); renderFournList();
+}
+
+// ── CARTES ─────────────────────────────────────────────────────────────────
+function openCarteModal(fournId){
+  document.getElementById('carteFournId').value=fournId;
+  document.getElementById('carteLabel').value='';
+  document.getElementById('carteMontant').value='';
+  document.getElementById('carteDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('carteModal').classList.add('open');
+}
+function closeCarteModal(){document.getElementById('carteModal').classList.remove('open');}
+function saveCarte(){
+  const fournId=document.getElementById('carteFournId').value;
+  const label=document.getElementById('carteLabel').value.trim();
+  const montant=parseFloat(document.getElementById('carteMontant').value)||0;
+  const date=document.getElementById('carteDate').value;
+  if(!label||!montant){showToast('⚠️ Label et Montant obligatoires!',true);return;}
+  const f=fourns.find(x=>x.id===fournId); if(!f) return;
+  f.cartes.push({id:uid(),label,montant,date});
+  save(); renderFournList(); refreshFournSelects(); closeCarteModal();
+  showToast('✅ Carte ajoutée!');
+}
+function openEditCarteModal(fournId,carteId){
+  const f=fourns.find(x=>x.id===fournId); if(!f) return;
+  const c=f.cartes.find(x=>x.id===carteId); if(!c) return;
+  document.getElementById('editCarteFournId').value=fournId;
+  document.getElementById('editCarteId').value=carteId;
+  document.getElementById('editCarteLabel').value=c.label||'';
+  document.getElementById('editCarteMontant').value=c.montant||'';
+  document.getElementById('editCarteDate').value=c.date||'';
+  document.getElementById('editCarteModal').classList.add('open');
+}
+function closeEditCarteModal(){document.getElementById('editCarteModal').classList.remove('open');}
+function saveEditCarte(){
+  const fournId=document.getElementById('editCarteFournId').value;
+  const carteId=document.getElementById('editCarteId').value;
+  const label=document.getElementById('editCarteLabel').value.trim();
+  const montant=parseFloat(document.getElementById('editCarteMontant').value)||0;
+  const date=document.getElementById('editCarteDate').value;
+  if(!label||!montant){showToast('⚠️ Label et Montant obligatoires!',true);return;}
+  const f=fourns.find(x=>x.id===fournId); if(!f) return;
+  const ci=f.cartes.findIndex(x=>x.id===carteId); if(ci===-1) return;
+  f.cartes[ci]={...f.cartes[ci],label,montant,date};
+  save(); renderFournList(); refreshFournSelects(); closeEditCarteModal(); updateKPIs();
+  showToast('✅ Carte modifiée!');
+}
+function deleteCarte(fournId,carteId){
+  if(!confirm('Supprimer cette carte?')) return;
+  const f=fourns.find(x=>x.id===fournId); if(!f) return;
+  f.cartes=f.cartes.filter(c=>c.id!==carteId);
+  save(); renderFournList(); refreshFournSelects(); updateKPIs();
+  showToast('✅ Carte supprimée!');
+}
+
+// ── LEAFLET MAP ────────────────────────────────────────────────────────────
+let tunisiaMap=null, groupedChartObj=null;
+
+function initTunisiaMap(){
+  const container=document.getElementById('tunisiaMap');
+  if(!container) return;
+  if(tunisiaMap){ tunisiaMap.remove(); tunisiaMap=null; }
+  tunisiaMap=L.map(container).setView([34.0,9.5],7);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+    subdomains:'abcd', maxZoom:12
+  }).addTo(tunisiaMap);
+  const cityCoords={
+    'Tunis':[36.8065,10.1815],'Sfax':[34.7406,10.7603],'Sousse':[35.8256,10.6368],
+    'Bizerte':[37.2744,9.8739],'Nabeul':[36.4561,10.7376],'Gabès':[33.8815,10.0982],
+    'Kairouan':[35.6781,10.0964],'Gafsa':[34.4250,8.7842],'Monastir':[35.7646,10.8115],
+    'Zaghouan':[36.4029,10.1429],'Mahdia':[35.5045,11.0622],'Béja':[36.7256,9.1817],
+    'Jendouba':[36.5012,8.7802],'Kef':[36.1740,8.7050],'Tozeur':[33.9197,8.1335],
+    'Médenine':[33.3479,10.4972],'Kelibia':[36.8469,11.0953],'Hammamet':[36.3994,10.6133],
+    'Ariana':[36.8625,10.1956],'Ben Arous':[36.7531,10.2309],'Manouba':[36.8081,10.0989],
+    'Siliana':[36.0853,9.3704],'Kasserine':[35.1674,8.8365],'Sidi Bouzid':[35.0382,9.4849],
+    'Tataouine':[32.9297,10.4518],'Kebili':[33.7050,8.9712],'Tabarka':[36.9542,8.7576],
+    'Djerba':[33.8076,10.8451],'Zarzis':[33.5031,11.1119],'Bousalem':[36.6333,8.9667],
+    'Dougga':[36.4228,9.2194],'El Fahs':[36.3667,10.1500],'Grombalia':[36.5961,10.5042],
+    'Korba':[36.5731,10.8578],'Menzel Bourguiba':[37.1528,9.7944],'Soliman':[36.7006,10.4881],
+    'Kalaa Kebira':[35.8667,10.5333],'Msaken':[35.7167,10.5833],'Rades':[36.7728,10.2767],
+    'La Marsa':[36.8781,10.3183],'Carthage':[36.8528,10.3233]
+  };
+  const cityStats={};
+  sales.forEach(sale=>{
+    const city=sale.ville||'';
+    const key=Object.keys(cityCoords).find(c=>c.toLowerCase()===city.toLowerCase());
+    if(key){
+      if(!cityStats[key]) cityStats[key]={revenu:0,benef:0,count:0};
+      cityStats[key].revenu+=sale.revenu;
+      cityStats[key].benef+=(sale.benef||sale.benefBrut||0);
+      cityStats[key].count++;
+    }
+  });
+  const maxRevenue=Math.max(...Object.values(cityStats).map(c=>c.revenu),1);
+  for(const city in cityStats){
+    const stats=cityStats[city];
+    const radius=10+(stats.revenu/maxRevenue)*35;
+    const color=stats.revenu>maxRevenue*0.7?'#ef4444':(stats.revenu>maxRevenue*0.3?'#f59e0b':'#3b82f6');
+    const marker=L.circleMarker(cityCoords[city],{
+      radius,fillColor:color,color:'#fff',weight:1.5,fillOpacity:0.7
+    }).addTo(tunisiaMap);
+    marker.bindPopup(`<b>📍 ${city}</b><br>💰 Revenu: ${fmt(stats.revenu)}<br>📈 Bénéfice: ${fmt(stats.benef)}<br>🛒 Ventes: ${stats.count}`);
+  }
+  const statsEl=document.getElementById('mapStats');
+  if(statsEl){
+    if(!Object.keys(cityStats).length){
+      statsEl.innerHTML='ℹ️ Ajoutez des ventes avec des villes tunisiennes.';
+    } else {
+      const totalRev=Object.values(cityStats).reduce((a,c)=>a+c.revenu,0);
+      statsEl.innerHTML=`🗺️ ${Object.keys(cityStats).length} villes actives · Revenu total: ${fmt(totalRev)}`;
+    }
+  }
+  setTimeout(()=>tunisiaMap.invalidateSize(),200);
+}
+
+// ── CHART.JS: Grouped Bar Chart ────────────────────────────────────────────
+function buildYearSelectorForComp(){
+  const sel=document.getElementById('compYearSelect'); if(!sel) return;
+  const years=[...new Set(sales.map(s=>s.date?s.date.slice(0,4):null).filter(Boolean))];
+  const currentYear=new Date().getFullYear();
+  if(!years.includes(String(currentYear))) years.push(String(currentYear));
+  years.sort((a,b)=>b-a);
+  sel.innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join('');
+  if(years.length) sel.value=years[0];
+}
+
+function updateGroupedChart(){
+  const sel=document.getElementById('compYearSelect'); if(!sel) return;
+  const year=sel.value||new Date().getFullYear();
+  const months=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  const md=Array(12).fill(null).map(()=>({revenu:0,coutTotal:0,benef:0}));
+  sales.forEach(s=>{
+    if(s.date&&s.date.startsWith(year)){
+      const m=parseInt(s.date.split('-')[1])-1;
+      if(m>=0&&m<12){ md[m].revenu+=s.revenu; md[m].coutTotal+=s.coutTotal; md[m].benef+=(s.benef||s.benefBrut||0); }
+    }
+  });
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const textColor=isDark?'#a0a0c0':'#8a7d6b';
+  const gridColor=isDark?'#2a2a3d':'#d6cfc0';
+  const ctx=document.getElementById('groupedBarChart');
+  if(!ctx) return;
+  if(groupedChartObj) groupedChartObj.destroy();
+  groupedChartObj=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:months,
+      datasets:[
+        {label:'💰 Revenu (DT)',data:md.map(d=>d.revenu),backgroundColor:'#3b82f6',borderRadius:5,barPercentage:0.7,categoryPercentage:0.8},
+        {label:'📦 Coût Total (DT)',data:md.map(d=>d.coutTotal),backgroundColor:'#ef4444',borderRadius:5,barPercentage:0.7,categoryPercentage:0.8},
+        {label:'✅ Bénéfice (DT)',data:md.map(d=>d.benef),backgroundColor:'#10b981',borderRadius:5,barPercentage:0.7,categoryPercentage:0.8}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{
+        tooltip:{callbacks:{label:(c)=>`${c.dataset.label}: ${fmt(c.raw)}`}},
+        legend:{position:'top',labels:{color:textColor,boxWidth:14,padding:12}}
+      },
+      scales:{
+        y:{ticks:{callback:(v)=>v===0?'0':fmt(v),color:textColor,font:{size:10}},grid:{color:gridColor}},
+        x:{ticks:{color:textColor,font:{size:11}},grid:{display:false}}
+      }
+    }
+  });
+}
+
 // ── TOAST ──────────────────────────────────────────────────────────────────
 function showToast(msg,err=false){
   const t=document.getElementById('toast');
@@ -2064,10 +2468,10 @@ function showToast(msg,err=false){
   setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-// Export / Import
+// Export JSON — sauvegarde la date
 function exportJSON(){
   if(!sales.length){showToast('⚠️ Aucune vente!',true);return;}
-  const blob=new Blob([JSON.stringify({version:2,exportDate:new Date().toISOString(),sales,fourns,achats,stockItems},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({version:2,exportDate:new Date().toISOString(),sales,fourns,achats,stockItems,clients},null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download=`flousflow-${new Date().toISOString().split('T')[0]}.json`;
@@ -2076,6 +2480,8 @@ function exportJSON(){
   checkBackupReminder();
   showToast('✅ JSON téléchargé!');
 }
+
+// ── EXPORT EXCEL ───────────────────────────────────────────────────────────
 function exportExcel(){
   if(!sales.length){showToast('⚠️ Aucune vente!',true);return;}
   const rows=sales.map((s,i)=>{
@@ -2094,7 +2500,7 @@ function exportExcel(){
   });
   const tv=sales.reduce((a,s)=>a+s.revenu,0);
   const tb=sales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
-  const td=calcARecuperer();
+  const td=calcTotalDettes();
   const summary=[
     {'Indicateur':'Total Ventes (DT)','Valeur':+tv.toFixed(3)},
     {'Indicateur':'Bénéfice Brut (DT)','Valeur':+tb.toFixed(3)},
@@ -2109,6 +2515,8 @@ function exportExcel(){
   XLSX.writeFile(wb,`flousflow-${new Date().toISOString().split('T')[0]}.xlsx`);
   showToast('✅ Excel téléchargé!');
 }
+
+// ── IMPORT JSON ────────────────────────────────────────────────────────────
 function importData(event){
   const file=event.target.files[0]; if(!file) return;
   const reader=new FileReader();
@@ -2121,6 +2529,7 @@ function importData(event){
       if(data.fourns) fourns=data.fourns;
       if(data.achats) achats=data.achats;
       if(data.stockItems){ stockItems=data.stockItems; saveStock(); }
+      if(data.clients){ clients=data.clients; saveClients(); }
       save(); updateKPIs(); renderSales(); refreshFournSelects();
       showToast(`✅ ${sales.length} vente(s) importée(s)!`);
     } catch{showToast('❌ Fichier invalide!',true);}
@@ -2128,139 +2537,6 @@ function importData(event){
   };
   reader.readAsText(file);
 }
-
-// ---- NOUVELLES FONCTIONS : CARTE TUNISIE ET GRAPHIQUE COMPARAISON ----
-let tunisiaMap = null;
-let groupedChartObj = null;
-
-function initTunisiaMap() {
-  const container = document.getElementById('tunisiaMap');
-  if (!container) return;
-  if (tunisiaMap) tunisiaMap.remove();
-  tunisiaMap = L.map(container).setView([34.0, 9.5], 7);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-    subdomains: 'abcd', maxZoom: 10
-  }).addTo(tunisiaMap);
-  const cityCoords = {
-    "Tunis": [36.8065, 10.1815], "Sfax": [34.7406, 10.7603], "Sousse": [35.8256, 10.6368],
-    "Bizerte": [37.2744, 9.8739], "Nabeul": [36.4561, 10.7376], "Gabès": [33.8815, 10.0982],
-    "Kairouan": [35.6781, 10.0964], "Gafsa": [34.4250, 8.7842], "Monastir": [35.7646, 10.8115],
-    "Zaghouan": [36.4029, 10.1429], "Mahdia": [35.5045, 11.0622], "Béja": [36.7256, 9.1817],
-    "Jendouba": [36.5012, 8.7802], "Kef": [36.1740, 8.7050], "Tozeur": [33.9197, 8.1335],
-    "Médenine": [33.3479, 10.4972]
-  };
-  let cityStats = {};
-  sales.forEach(sale => {
-    let city = sale.ville || '';
-    if (city && cityCoords[city]) {
-      if (!cityStats[city]) cityStats[city] = { revenu: 0, benef: 0, count: 0 };
-      cityStats[city].revenu += sale.revenu;
-      cityStats[city].benef += (sale.benefBrut || 0);
-      cityStats[city].count++;
-    }
-  });
-  let maxRevenue = Math.max(...Object.values(cityStats).map(c => c.revenu), 1);
-  for (let city in cityStats) {
-    let stats = cityStats[city];
-    let radius = 10 + (stats.revenu / maxRevenue) * 35;
-    let color = stats.revenu > maxRevenue * 0.7 ? '#ef4444' : (stats.revenu > maxRevenue * 0.3 ? '#f59e0b' : '#3b82f6');
-    let marker = L.circleMarker(cityCoords[city], {
-      radius: radius, fillColor: color, color: '#fff', weight: 1.5, fillOpacity: 0.7
-    }).addTo(tunisiaMap);
-    marker.bindPopup(`
-      <b>📍 ${city}</b><br>
-      💰 Revenu: ${fmt(stats.revenu)}<br>
-      📈 Bénéfice: ${fmt(stats.benef)}<br>
-      🛒 Ventes: ${stats.count}
-    `);
-  }
-  if (Object.keys(cityStats).length === 0) {
-    L.marker([34.0, 9.5]).bindPopup("Aucune vente avec ville tunisienne.").addTo(tunisiaMap);
-    document.getElementById('mapStats').innerHTML = "ℹ️ Ajoutez des ventes avec des villes (Tunis, Sfax, Sousse...)";
-  } else {
-    document.getElementById('mapStats').innerHTML = `🗺️ ${Object.keys(cityStats).length} villes actives · Revenu total sur carte: ${fmt(Object.values(cityStats).reduce((a,c)=>a+c.revenu,0))}`;
-  }
-  setTimeout(() => tunisiaMap.invalidateSize(), 150);
-}
-
-function buildYearSelectorForComp() {
-  const sel = document.getElementById('compYearSelect');
-  if (!sel) return;
-  let years = [...new Set(sales.map(s => s.date ? s.date.slice(0,4) : null).filter(Boolean))];
-  let currentYear = new Date().getFullYear();
-  if (!years.includes(String(currentYear))) years.push(String(currentYear));
-  years.sort((a,b) => b - a);
-  sel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
-  if (years.length) sel.value = years[0];
-}
-
-function updateGroupedChart() {
-  let year = document.getElementById('compYearSelect').value;
-  if (!year) { let y = new Date().getFullYear(); document.getElementById('compYearSelect').value = y; year = y; }
-  const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
-  let monthlyData = Array(12).fill().map(() => ({ revenu: 0, coutTotal: 0, benef: 0 }));
-  sales.forEach(sale => {
-    if (sale.date && sale.date.startsWith(year)) {
-      let month = parseInt(sale.date.split('-')[1]) - 1;
-      if (month >= 0 && month < 12) {
-        monthlyData[month].revenu += sale.revenu;
-        monthlyData[month].coutTotal += sale.coutTotal;
-        monthlyData[month].benef += (sale.benefBrut || 0);
-      }
-    }
-  });
-  let labels = months.map((m,i) => monthlyData[i].revenu > 0 || monthlyData[i].coutTotal > 0 ? m : '');
-  let revenuData = monthlyData.map(d => d.revenu);
-  let coutData = monthlyData.map(d => d.coutTotal);
-  let benefData = monthlyData.map(d => d.benef);
-  const ctx = document.getElementById('groupedBarChart').getContext('2d');
-  if (groupedChartObj) groupedChartObj.destroy();
-  groupedChartObj = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [
-        { label: '💰 Revenu (DT)', data: revenuData, backgroundColor: '#3b82f6', borderRadius: 6, barPercentage: 0.7, categoryPercentage: 0.8 },
-        { label: '📦 Coût Total (DT)', data: coutData, backgroundColor: '#ef4444', borderRadius: 6 },
-        { label: '✅ Bénéfice (DT)', data: benefData, backgroundColor: '#10b981', borderRadius: 6 }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: true,
-      plugins: {
-        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${fmt(ctx.raw)}` } },
-        legend: { position: 'top', labels: { color: getComputedStyle(document.body).getPropertyValue('--text') } }
-      },
-      scales: {
-        y: { ticks: { callback: (val) => fmt(val), color: '#6b6b8a' }, grid: { color: '#2a2a3d' } },
-        x: { ticks: { color: '#a0a0c0' } }
-      }
-    }
-  });
-}
-
-// ── PAGINATION ─────────────────────────────────────────────────────────────
-function goPage(dir){
-  currentPage+=dir;
-  renderSales();
-  window.scrollTo(0,0);
-}
-
-// Final initialisation
-document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
-document.getElementById('aDate').value = new Date().toISOString().split('T')[0];
-buildMonthSelect();
-refreshFournSelects();
-refreshAchatFournSelect();
-refreshStockModelList();
-updateKPIs();
-checkBackupReminder();
-buildYearSelectorForComp();
-setTimeout(() => {
-  if(document.getElementById('tab-carte').classList.contains('active')) initTunisiaMap();
-  if(document.getElementById('tab-comparaison').classList.contains('active')) updateGroupedChart();
-}, 300);
 </script>
 </body>
 </html>
