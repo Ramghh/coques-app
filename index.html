@@ -126,7 +126,8 @@ input::placeholder{color:var(--muted)}
 .dash-section{margin-bottom:22px}
 .dash-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
 .city-list{display:flex;flex-direction:column;gap:8px}
-.city-row{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow)}
+.city-row{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);cursor:pointer;transition:background 0.2s}
+.city-row:hover{background:var(--surface);border-color:var(--accent)}
 .city-name{font-weight:600;font-size:17px}
 .city-stats{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-top:3px}
 .city-benef{font-family:'DM Mono',monospace;font-size:16px;color:var(--green);font-weight:600}
@@ -2061,7 +2062,7 @@ function renderDash(){
   const rg=map=>{
     const mx=Math.max(...Object.values(map).map(c=>c.benef),1);
     return Object.entries(map).sort((a,b)=>b[1].benef-a[1].benef).map(([n,d])=>`
-      <div class="city-row">
+      <div class="city-row" onclick="showCitySales('${n.replace(/'/g, "\\'")}')">
         <div>
           <div class="city-name">${n}</div>
           <div class="city-stats">${d.count} vente${d.count>1?'s':''} · ${fmt(d.revenu)}</div>
@@ -2345,6 +2346,27 @@ function deleteCarte(fournId,carteId){
   f.cartes=f.cartes.filter(c=>c.id!==carteId);
   save(); renderFournList(); refreshFournSelects(); updateKPIs();
   showToast('✅ Carte supprimée!');
+}
+
+// ── CLICK ON CITY (NEW FEATURE) ────────────────────────────────────────────
+function showCitySales(city) {
+  // Basculer vers l'onglet Ventes
+  const ventesBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => btn.textContent.includes('📋 Ventes'));
+  if (ventesBtn) showTab('ventes', ventesBtn);
+  // Réinitialiser tous les filtres
+  resetFilters();
+  // Rafraîchir les selects pour s'assurer que la ville existe
+  refreshFilterSelects();
+  // Définir le filtre ville
+  const filterVille = document.getElementById('filterVille');
+  if (filterVille) {
+    filterVille.value = city;
+  }
+  // Déclencher l'affichage
+  renderSales();
+  // Optionnel: faire défiler jusqu'à la liste
+  const salesList = document.getElementById('salesList');
+  if (salesList) salesList.scrollIntoView({ behavior: 'smooth' });
 }
 
 // ── LEAFLET MAP ────────────────────────────────────────────────────────────
