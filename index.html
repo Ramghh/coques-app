@@ -484,6 +484,14 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     <button onclick="resetFilters()" style="width:100%;padding:9px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">🔄 Réinitialiser les filtres</button>
   </div>
 
+  <!-- FILTRES RAPIDES -->
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <button class="sort-btn" id="qfBtn-today"   onclick="applyQuickFilter('today',this)"  >📅 Aujourd'hui</button>
+    <button class="sort-btn" id="qfBtn-week"    onclick="applyQuickFilter('week',this)"   >📆 Cette semaine</button>
+    <button class="sort-btn" id="qfBtn-month"   onclick="applyQuickFilter('month',this)"  >🗓️ Ce mois</button>
+    <button class="sort-btn" id="qfBtn-all"     onclick="applyQuickFilter('all',this)"    >🔄 Tout</button>
+  </div>
+
   <div id="filterInfo" style="display:none;margin-bottom:10px;padding:10px 14px;background:rgba(124,108,252,.1);border:1px solid rgba(124,108,252,.25);border-radius:10px;font-size:13px;color:var(--accent)"></div>
 
   <div class="sort-bar">
@@ -563,6 +571,16 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       <select id="yearSelect" onchange="renderAnnuel()"></select>
     </div>
     <div class="month-cards" id="annuelKpis"></div>
+    <!-- Trend chart annuel -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">📈 Évolution mensuelle</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="sort-btn active" id="trendByBenef" onclick="setTrendMode('benef',this)">💰 Bénéfice</button>
+        <button class="sort-btn" id="trendByRevenu" onclick="setTrendMode('revenu',this)">💵 Revenu</button>
+        <button class="sort-btn" id="trendByVentes" onclick="setTrendMode('ventes',this)">📦 Ventes</button>
+      </div>
+      <canvas id="annuelTrendChart" style="width:100%;max-height:200px"></canvas>
+    </div>
     <div class="month-sales-title">📊 Détail par mois</div>
     <div id="annuelMonths" style="display:flex;flex-direction:column;gap:8px"></div>
   </div>
@@ -1571,6 +1589,33 @@ function refreshFilterSelects(){
   fm.value=curM;
 }
 
+function applyQuickFilter(mode, btn){
+  ['today','week','month','all'].forEach(m=>{
+    const b=document.getElementById('qfBtn-'+m);
+    if(b) b.classList.remove('active');
+  });
+  if(btn) btn.classList.add('active');
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const todayStr=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const from=document.getElementById('filterDateFrom');
+  const to=document.getElementById('filterDateTo');
+  if(!from||!to) return;
+  if(mode==='today'){
+    from.value=todayStr; to.value=todayStr;
+  } else if(mode==='week'){
+    const d=now.getDay();
+    const mon=new Date(now); mon.setDate(now.getDate()-(d===0?6:d-1));
+    from.value=`${mon.getFullYear()}-${pad(mon.getMonth()+1)}-${pad(mon.getDate())}`;
+    to.value=todayStr;
+  } else if(mode==='month'){
+    from.value=`${now.getFullYear()}-${pad(now.getMonth()+1)}-01`;
+    to.value=todayStr;
+  } else {
+    from.value=''; to.value='';
+  }
+  currentPage=1; renderSales();
+}
 function resetFilters(){
   ['filterFourn','filterCarte','filterVille','filterModel'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
   ['filterDateFrom','filterDateTo','filterBenefMin','filterBenefMax'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
@@ -1924,6 +1969,92 @@ function buildMonthSelect(){
   });
 }
 
+let trendMode='benef';
+function setTrendMode(mode,btn){
+  trendMode=mode;
+  document.querySelectorAll('#tab-annuel .sort-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderAnnuelTrendChart();
+}
+function renderAnnuelTrendChart(){
+  const year=document.getElementById('yearSelect')?.value;
+  if(!year) return;
+  const months=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  const ySales=sales.filter(s=>s.date&&s.date.startsWith(year));
+  const labels=[];
+  const values=[];
+  months.forEach((m,i)=>{
+    const ms=`${year}-${String(i+1).padStart(2,'0')}`;
+    const mSales=ySales.filter(s=>s.date&&s.date.startsWith(ms));
+    if(!mSales.length) return;
+    labels.push(m);
+    if(trendMode==='benef') values.push(mSales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0));
+    else if(trendMode==='revenu') values.push(mSales.reduce((a,s)=>a+s.revenu,0));
+    else values.push(mSales.length);
+  });
+  drawAnnuelLineChart('annuelTrendChart', labels, values);
+}
+function drawAnnuelLineChart(canvasId, labels, values){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas) return;
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const textColor=isDark?'#6b6b8a':'#8a7d6b';
+  const gridColor=isDark?'#2a2a3d':'#d6cfc0';
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth||320;
+  const H=200;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+  if(!labels.length||values.every(v=>v===0)){
+    ctx.fillStyle=textColor; ctx.font='13px DM Sans,sans-serif';
+    ctx.textAlign='center'; ctx.fillText('Aucune donnée',W/2,H/2); return;
+  }
+  const maxVal=Math.max(...values,1);
+  const pad={top:18,right:14,bottom:36,left:14};
+  const cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
+  // Grid
+  ctx.strokeStyle=gridColor; ctx.lineWidth=1;
+  for(let i=0;i<=3;i++){
+    const y=pad.top+cH*(1-i/3);
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
+  }
+  const pts=values.map((v,i)=>({
+    x:pad.left+(i/(labels.length-1||1))*cW,
+    y:pad.top+cH*(1-v/maxVal)
+  }));
+  // Gradient fill
+  const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+cH);
+  const c1=trendMode==='benef'?'124,108,252':trendMode==='revenu'?'245,158,11':'16,185,129';
+  grad.addColorStop(0,`rgba(${c1},0.35)`);
+  grad.addColorStop(1,`rgba(${c1},0.02)`);
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pad.top+cH);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x,pad.top+cH);
+  ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+  // Smooth line
+  ctx.beginPath();
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle=`rgb(${c1})`; ctx.lineWidth=2.5;
+  ctx.lineJoin='round'; ctx.stroke();
+  // Dots + value labels
+  pts.forEach((p,i)=>{
+    ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2);
+    ctx.fillStyle=`rgb(${c1})`; ctx.fill();
+    ctx.strokeStyle=isDark?'#0a0a0f':'#fdfaf4'; ctx.lineWidth=2; ctx.stroke();
+    // Value on top
+    ctx.fillStyle=`rgb(${c1})`; ctx.font=`bold 10px DM Mono,monospace`;
+    ctx.textAlign='center';
+    const label=trendMode==='ventes'?values[i]+'':values[i]>=1000?(values[i]/1000).toFixed(1)+'k':values[i].toFixed(0);
+    ctx.fillText(label, p.x, p.y-8);
+    // Month label
+    ctx.fillStyle=textColor; ctx.font='10px DM Sans,sans-serif';
+    ctx.fillText(labels[i], p.x, H-pad.bottom+14);
+  });
+}
 function renderAnnuel(){
   const year=document.getElementById('yearSelect').value;
   const ySales=sales.filter(s=>s.date&&s.date.startsWith(year));
@@ -1936,6 +2067,9 @@ function renderAnnuel(){
     <div class="month-kpi"><div class="month-kpi-label">✅ Bénéfice</div><div class="month-kpi-val" style="color:var(--green)">${fmt(tb)}</div></div>
     <div class="month-kpi"><div class="month-kpi-label">🛒 Coût Total</div><div class="month-kpi-val" style="color:var(--red)">${fmt(tc)}</div></div>
     <div class="month-kpi"><div class="month-kpi-label">📦 Ventes</div><div class="month-kpi-val" style="color:var(--accent)">${ySales.length}</div></div>`;
+
+  // Draw trend chart
+  setTimeout(()=>renderAnnuelTrendChart(), 30);
 
   const months=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const maxBenef=Math.max(...months.map((_,i)=>{
