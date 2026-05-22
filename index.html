@@ -99,6 +99,7 @@ input::placeholder{color:var(--muted)}
 .sale-benef{font-family:'DM Mono',monospace;font-size:16px;font-weight:700;padding:5px 12px;border-radius:10px;white-space:nowrap;flex-shrink:0;margin-left:8px}
 .sale-benef.pos{background:rgba(16,185,129,.15);color:var(--green)}
 .sale-benef.neg{background:rgba(239,68,68,.15);color:var(--red)}
+.sale-benef.neu{background:rgba(107,107,138,.12);color:var(--muted)}
 .sale-meta{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
 .tag{font-size:13px;padding:5px 10px;border-radius:8px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
 .tag.city{color:var(--yellow);border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.08)}
@@ -211,7 +212,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 <div class="kpi-strip">
   <div class="kpi"><div class="kpi-label">Total Ventes</div><div class="kpi-value yellow" id="kpiVentes">0 DT</div></div>
   <div class="kpi"><div class="kpi-label">Bénéfice</div><div class="kpi-value green" id="kpiBenef">0 DT</div></div>
-  <div class="kpi"><div class="kpi-label">Marge</div><div class="kpi-value purple" id="kpiMarge">0%</div></div>
+  <div class="kpi"><div class="kpi-label">Clients uniques</div><div class="kpi-value purple" id="kpiClients">0</div></div>
 </div>
 
 <div style="margin:14px 18px;background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.3);border-radius:var(--radius);padding:16px 18px;display:flex;align-items:center;justify-content:space-between">
@@ -352,9 +353,9 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
         <datalist id="fModelList"></datalist>
         <div id="stockIndicator" style="display:none;margin-top:5px;font-size:12px;padding:6px 10px;border-radius:8px;font-family:'DM Mono',monospace;font-weight:600"></div>
       </div>
-      <div><label>Couleur</label><input type="text" id="fColor" placeholder="Noir"></div>
-      <div><label>Ville</label><input type="text" id="fVille" placeholder="Tunis"></div>
-      <div><label>N° Client</label><input type="text" id="fClient" placeholder="C-0001"></div>
+      <div><label>Couleur</label><input type="text" id="fColor" placeholder="Noir" list="fColorList"><datalist id="fColorList"></datalist></div>
+      <div><label>Ville</label><input type="text" id="fVille" placeholder="Tunis" list="fVilleList"><datalist id="fVilleList"></datalist></div>
+      <div><label>N° Client</label><input type="text" id="fClient" placeholder="C-0001" list="fClientList"><datalist id="fClientList"></datalist></div>
       <div><label>Quantité</label><input type="number" id="fQty" placeholder="1" min="1"></div>
       <div><label>Fournisseur</label>
         <select id="fFourn" onchange="filterCartesByFourn(this.value,'fCarte')">
@@ -623,11 +624,16 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     </div>
   </div>
   <div class="backup-card">
-    <div class="backup-title">📥 Importer</div>
-    <div class="backup-desc">Restaure tes données depuis un fichier JSON exporté.</div>
+    <div class="backup-title">&#x1F4E5; Importer</div>
+    <div class="backup-desc">Restaure ou fusionne tes donn&#xe9;es depuis un fichier JSON export&#xe9;.</div>
     <div class="backup-btns">
-      <button class="btn-imp" onclick="document.getElementById('fileInput').click()">📂 Choisir fichier .json</button>
+      <button class="btn-imp" onclick="triggerImport('replace')">&#x1F504; Remplacer &#x2014; &#xe9;crase tout</button>
+      <button class="btn-imp" style="background:linear-gradient(135deg,rgba(124,108,252,.15),rgba(124,108,252,.05));border:1px solid rgba(124,108,252,.3);color:var(--accent)" onclick="triggerImport('merge')">&#x1F500; Fusionner &#x2014; ajoute sans &#xe9;craser</button>
       <input type="file" id="fileInput" accept=".json" onchange="importData(event)">
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:var(--muted);line-height:1.7">
+      <strong style="color:var(--text)">&#x1F504; Remplacer</strong> &#x2014; efface les donn&#xe9;es actuelles et importe tout.<br>
+      <strong style="color:var(--accent)">&#x1F500; Fusionner</strong> &#x2014; garde tes donn&#xe9;es et ajoute les nouvelles (ignore les doublons par ID).
     </div>
   </div>
   <div class="backup-info">
@@ -838,10 +844,11 @@ function allCartes(){
 function totalInvesti(){
   return fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>b+c.montant,0),0);
 }
-// À récupérer = total investi - bénéfice total (négatif = encore à récupérer, positif = profit)
+// À récupérer = total investi - revenu des ventes liées aux cartes
+// (on récupère l'investissement via le revenu généré par chaque carte, pas le bénéfice global)
 function calcARecuperer(){
-  const benef=sales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
-  return totalInvesti()-benef;
+  const revCartes=sales.filter(s=>s.carteId).reduce((a,s)=>a+s.revenu,0);
+  return totalInvesti()-revCartes;
 }
 
 // ── THEME ──────────────────────────────────────────────────────────────────
@@ -1306,9 +1313,36 @@ function checkStockForModel(){
 }
 
 function refreshStockModelList(){
+  // fModelList: stock + ventes précédentes
   const dl=document.getElementById('fModelList');
-  if(!dl) return;
-  dl.innerHTML=stockItems.map(s=>`<option value="${s.model}">`).join('');
+  if(dl){
+    const stockModels=stockItems.map(s=>s.model);
+    const saleModels=[...new Set(sales.map(s=>s.model).filter(Boolean))];
+    const allModels=[...new Set([...stockModels,...saleModels])].sort();
+    dl.innerHTML=allModels.map(m=>`<option value="${m}">`).join('');
+  }
+  // fVilleList: villes des ventes précédentes
+  const vdl=document.getElementById('fVilleList');
+  if(vdl){
+    const villes=[...new Set(sales.map(s=>s.ville).filter(Boolean))].sort();
+    vdl.innerHTML=villes.map(v=>`<option value="${v}">`).join('');
+  }
+  // fColorList: couleurs précédentes
+  const cdl=document.getElementById('fColorList');
+  if(cdl){
+    const colors=[...new Set(sales.map(s=>s.color).filter(Boolean))].sort();
+    cdl.innerHTML=colors.map(c=>`<option value="${c}">`).join('');
+  }
+  // fClientList: clients précédents (ref ou nom)
+  const cldl=document.getElementById('fClientList');
+  if(cldl){
+    const refs=[...new Set([
+      ...clients.map(c=>c.ref).filter(Boolean),
+      ...clients.map(c=>c.nom).filter(Boolean),
+      ...sales.map(s=>s.client).filter(Boolean)
+    ])].sort();
+    cldl.innerHTML=refs.map(r=>`<option value="${r}">`).join('');
+  }
 }
 
 // ── ADD SALE ───────────────────────────────────────────────────────────────
@@ -1353,7 +1387,8 @@ function updateKPIs(){
   const mg=tv>0?benef/tv:0;
   document.getElementById('kpiVentes').textContent=fmt(tv);
   document.getElementById('kpiBenef').textContent=fmt(benef);
-  document.getElementById('kpiMarge').textContent=fmtP(mg);
+  const uniqueClients=new Set(sales.map(s=>s.client).filter(Boolean)).size;
+  document.getElementById('kpiClients').textContent=uniqueClients;
   document.getElementById('kpiCout').textContent=fmt(cout);
   document.getElementById('kpiNbVentes').textContent=sales.length;
   document.getElementById('totalCount').textContent=sales.length+' vente'+(sales.length>1?'s':'');
@@ -1558,7 +1593,13 @@ function getFiltered(){
     const fNom=fObj?fObj.nom:'';
     const benef=s.benef||s.benefBrut||0;
     const matchQ=!q||(s.model||'').toLowerCase().includes(q)||(s.ville||'').toLowerCase().includes(q)||(s.client||'').toLowerCase().includes(q)||(s.color||'').toLowerCase().includes(q)||fNom.toLowerCase().includes(q);
-    const matchCarte=!filterCarteId||s.carteId===filterCarteId;
+    const matchCarte=!filterCarteId||(()=>{
+      // Compatibilité: certaines ventes ont carteId=id, d'autres ont carteId=label (anciennes données)
+      if(s.carteId===filterCarteId) return true;
+      const carteObj=allCartes().find(c=>c.id===filterCarteId);
+      if(carteObj && s.carteId===carteObj.label) return true;
+      return false;
+    })();
     const matchFourn=!filterFournId||s.fourn===filterFournId||(fObj&&fObj.id===filterFournId);
     const matchVille=!filterVille||s.ville===filterVille;
     const matchModel=!filterModel||s.model===filterModel;
@@ -1604,10 +1645,11 @@ function cardHTML(s,q=''){
   const fNom=fObj?fObj.nom:(s.fourn||'');
   const carteObj=allCartes().find(x=>x.id===s.carteId);
   const bv=s.benefBrut||s.benef||0; // compatibilité
+  const bClass=bv>0?'pos':bv<0?'neg':'neu';
   return `<div class="sale-card">
     <div class="sale-top">
       <div class="sale-model">${hl(s.model,q)}</div>
-      <div class="sale-benef ${bv>=0?'pos':'neg'}">${bv>=0?'+':''}${fmt(bv)}</div>
+      <div class="sale-benef ${bClass}">${bv>0?'+':''}${fmt(bv)}</div>
     </div>
     <div class="sale-meta">
       <span class="tag">📅 ${ds}</span>
@@ -1700,13 +1742,20 @@ function renderSales(){
 
   // Render cards
   let html='',last=null;
+  // Pré-calcul des stats par date depuis pageData uniquement (correct par page)
+  const dateStatsMap={};
+  pageData.forEach(v=>{
+    const dk=v.date||'';
+    if(!dateStatsMap[dk]) dateStatsMap[dk]={count:0,benef:0};
+    dateStatsMap[dk].count++;
+    dateStatsMap[dk].benef+=(v.benefBrut||v.benef||0);
+  });
   pageData.forEach(v=>{
     if(currentSort!=='benef'){
       const dk=v.date||'';
       if(dk!==last){
-        const db=sorted.filter(x=>x.date===dk).reduce((a,x)=>a+(x.benefBrut||x.benef||0),0);
-        const dc=sorted.filter(x=>x.date===dk).length;
-        html+=`<div class="date-group-header">📅 ${fmtDate(dk)}<span>${dc} vente${dc>1?'s':''} · ${fmt(db)}</span></div>`;
+        const ds=dateStatsMap[dk];
+        html+=`<div class="date-group-header">📅 ${fmtDate(dk)}<span>${ds.count} vente${ds.count>1?'s':''} · ${fmt(ds.benef)}</span></div>`;
         last=dk;
       }
     }
@@ -2377,7 +2426,11 @@ function initTunisiaMap(){
   if(!container) return;
   if(tunisiaMap){ tunisiaMap.remove(); tunisiaMap=null; }
   tunisiaMap=L.map(container).setView([34.0,9.5],7);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+  const isDarkMap=document.documentElement.getAttribute('data-theme')==='dark';
+  const tileUrl=isDarkMap
+    ?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    :'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  L.tileLayer(tileUrl,{
     attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
     subdomains:'abcd', maxZoom:12
   }).addTo(tunisiaMap);
@@ -2531,14 +2584,50 @@ function exportExcel(){
     {'Indicateur':'Marge Nette (%)','Valeur':+(tv>0?((tb-td)/tv)*100:0).toFixed(1)},
     {'Indicateur':'Nombre de Ventes','Valeur':sales.length},
   ];
+  // Sheet Cartes
+  const cartesRows=[];
+  fourns.forEach(f=>{
+    f.cartes.forEach(c=>{
+      const revCarte=sales.filter(s=>s.carteId===c.id).reduce((a,s)=>a+s.revenu,0);
+      const aRec=c.montant-revCarte;
+      cartesRows.push({
+        'Fournisseur':f.nom,'Carte':c.label,'Date':c.date||'',
+        'Montant chargé (DT)':+c.montant.toFixed(3),
+        'Revenu généré (DT)':+revCarte.toFixed(3),
+        'À récupérer (DT)':+aRec.toFixed(3),
+        'Récupéré (%)':+(c.montant>0?Math.min(100,(revCarte/c.montant)*100):0).toFixed(1)
+      });
+    });
+  });
+
+  // Sheet Stock
+  const stockRows=stockItems.map(s=>{
+    const vendu=sales.filter(x=>x.model&&x.model.toLowerCase()===s.model.toLowerCase()).reduce((a,x)=>a+(x.qty||1),0);
+    return {
+      'Modèle':s.model,'Quantité totale':s.qty,'Vendus':vendu,
+      'Restants':Math.max(0,s.qty-vendu),
+      'Prix achat (DT)':+(s.prix||0).toFixed(3),
+      'Valeur stock (DT)':+(Math.max(0,s.qty-vendu)*(s.prix||0)).toFixed(3),
+      'Notes':s.notes||''
+    };
+  });
+
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Ventes');
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(summary),'Résumé');
+  if(cartesRows.length) XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(cartesRows),'Cartes');
+  if(stockRows.length) XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(stockRows),'Stock');
   XLSX.writeFile(wb,`flousflow-${new Date().toISOString().split('T')[0]}.xlsx`);
   showToast('✅ Excel téléchargé!');
 }
 
 // ── IMPORT JSON ────────────────────────────────────────────────────────────
+let _importMode='replace';
+function triggerImport(mode){
+  _importMode=mode;
+  document.getElementById('fileInput').click();
+}
+
 function importData(event){
   const file=event.target.files[0]; if(!file) return;
   const reader=new FileReader();
@@ -2546,15 +2635,43 @@ function importData(event){
     try{
       const data=JSON.parse(e.target.result);
       if(!data.sales||!Array.isArray(data.sales)) throw new Error();
-      if(!confirm(`Importer ${data.sales.length} vente(s)?\n⚠️ Données actuelles remplacées.`)) return;
-      sales=data.sales;
-      if(data.fourns) fourns=data.fourns;
-      if(data.achats) achats=data.achats;
-      if(data.stockItems){ stockItems=data.stockItems; saveStock(); }
-      if(data.clients){ clients=data.clients; saveClients(); }
-      save(); updateKPIs(); renderSales(); refreshFournSelects();
-      showToast(`✅ ${sales.length} vente(s) importée(s)!`);
-    } catch{showToast('❌ Fichier invalide!',true);}
+
+      if(_importMode==='replace'){
+        if(!confirm(`Importer ${data.sales.length} vente(s) ?\n⚠️ Données actuelles remplacées.`)) return;
+        sales=data.sales;
+        if(data.fourns) fourns=data.fourns;
+        if(data.achats) achats=data.achats;
+        if(data.stockItems){ stockItems=data.stockItems; saveStock(); }
+        if(data.clients){ clients=data.clients; saveClients(); }
+        save(); updateKPIs(); renderSales(); refreshFournSelects(); refreshStockModelList();
+        showToast(`✅ ${sales.length} vente(s) importée(s)!`);
+
+      } else {
+        // Mode fusion — ajoute uniquement les éléments nouveaux (par ID)
+        const existingIds=new Set(sales.map(s=>String(s.id)));
+        const newSales=(data.sales||[]).filter(s=>!existingIds.has(String(s.id)));
+        const existingAchatIds=new Set(achats.map(a=>String(a.id)));
+        const newAchats=(data.achats||[]).filter(a=>!existingAchatIds.has(String(a.id)));
+        const existingStockIds=new Set(stockItems.map(s=>s.id));
+        const newStock=(data.stockItems||[]).filter(s=>!existingStockIds.has(s.id));
+        const existingClientIds=new Set(clients.map(c=>c.id));
+        const newClients=(data.clients||[]).filter(c=>!existingClientIds.has(c.id));
+        const existingFournIds=new Set(fourns.map(f=>f.id));
+        const newFourns=(data.fourns||[]).filter(f=>!existingFournIds.has(f.id));
+
+        if(!confirm(`Fusionner ?\n+${newSales.length} vente(s)  +${newAchats.length} achat(s)  +${newFourns.length} fourn.  +${newClients.length} client(s)\n(doublons ignorés)`)) return;
+
+        sales=[...sales,...newSales];
+        achats=[...achats,...newAchats];
+        stockItems=[...stockItems,...newStock];
+        clients=[...clients,...newClients];
+        fourns=[...fourns,...newFourns];
+
+        saveAchats(); saveStock(); saveClients();
+        save(); updateKPIs(); renderSales(); refreshFournSelects(); refreshStockModelList();
+        showToast(`✅ Fusion: +${newSales.length} vente(s) ajoutée(s)!`);
+      }
+    } catch(err){showToast('❌ Fichier invalide!',true);}
     event.target.value='';
   };
   reader.readAsText(file);
