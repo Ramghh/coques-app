@@ -113,7 +113,9 @@ input::placeholder{color:var(--muted)}
 /* Boutons en bas */
 .sale-actions{display:flex;gap:8px;margin-top:4px}
 .btn-edit-card{flex:1;padding:9px;background:rgba(124,108,252,.1);border:1px solid rgba(124,108,252,.2);color:var(--accent);border-radius:10px;cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600}
-.btn-del-card{flex:1;padding:9px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:var(--red);border-radius:10px;cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600}
+.btn-dup-card{flex:1;padding:9px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--yellow);border-radius:10px;cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600}
+.fab{position:fixed;bottom:28px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;font-size:28px;border:none;cursor:pointer;box-shadow:0 4px 18px rgba(124,108,252,.5);z-index:150;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s;line-height:1}
+.fab:active{transform:scale(.93);box-shadow:0 2px 10px rgba(124,108,252,.4)}
 
 /* TOP VENTES */
 .top-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
@@ -1671,7 +1673,8 @@ function cardHTML(s,q=''){
     </div>
     <div class="sale-actions">
       <button class="btn-edit-card" onclick="openEditModal(${s.id})">✏️ Modifier</button>
-      <button class="btn-del-card" onclick="deleteSale(${s.id})">🗑️ Supprimer</button>
+      <button class="btn-dup-card"  onclick="duplicateSale(${s.id})">📋 Copier</button>
+      <button class="btn-del-card"  onclick="deleteSale(${s.id})">🗑️</button>
     </div>
   </div>`;
 }
@@ -1772,6 +1775,34 @@ function deleteSale(id){
   if(!confirm('Supprimer cette vente?')) return;
   sales=sales.filter(s=>s.id!==id);
   save(); updateKPIs(); renderSales();
+}
+
+function duplicateSale(id){
+  const s=sales.find(x=>x.id===id); if(!s) return;
+  const today=new Date().toISOString().split('T')[0];
+  // Fill form fields
+  document.getElementById('fDate').value=today;
+  document.getElementById('fModel').value=s.model||'';
+  document.getElementById('fColor').value=s.color||'';
+  document.getElementById('fVille').value=s.ville||'';
+  document.getElementById('fClient').value=s.client||'';
+  document.getElementById('fQty').value=s.qty||1;
+  document.getElementById('fPrix').value=s.prix||'';
+  document.getElementById('fCout').value=s.cout||'';
+  document.getElementById('fEnvoi').value=s.envoi||'';
+  document.getElementById('fFourn').value=s.fourn||'';
+  document.getElementById('fCarte').value=s.carteId||'';
+  // Switch to Ajouter tab
+  const btn=document.querySelector('.tab-btn[onclick*="ajouter"]');
+  showTab('ajouter', btn);
+  window.scrollTo({top:0,behavior:'smooth'});
+  showToast('📋 Vente copiée — vérifier et enregistrer!');
+}
+
+function goAddSale(){
+  const btn=document.querySelector('.tab-btn[onclick*="ajouter"]');
+  showTab('ajouter', btn);
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 // ── TOP VENTES + CHART ────────────────────────────────────────────────────
@@ -2685,5 +2716,9 @@ function importData(event){
   reader.readAsText(file);
 }
 </script>
+
+<!-- FAB -->
+<button class="fab" onclick="goAddSale()" title="Nouvelle vente">＋</button>
+
 </body>
 </html>
