@@ -177,6 +177,30 @@ input::placeholder{color:var(--muted)}
 .toast.error{background:var(--red)}
 mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 
+/* FAB */
+.fab{position:fixed;bottom:28px;right:20px;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;font-size:28px;line-height:1;cursor:pointer;box-shadow:0 6px 20px rgba(124,108,252,.5);z-index:150;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s}
+.fab:active{transform:scale(.93);box-shadow:0 3px 10px rgba(124,108,252,.4)}
+
+/* CONFIRM MODAL */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;justify-content:center;z-index:250;opacity:0;pointer-events:none;transition:opacity .2s}
+.confirm-overlay.open{opacity:1;pointer-events:all}
+.confirm-box{background:var(--surface);border-radius:22px 22px 0 0;padding:28px 22px 34px;width:100%;max-width:460px;transform:translateY(100%);transition:transform .25s cubic-bezier(.34,1.2,.64,1)}
+.confirm-overlay.open .confirm-box{transform:translateY(0)}
+.confirm-icon{font-size:44px;text-align:center;margin-bottom:10px}
+.confirm-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;text-align:center;margin-bottom:8px}
+.confirm-msg{font-size:14px;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:22px}
+.confirm-btns{display:flex;flex-direction:column;gap:10px}
+.confirm-btn-del{width:100%;padding:15px;background:var(--red);border:none;color:#fff;border-radius:14px;font-size:16px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer}
+.confirm-btn-cancel{width:100%;padding:15px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:14px;font-size:16px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer}
+
+/* QUICK ADD MODAL */
+.quick-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;justify-content:center;z-index:220;opacity:0;pointer-events:none;transition:opacity .2s}
+.quick-overlay.open{opacity:1;pointer-events:all}
+.quick-box{background:var(--surface);border-radius:22px 22px 0 0;padding:22px 20px 36px;width:100%;max-width:460px;transform:translateY(100%);transition:transform .28s cubic-bezier(.34,1.2,.64,1);max-height:92vh;overflow-y:auto}
+.quick-overlay.open .quick-box{transform:translateY(0)}
+.quick-handle{width:40px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 18px}
+.quick-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
 /* BELL */
 .bell-wrap{position:relative;cursor:pointer}
 .bell-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;position:relative}
@@ -484,14 +508,6 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     <button onclick="resetFilters()" style="width:100%;padding:9px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">🔄 Réinitialiser les filtres</button>
   </div>
 
-  <!-- FILTRES RAPIDES -->
-  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-    <button class="sort-btn" id="qfBtn-today"   onclick="applyQuickFilter('today',this)"  >📅 Aujourd'hui</button>
-    <button class="sort-btn" id="qfBtn-week"    onclick="applyQuickFilter('week',this)"   >📆 Cette semaine</button>
-    <button class="sort-btn" id="qfBtn-month"   onclick="applyQuickFilter('month',this)"  >🗓️ Ce mois</button>
-    <button class="sort-btn" id="qfBtn-all"     onclick="applyQuickFilter('all',this)"    >🔄 Tout</button>
-  </div>
-
   <div id="filterInfo" style="display:none;margin-bottom:10px;padding:10px 14px;background:rgba(124,108,252,.1);border:1px solid rgba(124,108,252,.25);border-radius:10px;font-size:13px;color:var(--accent)"></div>
 
   <div class="sort-bar">
@@ -571,16 +587,6 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       <select id="yearSelect" onchange="renderAnnuel()"></select>
     </div>
     <div class="month-cards" id="annuelKpis"></div>
-    <!-- Trend chart annuel -->
-    <div style="margin-bottom:14px">
-      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">📈 Évolution mensuelle</div>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <button class="sort-btn active" id="trendByBenef" onclick="setTrendMode('benef',this)">💰 Bénéfice</button>
-        <button class="sort-btn" id="trendByRevenu" onclick="setTrendMode('revenu',this)">💵 Revenu</button>
-        <button class="sort-btn" id="trendByVentes" onclick="setTrendMode('ventes',this)">📦 Ventes</button>
-      </div>
-      <canvas id="annuelTrendChart" style="width:100%;max-height:200px"></canvas>
-    </div>
     <div class="month-sales-title">📊 Détail par mois</div>
     <div id="annuelMonths" style="display:flex;flex-direction:column;gap:8px"></div>
   </div>
@@ -661,6 +667,52 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- FAB -->
+<button class="fab" onclick="openQuickAdd()" title="Nouvelle vente rapide">＋</button>
+
+<!-- CONFIRM DELETE MODAL -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon" id="confirmIcon">🗑️</div>
+    <div class="confirm-title" id="confirmTitle">Supprimer?</div>
+    <div class="confirm-msg" id="confirmMsg">Cette action est irréversible.</div>
+    <div class="confirm-btns">
+      <button class="confirm-btn-del" id="confirmOkBtn">🗑️ Supprimer</button>
+      <button class="confirm-btn-cancel" onclick="closeConfirm()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK ADD MODAL -->
+<div class="quick-overlay" id="quickOverlay" onclick="handleQuickOverlayClick(event)">
+  <div class="quick-box" id="quickBox">
+    <div class="quick-handle"></div>
+    <div class="quick-title">🛍️ Nouvelle Vente</div>
+    <div class="form-grid">
+      <div><label>Date</label><input type="date" id="qDate" style="margin-top:5px"></div>
+      <div><label>Modèle</label><input type="text" id="qModel" placeholder="iPhone 15 Pro" list="fModelList" oninput="checkQuickStock()" style="margin-top:5px">
+        <div id="qStockIndic" style="display:none;margin-top:4px;font-size:12px;padding:5px 10px;border-radius:8px;font-family:'DM Mono',monospace;font-weight:600"></div>
+      </div>
+      <div><label>Couleur</label><input type="text" id="qColor" placeholder="Noir" list="fColorList" style="margin-top:5px"></div>
+      <div><label>Ville</label><input type="text" id="qVille" placeholder="Tunis" list="fVilleList" style="margin-top:5px"></div>
+      <div><label>N° Client</label><input type="text" id="qClient" placeholder="C-0001" list="fClientList" style="margin-top:5px"></div>
+      <div><label>Quantité</label><input type="number" id="qQty" placeholder="1" min="1" style="margin-top:5px"></div>
+      <div><label>Fournisseur</label>
+        <select id="qFourn" onchange="filterCartesByFourn(this.value,'qCarte')" style="margin-top:5px">
+          <option value="">— Fournisseur —</option>
+        </select>
+      </div>
+      <div class="edit-full"><label>Carte utilisée</label>
+        <select id="qCarte" style="margin-top:5px"><option value="">— Carte —</option></select>
+      </div>
+      <div><label>Prix Vente (DT/u)</label><input type="number" id="qPrix" placeholder="42.500" step="0.001" style="margin-top:5px"></div>
+      <div><label>Coût Achat (DT/u)</label><input type="number" id="qCout" placeholder="11.450" step="0.001" style="margin-top:5px"></div>
+      <div class="edit-full"><label>Frais Envoi (DT)</label><input type="number" id="qEnvoi" placeholder="9.150" step="0.001" style="margin-top:5px"></div>
+    </div>
+    <button class="btn-add" onclick="saveQuickAdd()" style="margin-top:16px">✅ Enregistrer la vente</button>
+  </div>
+</div>
 
 <!-- MODAL MODIFIER STOCK -->
 <div class="modal-overlay" id="editStockModal">
@@ -914,10 +966,18 @@ function removeStock(model, qty){
 }
 
 function deleteStockItem(id){
-  if(!confirm('Supprimer ce produit du stock?')) return;
-  stockItems=stockItems.filter(s=>s.id!==id);
-  saveStock(); renderStock();
-  showToast('✅ Produit supprimé!');
+  const item=stockItems.find(s=>s.id===id);
+  showConfirm({
+    icon:'📦',
+    title:'Supprimer du stock?',
+    msg: item ? `<strong>${item.model}</strong> · ${item.qty} u` : 'Cette action est irréversible.',
+    btnLabel:'🗑️ Supprimer',
+    onOk:()=>{
+      stockItems=stockItems.filter(s=>s.id!==id);
+      saveStock(); renderStock();
+      showToast('✅ Produit supprimé!');
+    }
+  });
 }
 
 function renderStock(){
@@ -1103,10 +1163,18 @@ function addClient(){
 }
 
 function deleteClient(id){
-  if(!confirm('Supprimer ce client?')) return;
-  clients=clients.filter(c=>c.id!==id);
-  saveClients(); renderClients();
-  showToast('✅ Client supprimé!');
+  const c=clients.find(x=>x.id===id);
+  showConfirm({
+    icon:'👤',
+    title:'Supprimer ce client?',
+    msg: c ? `<strong>${c.nom}</strong>${c.tel?' · '+c.tel:''}` : 'Cette action est irréversible.',
+    btnLabel:'🗑️ Supprimer',
+    onOk:()=>{
+      clients=clients.filter(x=>x.id!==id);
+      saveClients(); renderClients();
+      showToast('✅ Client supprimé!');
+    }
+  });
 }
 
 function getClientSales(client){
@@ -1280,10 +1348,18 @@ function renderAchats(){
 }
 
 function deleteAchat(id){
-  if(!confirm('Supprimer cet achat?')) return;
-  achats=achats.filter(a=>a.id!==id);
-  saveAchats(); renderAchats();
-  showToast('✅ Achat supprimé!');
+  const a=achats.find(x=>x.id===id);
+  showConfirm({
+    icon:'📦',
+    title:'Supprimer cet achat?',
+    msg: a ? `<strong>${a.produit||'—'}</strong> · ${fmt(a.coutTotal)}` : 'Cette action est irréversible.',
+    btnLabel:'🗑️ Supprimer',
+    onOk:()=>{
+      achats=achats.filter(x=>x.id!==id);
+      saveAchats(); renderAchats();
+      showToast('✅ Achat supprimé!');
+    }
+  });
 }
 
 // ── TABS ───────────────────────────────────────────────────────────────────
@@ -1589,33 +1665,6 @@ function refreshFilterSelects(){
   fm.value=curM;
 }
 
-function applyQuickFilter(mode, btn){
-  ['today','week','month','all'].forEach(m=>{
-    const b=document.getElementById('qfBtn-'+m);
-    if(b) b.classList.remove('active');
-  });
-  if(btn) btn.classList.add('active');
-  const now=new Date();
-  const pad=n=>String(n).padStart(2,'0');
-  const todayStr=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
-  const from=document.getElementById('filterDateFrom');
-  const to=document.getElementById('filterDateTo');
-  if(!from||!to) return;
-  if(mode==='today'){
-    from.value=todayStr; to.value=todayStr;
-  } else if(mode==='week'){
-    const d=now.getDay();
-    const mon=new Date(now); mon.setDate(now.getDate()-(d===0?6:d-1));
-    from.value=`${mon.getFullYear()}-${pad(mon.getMonth()+1)}-${pad(mon.getDate())}`;
-    to.value=todayStr;
-  } else if(mode==='month'){
-    from.value=`${now.getFullYear()}-${pad(now.getMonth()+1)}-01`;
-    to.value=todayStr;
-  } else {
-    from.value=''; to.value='';
-  }
-  currentPage=1; renderSales();
-}
 function resetFilters(){
   ['filterFourn','filterCarte','filterVille','filterModel'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
   ['filterDateFrom','filterDateTo','filterBenefMin','filterBenefMax'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
@@ -1712,7 +1761,8 @@ function cardHTML(s,q=''){
     </div>
     <div class="sale-actions">
       <button class="btn-edit-card" onclick="openEditModal(${s.id})">✏️ Modifier</button>
-      <button class="btn-del-card" onclick="deleteSale(${s.id})">🗑️ Supprimer</button>
+      <button class="btn-edit-card" onclick="duplicateSale(${s.id})" style="background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.2);color:var(--green)">📋 Copier</button>
+      <button class="btn-del-card" onclick="confirmDeleteSale(${s.id})">🗑️</button>
     </div>
   </div>`;
 }
@@ -1809,10 +1859,20 @@ function renderSales(){
   el.innerHTML=html;
 }
 
+function confirmDeleteSale(id){
+  const s=sales.find(x=>x.id===id); if(!s) return;
+  showConfirm({
+    icon:'🗑️',
+    title:'Supprimer cette vente?',
+    msg:`<strong>${s.model||'—'}</strong> · ${s.date||'—'}<br>Bénéfice: ${fmt(s.benefBrut||s.benef||0)}`,
+    btnLabel:'🗑️ Supprimer',
+    onOk:()=>deleteSale(id)
+  });
+}
 function deleteSale(id){
-  if(!confirm('Supprimer cette vente?')) return;
   sales=sales.filter(s=>s.id!==id);
   save(); updateKPIs(); renderSales();
+  showToast('✅ Vente supprimée!');
 }
 
 // ── TOP VENTES + CHART ────────────────────────────────────────────────────
@@ -1969,92 +2029,6 @@ function buildMonthSelect(){
   });
 }
 
-let trendMode='benef';
-function setTrendMode(mode,btn){
-  trendMode=mode;
-  document.querySelectorAll('#tab-annuel .sort-btn').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  renderAnnuelTrendChart();
-}
-function renderAnnuelTrendChart(){
-  const year=document.getElementById('yearSelect')?.value;
-  if(!year) return;
-  const months=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
-  const ySales=sales.filter(s=>s.date&&s.date.startsWith(year));
-  const labels=[];
-  const values=[];
-  months.forEach((m,i)=>{
-    const ms=`${year}-${String(i+1).padStart(2,'0')}`;
-    const mSales=ySales.filter(s=>s.date&&s.date.startsWith(ms));
-    if(!mSales.length) return;
-    labels.push(m);
-    if(trendMode==='benef') values.push(mSales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0));
-    else if(trendMode==='revenu') values.push(mSales.reduce((a,s)=>a+s.revenu,0));
-    else values.push(mSales.length);
-  });
-  drawAnnuelLineChart('annuelTrendChart', labels, values);
-}
-function drawAnnuelLineChart(canvasId, labels, values){
-  const canvas=document.getElementById(canvasId);
-  if(!canvas) return;
-  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
-  const textColor=isDark?'#6b6b8a':'#8a7d6b';
-  const gridColor=isDark?'#2a2a3d':'#d6cfc0';
-  const dpr=window.devicePixelRatio||1;
-  const W=canvas.offsetWidth||320;
-  const H=200;
-  canvas.width=W*dpr; canvas.height=H*dpr;
-  canvas.style.height=H+'px';
-  const ctx=canvas.getContext('2d');
-  ctx.scale(dpr,dpr);
-  ctx.clearRect(0,0,W,H);
-  if(!labels.length||values.every(v=>v===0)){
-    ctx.fillStyle=textColor; ctx.font='13px DM Sans,sans-serif';
-    ctx.textAlign='center'; ctx.fillText('Aucune donnée',W/2,H/2); return;
-  }
-  const maxVal=Math.max(...values,1);
-  const pad={top:18,right:14,bottom:36,left:14};
-  const cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
-  // Grid
-  ctx.strokeStyle=gridColor; ctx.lineWidth=1;
-  for(let i=0;i<=3;i++){
-    const y=pad.top+cH*(1-i/3);
-    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
-  }
-  const pts=values.map((v,i)=>({
-    x:pad.left+(i/(labels.length-1||1))*cW,
-    y:pad.top+cH*(1-v/maxVal)
-  }));
-  // Gradient fill
-  const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+cH);
-  const c1=trendMode==='benef'?'124,108,252':trendMode==='revenu'?'245,158,11':'16,185,129';
-  grad.addColorStop(0,`rgba(${c1},0.35)`);
-  grad.addColorStop(1,`rgba(${c1},0.02)`);
-  ctx.beginPath();
-  ctx.moveTo(pts[0].x,pad.top+cH);
-  pts.forEach(p=>ctx.lineTo(p.x,p.y));
-  ctx.lineTo(pts[pts.length-1].x,pad.top+cH);
-  ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
-  // Smooth line
-  ctx.beginPath();
-  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
-  ctx.strokeStyle=`rgb(${c1})`; ctx.lineWidth=2.5;
-  ctx.lineJoin='round'; ctx.stroke();
-  // Dots + value labels
-  pts.forEach((p,i)=>{
-    ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2);
-    ctx.fillStyle=`rgb(${c1})`; ctx.fill();
-    ctx.strokeStyle=isDark?'#0a0a0f':'#fdfaf4'; ctx.lineWidth=2; ctx.stroke();
-    // Value on top
-    ctx.fillStyle=`rgb(${c1})`; ctx.font=`bold 10px DM Mono,monospace`;
-    ctx.textAlign='center';
-    const label=trendMode==='ventes'?values[i]+'':values[i]>=1000?(values[i]/1000).toFixed(1)+'k':values[i].toFixed(0);
-    ctx.fillText(label, p.x, p.y-8);
-    // Month label
-    ctx.fillStyle=textColor; ctx.font='10px DM Sans,sans-serif';
-    ctx.fillText(labels[i], p.x, H-pad.bottom+14);
-  });
-}
 function renderAnnuel(){
   const year=document.getElementById('yearSelect').value;
   const ySales=sales.filter(s=>s.date&&s.date.startsWith(year));
@@ -2067,9 +2041,6 @@ function renderAnnuel(){
     <div class="month-kpi"><div class="month-kpi-label">✅ Bénéfice</div><div class="month-kpi-val" style="color:var(--green)">${fmt(tb)}</div></div>
     <div class="month-kpi"><div class="month-kpi-label">🛒 Coût Total</div><div class="month-kpi-val" style="color:var(--red)">${fmt(tc)}</div></div>
     <div class="month-kpi"><div class="month-kpi-label">📦 Ventes</div><div class="month-kpi-val" style="color:var(--accent)">${ySales.length}</div></div>`;
-
-  // Draw trend chart
-  setTimeout(()=>renderAnnuelTrendChart(), 30);
 
   const months=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const maxBenef=Math.max(...months.map((_,i)=>{
@@ -2690,7 +2661,114 @@ function exportJSON(){
   showToast('✅ JSON téléchargé!');
 }
 
-// ── EXPORT EXCEL ───────────────────────────────────────────────────────────
+// ── CONFIRM MODAL ─────────────────────────────────────────────────────────
+let _confirmCallback=null;
+function showConfirm({icon='🗑️',title='Supprimer?',msg='',btnLabel='Supprimer',onOk}){
+  document.getElementById('confirmIcon').textContent=icon;
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMsg').innerHTML=msg||'Cette action est irréversible.';
+  const btn=document.getElementById('confirmOkBtn');
+  btn.textContent=btnLabel;
+  _confirmCallback=onOk;
+  btn.onclick=()=>{ closeConfirm(); if(_confirmCallback) _confirmCallback(); };
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function closeConfirm(){
+  document.getElementById('confirmOverlay').classList.remove('open');
+  _confirmCallback=null;
+}
+document.getElementById('confirmOverlay').addEventListener('click',e=>{
+  if(e.target===e.currentTarget) closeConfirm();
+});
+
+// ── QUICK ADD (FAB) ───────────────────────────────────────────────────────
+function openQuickAdd(prefill={}){
+  // Remplir fournisseurs dans qFourn
+  const sel=document.getElementById('qFourn');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Fournisseur —</option>';
+  fourns.forEach(f=>{const o=document.createElement('option');o.value=f.id;o.textContent=f.nom;sel.appendChild(o);});
+
+  // Prefill (pour duplication)
+  document.getElementById('qDate').value=prefill.date||new Date().toISOString().split('T')[0];
+  document.getElementById('qModel').value=prefill.model||'';
+  document.getElementById('qColor').value=prefill.color||'';
+  document.getElementById('qVille').value=prefill.ville||'';
+  document.getElementById('qClient').value=prefill.client||'';
+  document.getElementById('qQty').value=prefill.qty||'';
+  document.getElementById('qPrix').value=prefill.prix||'';
+  document.getElementById('qCout').value=prefill.cout||'';
+  document.getElementById('qEnvoi').value=prefill.envoi||'';
+  document.getElementById('qFourn').value=prefill.fourn||'';
+  if(prefill.fourn) filterCartesByFourn(prefill.fourn,'qCarte');
+  setTimeout(()=>{ document.getElementById('qCarte').value=prefill.carteId||''; },50);
+  document.getElementById('qStockIndic').style.display='none';
+
+  document.getElementById('quickOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('qModel').focus(),300);
+}
+function closeQuickAdd(){
+  document.getElementById('quickOverlay').classList.remove('open');
+}
+function handleQuickOverlayClick(e){
+  if(e.target===e.currentTarget) closeQuickAdd();
+}
+function saveQuickAdd(){
+  const date=document.getElementById('qDate').value;
+  const model=document.getElementById('qModel').value.trim();
+  const color=document.getElementById('qColor').value.trim();
+  const ville=document.getElementById('qVille').value.trim();
+  const client=document.getElementById('qClient').value.trim();
+  const qty=parseFloat(document.getElementById('qQty').value)||1;
+  const fourn=document.getElementById('qFourn').value;
+  const carteId=document.getElementById('qCarte').value;
+  const prix=parseFloat(document.getElementById('qPrix').value)||0;
+  const cout=parseFloat(document.getElementById('qCout').value)||0;
+  const envoi=parseFloat(document.getElementById('qEnvoi').value)||0;
+  if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
+  sales.push({id:Date.now(),date,model,color,ville,client,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)});
+  const stockItem=stockItems.find(s=>s.model.toLowerCase()===model.toLowerCase());
+  if(stockItem){
+    stockItem.history=stockItem.history||[];
+    stockItem.history.push({date,qty:-qty,type:'vente'});
+    saveStock();
+  }
+  save(); updateKPIs(); refreshFilterSelects(); refreshStockModelList();
+  closeQuickAdd();
+  showToast('✅ Vente enregistrée!');
+}
+function checkQuickStock(){
+  const model=document.getElementById('qModel').value.trim().toLowerCase();
+  const indic=document.getElementById('qStockIndic');
+  if(!model){indic.style.display='none';return;}
+  const item=stockItems.find(s=>s.model.toLowerCase()===model);
+  if(!item){indic.style.display='none';return;}
+  const vendu=sales.filter(s=>s.model&&s.model.toLowerCase()===item.model.toLowerCase()).reduce((a,s)=>a+(s.qty||1),0);
+  const restant=Math.max(0,item.qty-vendu);
+  indic.style.display='block';
+  if(restant===0){
+    indic.style.background='rgba(239,68,68,.1)';indic.style.color='var(--red)';indic.style.border='1px solid rgba(239,68,68,.2)';
+    indic.textContent='⚠️ Stock épuisé!';
+  } else if(restant<=3){
+    indic.style.background='rgba(245,158,11,.1)';indic.style.color='var(--yellow)';indic.style.border='1px solid rgba(245,158,11,.2)';
+    indic.textContent=`⚠️ Stock faible: ${restant} restante${restant>1?'s':''}`;
+  } else {
+    indic.style.background='rgba(16,185,129,.1)';indic.style.color='var(--green)';indic.style.border='1px solid rgba(16,185,129,.2)';
+    indic.textContent=`📦 En stock: ${restant} unité${restant>1?'s':''}`;
+  }
+}
+
+// ── DUPLICATE SALE ────────────────────────────────────────────────────────
+function duplicateSale(id){
+  const s=sales.find(x=>x.id===id); if(!s) return;
+  openQuickAdd({
+    date: new Date().toISOString().split('T')[0],
+    model:s.model, color:s.color, ville:s.ville, client:s.client,
+    qty:s.qty, prix:s.prix, cout:s.cout, envoi:s.envoi,
+    fourn:s.fourn, carteId:s.carteId
+  });
+}
+
 function exportExcel(){
   if(!sales.length){showToast('⚠️ Aucune vente!',true);return;}
   const rows=sales.map((s,i)=>{
