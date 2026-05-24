@@ -657,8 +657,13 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
         oninput="saveDriveUrl()">
     </div>
     <div style="display:flex;gap:8px">
-      <button onclick="syncToDrive()" style="flex:1;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">☁️ Envoyer vers Drive</button>
-      <button onclick="syncFromDrive()" style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">⬇️ Récupérer</button>
+      <button onclick="syncToDrive()" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">☁️ Envoyer vers Drive</button>
+    </div>
+    <div style="margin-top:10px;background:var(--surface2);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--muted);line-height:1.6">
+      💡 Pour récupérer sur un autre appareil:<br>
+      1. Ouvre <strong style="color:var(--text)">drive.google.com</strong><br>
+      2. Télécharge <strong style="color:var(--text)">flousflow-backup.json</strong><br>
+      3. Importe via <strong style="color:var(--accent)">"Fusionner"</strong> ci-dessous
     </div>
     <div id="driveStatus" style="margin-top:10px;font-size:12px;color:var(--muted);text-align:center"></div>
   </div>
