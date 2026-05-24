@@ -2603,21 +2603,24 @@ async function syncFromDrive(){
   if(!confirm('Récupérer depuis Drive? Tes données actuelles seront remplacées.')) return;
   setDriveStatus('⏳ Récupération en cours...');
   try {
-    const res=await fetch(url+'?action=get');
-    const text=await res.text();
-    const json=JSON.parse(text);
-    if(json.success===false){ setDriveStatus('❌ '+json.error,'var(--red)'); return; }
-    if(json.sales) sales=json.sales;
-    if(json.fourns) fourns=json.fourns;
-    if(json.achats) achats=json.achats;
-    if(json.stockItems) stockItems=json.stockItems;
+    // Step 1: get download URL from script
+    const res=await fetch(url);
+    const json=await res.json();
+    if(!json.success){ setDriveStatus('❌ '+json.error,'var(--red)'); return; }
+    // Step 2: download the JSON file
+    const fileRes=await fetch(json.downloadUrl);
+    const data=await fileRes.json();
+    if(data.sales) sales=data.sales;
+    if(data.fourns) fourns=data.fourns;
+    if(data.achats) achats=data.achats;
+    if(data.stockItems) stockItems=data.stockItems;
     save();
     updateKPIs();
     renderSales();
     setDriveStatus('✅ Données récupérées — '+new Date().toLocaleTimeString('fr-TN'),'var(--green)');
     showToast('✅ Données Drive importées!');
   } catch(err){
-    setDriveStatus('❌ Connexion échouée — ouvre le lien dans un nouvel onglet pour autoriser','var(--red)');
+    setDriveStatus('❌ Connexion échouée','var(--red)');
     showToast('❌ Connexion échouée',true);
   }
 }
