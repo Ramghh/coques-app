@@ -2583,17 +2583,15 @@ async function syncToDrive(){
   const url=getDriveUrl();
   if(!url){ showToast('⚠️ URL manquant!',true); return; }
   setDriveStatus('⏳ Envoi en cours...');
-  const payload={
+  const payload=JSON.stringify({
     sales, fourns, achats, stockItems,
     exportedAt: new Date().toISOString(),
     version: '1.0'
-  };
+  });
   try {
-    await fetch(url,{
-      method:'POST',
-      mode:'no-cors',
-      body: JSON.stringify(payload)
-    });
+    const form=new FormData();
+    form.append('data', payload);
+    await fetch(url,{ method:'POST', mode:'no-cors', body:form });
     setDriveStatus('✅ Envoyé — '+new Date().toLocaleTimeString('fr-TN'),'var(--green)');
     showToast('☁️ Sync Drive réussi!');
   } catch(err){
