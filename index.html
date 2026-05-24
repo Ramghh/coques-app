@@ -2929,14 +2929,11 @@ function exportExcel(){
   });
   const tv=sales.reduce((a,s)=>a+s.revenu,0);
   const tb=sales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
-  const td=calcTotalDettes();
   const summary=[
     {'Indicateur':'Total Ventes (DT)','Valeur':+tv.toFixed(3)},
     {'Indicateur':'Bénéfice Brut (DT)','Valeur':+tb.toFixed(3)},
-    {'Indicateur':'Dettes Restantes (DT)','Valeur':+td.toFixed(3)},
-    {'Indicateur':'Bénéfice Net (DT)','Valeur':+(tb-td).toFixed(3)},
-    {'Indicateur':'Marge Nette (%)','Valeur':+(tv>0?((tb-td)/tv)*100:0).toFixed(1)},
     {'Indicateur':'Nombre de Ventes','Valeur':sales.length},
+    {'Indicateur':'Clients Uniques','Valeur':new Set(sales.map(s=>s.client).filter(Boolean)).size},
   ];
   // Sheet Cartes
   const cartesRows=[];
