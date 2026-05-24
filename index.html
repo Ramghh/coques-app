@@ -113,7 +113,15 @@ input::placeholder{color:var(--muted)}
 /* Boutons en bas */
 .sale-actions{display:flex;gap:8px;margin-top:4px}
 .btn-edit-card{flex:1;padding:9px;background:rgba(124,108,252,.1);border:1px solid rgba(124,108,252,.2);color:var(--accent);border-radius:10px;cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600}
+.btn-del-card{flex:1;padding:9px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:var(--red);border-radius:10px;cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600}
 .btn-dup-card{flex:1;padding:9px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--yellow);border-radius:10px;cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600}
+.btn-print-card{flex:1;padding:9px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:var(--green);border-radius:10px;cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600}
+
+@media print{
+  body > *{display:none!important}
+  #invoicePrintArea{display:block!important;position:fixed;inset:0;background:#fff;z-index:9999;padding:0}
+  @page{size:A5 landscape;margin:6mm}
+}
 .fab{position:fixed;bottom:28px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;font-size:28px;border:none;cursor:pointer;box-shadow:0 4px 18px rgba(124,108,252,.5);z-index:150;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s;line-height:1}
 .fab:active{transform:scale(.93);box-shadow:0 2px 10px rgba(124,108,252,.4)}
 
@@ -830,6 +838,7 @@ setTimeout(()=>{
 
 // ── HELPERS ────────────────────────────────────────────────────────────────
 function fmt(n){return (n||0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' DT';}
+function fmtI(n){return (n||0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g,' ');}
 function fmtP(n){return ((n||0)*100).toFixed(1)+'%';}
 function uid(){return Date.now()+'-'+Math.random().toString(36).slice(2);}
 function save(){
@@ -1447,12 +1456,6 @@ function updateKPIs(){
 }
 
 // ── THEME ──────────────────────────────────────────────────────────────────
-function toggleTheme(){
-  theme=theme==='dark'?'light':'dark';
-  document.documentElement.setAttribute('data-theme',theme);
-  document.getElementById('themeBtn').textContent=theme==='dark'?'🌙':'☀️';
-  save();
-}
 
 // ── BELL / BACKUP REMINDER ─────────────────────────────────────────────────
 function checkBackupReminder(){
@@ -1547,12 +1550,6 @@ function filterCartesByFourn(fournId,selectId){
 }
 
 // ── SORT & FILTER ──────────────────────────────────────────────────────────
-function setSort(mode,btn){
-  currentSort=mode;
-  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderSales();
-}
 function getSorted(list){
   const c=[...list];
   if(currentSort==='newest') c.sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
@@ -1672,9 +1669,10 @@ function cardHTML(s,q=''){
       <div class="num-item"><div class="num-label">Marge</div><div class="num-val" style="color:var(--accent)">${fmtP(s.marge)}</div></div>
     </div>
     <div class="sale-actions">
-      <button class="btn-edit-card" onclick="openEditModal(${s.id})">✏️ Modifier</button>
-      <button class="btn-dup-card"  onclick="duplicateSale(${s.id})">📋 Copier</button>
-      <button class="btn-del-card"  onclick="deleteSale(${s.id})">🗑️</button>
+      <button class="btn-edit-card"  onclick="openEditModal(${s.id})">✏️ Modifier</button>
+      <button class="btn-dup-card"   onclick="duplicateSale(${s.id})">📋 Copier</button>
+      <button class="btn-print-card" onclick="printInvoice(${s.id})">🖨️</button>
+      <button class="btn-del-card"   onclick="deleteSale(${s.id})">🗑️</button>
     </div>
   </div>`;
 }
@@ -1797,6 +1795,58 @@ function duplicateSale(id){
   showTab('ajouter', btn);
   window.scrollTo({top:0,behavior:'smooth'});
   showToast('📋 Vente copiée — vérifier et enregistrer!');
+}
+
+function printInvoice(id){
+  const s=sales.find(x=>x.id===id); if(!s) return;
+  const ds=s.date?new Date(s.date+'T00:00:00').toLocaleDateString('fr-TN',{day:'2-digit',month:'long',year:'numeric'}):'—';
+  const revenu=s.revenu||((s.prix||0)*(s.qty||1));
+  const envoi=s.envoi||0;
+  const villeRow=s.ville?'<div style="font-size:13px;color:#555;margin-top:2px">📍 '+s.ville+'</div>':'';
+  const envoiRow=envoi>0?'<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:12px;color:#555">Frais de livraison</td><td style="padding:7px 6px;text-align:center;font-size:12px;color:#555">1</td><td style="padding:7px 10px;text-align:right;font-size:12px;color:#555">'+fmtI(envoi)+' DT</td></tr>':'';
+  const area=document.getElementById('invoicePrintArea');
+  area.innerHTML=`<div style="font-family:'Segoe UI',Arial,sans-serif;width:100%;box-sizing:border-box;color:#111;padding:14px 20px;page-break-after:avoid">
+    <div style="text-align:center;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:10px">
+      <div style="font-size:20px;font-weight:900;letter-spacing:1px">CouvriTN</div>
+      <div style="font-size:11px;color:#555;margin-top:2px">📍 Kélibia, Tunisie &nbsp;|&nbsp; 📞 28 562 177</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:700">🧾 Facture</div>
+      <div style="font-size:11px;color:#555">Date: ${ds}</div>
+    </div>
+    <div style="background:#f7f7f7;border-radius:6px;padding:8px 10px;margin-bottom:10px">
+      <div style="font-size:10px;color:#777;margin-bottom:2px">CLIENT</div>
+      <div style="font-size:13px;font-weight:700">${s.client||'—'}</div>
+      ${villeRow}
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:10px">
+      <thead>
+        <tr style="background:#111;color:#fff">
+          <th style="padding:6px 10px;text-align:left;font-size:11px;border-radius:5px 0 0 5px">Article</th>
+          <th style="padding:6px 6px;text-align:center;font-size:11px">Qté</th>
+          <th style="padding:6px 10px;text-align:right;font-size:11px;border-radius:0 5px 5px 0">Prix</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #eee">
+          <td style="padding:7px 10px;font-size:13px;font-weight:600">${s.model||'—'}${s.color?' — '+s.color:''}</td>
+          <td style="padding:7px 6px;text-align:center;font-size:13px">${s.qty||1}</td>
+          <td style="padding:7px 10px;text-align:right;font-size:13px">${fmtI(s.prix||0)} DT</td>
+        </tr>
+        ${envoiRow}
+      </tbody>
+    </table>
+    <div style="background:#111;color:#fff;border-radius:7px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700">TOTAL</div>
+      <div style="font-size:17px;font-weight:900">${fmtI(revenu)} DT</div>
+    </div>
+    <div style="text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:7px">
+      Merci pour votre confiance 🙏 — CouvriTN
+    </div>
+  </div>`;
+  area.style.display='block';
+  window.onafterprint=()=>{ area.style.display='none'; window.onafterprint=null; };
+  window.print();
 }
 
 function goAddSale(){
@@ -2716,6 +2766,9 @@ function importData(event){
   reader.readAsText(file);
 }
 </script>
+
+<!-- INVOICE PRINT AREA -->
+<div id="invoicePrintArea" style="display:none"></div>
 
 <!-- FAB -->
 <button class="fab" onclick="goAddSale()" title="Nouvelle vente">＋</button>
