@@ -649,6 +649,20 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 <!-- BACKUP -->
 <div class="section" id="tab-backup">
   <div class="backup-card">
+    <div class="backup-title">☁️ Google Drive Sync</div>
+    <div class="backup-desc">Sauvegarde automatique sur ton Google Drive.</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <input type="text" id="driveScriptUrl" placeholder="Coller l'URL du Script ici..."
+        style="flex:1;padding:11px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif"
+        oninput="saveDriveUrl()">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="syncToDrive()" style="flex:1;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">☁️ Envoyer vers Drive</button>
+      <button onclick="syncFromDrive()" style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">⬇️ Récupérer</button>
+    </div>
+    <div id="driveStatus" style="margin-top:10px;font-size:12px;color:var(--muted);text-align:center"></div>
+  </div>
+  <div class="backup-card">
     <div class="backup-title">📤 Exporter</div>
     <div class="backup-desc">Télécharge tes données en JSON (sauvegarde) ou Excel (analyse).</div>
     <div class="backup-btns">
@@ -822,6 +836,8 @@ if(fourns.length && typeof fourns[0]==='string'){
 }
 
 let currentSort='newest', editingId=null, currentPage=1;
+const DRIVE_URL_KEY='flousFlowDriveUrl';
+const PREFILLED_URL='https://script.google.com/macros/s/AKfycbyDGTL7k2TP8-966BxgN1M-jBfe6rr9DGo7I2xdL5av-VEdlIUBT0gJ_06vJgTztWWrjA/exec';
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 document.documentElement.setAttribute('data-theme',theme);
@@ -834,6 +850,7 @@ refreshAchatFournSelect();
 refreshStockModelList();
 updateKPIs();
 checkBackupReminder();
+loadDriveUrl();
 
 // Restaurer dernier onglet
 const lastTab=localStorage.getItem('flousFlowLastTab');
@@ -1318,6 +1335,7 @@ function showTab(id,btn){
   if(id==='dashboard') { renderDash(); setTimeout(()=>{ buildYearSelectorForComp(); updateGroupedChart(); initTunisiaMap(); },400); }
   if(id==='marques') renderMarques();
   if(id==='fournisseurs') renderFournTab();
+  if(id==='backup') loadDriveUrl();
 }
 
 // ── STOCK INDICATOR IN FORM ────────────────────────────────────────────────
@@ -2532,7 +2550,81 @@ function renderFournTab(){
   }).join('');
 }
 
-// ── EDIT VENTE ─────────────────────────────────────────────────────────────
+// ── GOOGLE DRIVE SYNC ──────────────────────────────────────────────────────
+
+function loadDriveUrl(){
+  const el=document.getElementById('driveScriptUrl');
+  if(!el) return;
+  const saved=localStorage.getItem(DRIVE_URL_KEY)||PREFILLED_URL;
+  el.value=saved;
+  if(!localStorage.getItem(DRIVE_URL_KEY)) localStorage.setItem(DRIVE_URL_KEY, PREFILLED_URL);
+}
+
+function saveDriveUrl(){
+  const el=document.getElementById('driveScriptUrl');
+  if(el) localStorage.setItem(DRIVE_URL_KEY, el.value.trim());
+}
+
+function getDriveUrl(){
+  return localStorage.getItem(DRIVE_URL_KEY)||PREFILLED_URL;
+}
+
+function setDriveStatus(msg, color='var(--muted)'){
+  const el=document.getElementById('driveStatus');
+  if(el){ el.textContent=msg; el.style.color=color; }
+}
+
+async function syncToDrive(){
+  const url=getDriveUrl();
+  if(!url){ showToast('⚠️ URL manquant!',true); return; }
+  setDriveStatus('⏳ Envoi en cours...');
+  const payload={
+    sales, fourns, achats, stockItems,
+    exportedAt: new Date().toISOString(),
+    version: '1.0'
+  };
+  try {
+    const res=await fetch(url,{
+      method:'POST',
+      body: JSON.stringify(payload)
+    });
+    const json=await res.json();
+    if(json.success){
+      setDriveStatus('✅ Sauvegardé sur Drive — '+new Date().toLocaleTimeString('fr-TN'),'var(--green)');
+      showToast('☁️ Sync Drive réussi!');
+    } else {
+      setDriveStatus('❌ Erreur: '+json.error,'var(--red)');
+      showToast('❌ Erreur Drive',true);
+    }
+  } catch(err){
+    setDriveStatus('❌ Connexion échouée','var(--red)');
+    showToast('❌ Connexion échouée',true);
+  }
+}
+
+async function syncFromDrive(){
+  const url=getDriveUrl();
+  if(!url){ showToast('⚠️ URL manquant!',true); return; }
+  if(!confirm('Récupérer depuis Drive? Tes données actuelles seront remplacées.')) return;
+  setDriveStatus('⏳ Récupération en cours...');
+  try {
+    const res=await fetch(url);
+    const json=await res.json();
+    if(json.success===false){ setDriveStatus('❌ '+json.error,'var(--red)'); return; }
+    if(json.sales) sales=json.sales;
+    if(json.fourns) fourns=json.fourns;
+    if(json.achats) achats=json.achats;
+    if(json.stockItems) stockItems=json.stockItems;
+    save();
+    updateKPIs();
+    renderSales();
+    setDriveStatus('✅ Données récupérées — '+new Date().toLocaleTimeString('fr-TN'),'var(--green)');
+    showToast('✅ Données Drive importées!');
+  } catch(err){
+    setDriveStatus('❌ Connexion échouée','var(--red)');
+    showToast('❌ Connexion échouée',true);
+  }
+}
 function openEditModal(id){
   const s=sales.find(x=>x.id===id); if(!s) return;
   editingId=id;
