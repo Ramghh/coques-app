@@ -54,8 +54,10 @@ header{background:var(--header-bg);padding:18px 18px 14px;border-bottom:1px soli
 .rec-sub-val{font-family:'DM Mono',monospace;font-size:17px;font-weight:700;margin-top:3px}
 
 /* TABS */
-.nav-tabs{display:flex;gap:8px;padding:14px 18px;overflow-x:auto;scrollbar-width:none}
+.nav-tabs{display:flex;gap:8px;padding:6px 18px;overflow-x:auto;scrollbar-width:none}
 .nav-tabs::-webkit-scrollbar{display:none}
+.nav-wrap{padding:10px 0 4px;border-bottom:1px solid var(--border);background:var(--header)}
+.nav-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:0 18px;margin-bottom:4px}
 .tab-btn{flex-shrink:0;padding:10px 20px;border-radius:30px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;white-space:nowrap}
 .tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
 
@@ -263,16 +265,24 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
   </div>
 </div>
 
-<div class="nav-tabs">
-  <button class="tab-btn active" onclick="showTab('ajouter',this)">➕ Ajouter</button>
-  <button class="tab-btn" onclick="showTab('ventes',this)">📋 Ventes</button>
-  <button class="tab-btn" onclick="showTab('clients',this)">👤 Clients</button>
-  <button class="tab-btn" onclick="showTab('stock',this)">📦 Stock</button>
-  <button class="tab-btn" onclick="showTab('top',this)">🏆 Top Ventes</button>
-  <button class="tab-btn" onclick="showTab('rapport',this)">📊 Rapport</button>
-  <button class="tab-btn" onclick="showTab('annuel',this)">📅 Annuel</button>
-  <button class="tab-btn" onclick="showTab('dashboard',this)">🗺️ Dashboard</button>
-  <button class="tab-btn" onclick="showTab('backup',this)">💾 Sauvegarde</button>
+<div class="nav-wrap">
+  <div class="nav-label">Quotidien</div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="showTab('ajouter',this)">➕ Ajouter</button>
+    <button class="tab-btn" onclick="showTab('ventes',this)">📋 Ventes</button>
+    <button class="tab-btn" onclick="showTab('clients',this)">👤 Clients</button>
+    <button class="tab-btn" onclick="showTab('stock',this)">📦 Stock</button>
+  </div>
+  <div class="nav-label" style="margin-top:6px">Analyse</div>
+  <div class="nav-tabs">
+    <button class="tab-btn" onclick="showTab('top',this)">🏆 Top</button>
+    <button class="tab-btn" onclick="showTab('marques',this)">🏷️ Marques</button>
+    <button class="tab-btn" onclick="showTab('fournisseurs',this)">🧑‍💼 Fournisseurs</button>
+    <button class="tab-btn" onclick="showTab('rapport',this)">📊 Rapport</button>
+    <button class="tab-btn" onclick="showTab('annuel',this)">📅 Annuel</button>
+    <button class="tab-btn" onclick="showTab('dashboard',this)">🗺️ Dashboard</button>
+    <button class="tab-btn" onclick="showTab('backup',this)">💾 Backup</button>
+  </div>
 </div>
 
 <!-- CLIENTS -->
@@ -582,6 +592,15 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
   </div>
 </div>
 
+<!-- MARQUES -->
+<div class="section" id="tab-marques">
+  <div class="form-card">
+    <div class="form-title">🏷️ Marques</div>
+    <div id="marqueChartWrap"></div>
+    <div id="marqueCardsList"></div>
+  </div>
+</div>
+
 <!-- DASHBOARD -->
 <div class="section" id="tab-dashboard">
   <div class="dash-section">
@@ -612,18 +631,18 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
     <div class="city-list" id="cityList"></div>
   </div>
   <div class="dash-section">
-    <div class="dash-title">🏷️ Par Marque</div>
-    <div id="dashMarqueChart"></div>
-    <div class="city-list" id="marqueList"></div>
-  </div>
-  <div class="dash-section">
     <div class="dash-title">📱 Par Modèle</div>
     <div id="dashModelChart"></div>
     <div class="city-list" id="modelList"></div>
   </div>
-  <div class="dash-section">
-    <div class="dash-title">🧑‍💼 Par Fournisseur</div>
-    <div class="city-list" id="fournList"></div>
+</div>
+
+<!-- FOURNISSEURS -->
+<div class="section" id="tab-fournisseurs">
+  <div class="form-card">
+    <div class="form-title">🧑‍💼 Fournisseurs & Cartes</div>
+    <div id="fournTabList"></div>
+    <button onclick="openFournModal()" style="width:100%;margin-top:14px;padding:13px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:12px;font-size:15px;cursor:pointer;font-family:'DM Sans',sans-serif;">⚙️ Gérer les fournisseurs</button>
   </div>
 </div>
 
@@ -1297,6 +1316,8 @@ function showTab(id,btn){
   if(id==='rapport') setTimeout(()=>renderRapport(), 50);
   if(id==='annuel') renderAnnuel();
   if(id==='dashboard') { renderDash(); setTimeout(()=>{ buildYearSelectorForComp(); updateGroupedChart(); initTunisiaMap(); },400); }
+  if(id==='marques') renderMarques();
+  if(id==='fournisseurs') renderFournTab();
 }
 
 // ── STOCK INDICATOR IN FORM ────────────────────────────────────────────────
@@ -2180,6 +2201,181 @@ function drawLineChart(canvasId, labels, values){
   });
 }
 
+// ── MARQUES ────────────────────────────────────────────────────────────────
+function renderMarques(){
+  const wrap=document.getElementById('marqueChartWrap');
+  const list=document.getElementById('marqueCardsList');
+  if(!wrap||!list) return;
+  if(!sales.length){
+    wrap.innerHTML='';
+    list.innerHTML='<div class="empty"><div class="empty-icon">🏷️</div><div class="empty-text">Aucune vente.</div></div>';
+    return;
+  }
+
+  const COLORS=[
+    ['#7c6cfc','#a78bfa'],['#fc6c8f','#fb7ba2'],['#10b981','#34d399'],
+    ['#f59e0b','#fbbf24'],['#38bdf8','#7dd3fc'],['#fb923c','#fdba74'],
+    ['#a78bfa','#c4b5fd'],['#34d399','#6ee7b7'],['#f472b6','#f9a8d4'],
+    ['#818cf8','#a5b4fc'],['#2dd4bf','#5eead4'],['#facc15','#fde68a'],
+    ['#60a5fa','#93c5fd'],['#c084fc','#d8b4fe'],['#4ade80','#86efac']
+  ];
+
+  // Build marque data
+  const mq={};
+  sales.forEach(s=>{
+    const q=getMarque(s.model);
+    const d=s.date||'';
+    if(!mq[q]) mq[q]={count:0,revenu:0,benef:0,first:d,last:d};
+    mq[q].count++;
+    mq[q].revenu+=(s.revenu||0);
+    mq[q].benef+=(s.benefBrut||s.benef||0);
+    if(d&&(!mq[q].first||d<mq[q].first)) mq[q].first=d;
+    if(d&&(!mq[q].last ||d>mq[q].last))  mq[q].last=d;
+  });
+
+  const sorted=Object.entries(mq).sort((a,b)=>b[1].benef-a[1].benef).slice(0,15);
+  const maxBenef=Math.max(...sorted.map(([,d])=>d.benef),1);
+
+  // ── Canvas horizontal bar chart ──
+  const BAR_H=36, GAP=10, PAD={top:16,bottom:16,left:90,right:80};
+  const W=Math.min(window.innerWidth-32, 480);
+  const H=PAD.top + sorted.length*(BAR_H+GAP) - GAP + PAD.bottom;
+
+  wrap.innerHTML=`
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">📈 Top 15 — Bénéfice</div>
+    <div style="overflow-x:auto;margin-bottom:6px">
+      <canvas id="marqueCanvas" width="${W}" height="${H}" style="cursor:pointer;border-radius:12px"></canvas>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:20px">Appuyer sur une barre pour filtrer les ventes</div>
+    <div style="height:1px;background:var(--border);margin-bottom:18px"></div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">🗂️ Détail — Top 15</div>`;
+
+  // Draw canvas
+  const canvas=document.getElementById('marqueCanvas');
+  const ctx=canvas.getContext('2d');
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const bgColor=isDark?'#1e1b2e':'#f5f0e8';
+  const textColor=isDark?'#e2deff':'#1a1a2e';
+  const mutedColor=isDark?'#7c6cfc66':'#9ca3af';
+  const trackColor=isDark?'rgba(255,255,255,.07)':'rgba(0,0,0,.07)';
+
+  ctx.fillStyle=bgColor;
+  ctx.roundRect(0,0,W,H,12);
+  ctx.fill();
+
+  // Store bar rects for click detection
+  const barRects=[];
+
+  sorted.forEach(([name,d],i)=>{
+    const [c1,c2]=COLORS[i%COLORS.length];
+    const y=PAD.top+i*(BAR_H+GAP);
+    const availW=W-PAD.left-PAD.right;
+    const barW=Math.max(4,(d.benef/maxBenef)*availW);
+
+    // Track
+    ctx.fillStyle=trackColor;
+    ctx.beginPath();
+    ctx.roundRect(PAD.left,y+6,availW,BAR_H-12,6);
+    ctx.fill();
+
+    // Gradient bar
+    const grad=ctx.createLinearGradient(PAD.left,0,PAD.left+barW,0);
+    grad.addColorStop(0,c1);
+    grad.addColorStop(1,c2);
+    ctx.fillStyle=grad;
+    ctx.beginPath();
+    ctx.roundRect(PAD.left,y+6,barW,BAR_H-12,6);
+    ctx.fill();
+
+    // Store for click
+    barRects.push({x:PAD.left,y:y+6,w:availW,h:BAR_H-12,name});
+
+    // Label left
+    ctx.fillStyle=textColor;
+    ctx.font=`bold 13px 'DM Sans',sans-serif`;
+    ctx.textAlign='right';
+    ctx.textBaseline='middle';
+    const label=name.length>10?name.slice(0,10)+'…':name;
+    ctx.fillText(label,PAD.left-8,y+BAR_H/2);
+
+    // Value right
+    ctx.fillStyle=c1;
+    ctx.font=`bold 11px 'DM Mono',monospace`;
+    ctx.textAlign='left';
+    const val=fmtI(d.benef);
+    ctx.fillText(val+' DT',PAD.left+availW+6,y+BAR_H/2);
+  });
+
+  // Click handler
+  canvas.onclick=e=>{
+    const rect=canvas.getBoundingClientRect();
+    const scaleX=canvas.width/rect.width;
+    const scaleY=canvas.height/rect.height;
+    const cx=(e.clientX-rect.left)*scaleX;
+    const cy=(e.clientY-rect.top)*scaleY;
+    for(const r of barRects){
+      if(cx>=r.x&&cx<=r.x+r.w&&cy>=r.y&&cy<=r.y+r.h){
+        filterByMarque(r.name);
+        break;
+      }
+    }
+  };
+
+  // ── Cards ──
+  const fmtD=dt=>dt?new Date(dt+'T00:00:00').toLocaleDateString('fr-TN',{day:'2-digit',month:'short',year:'numeric'}):'—';
+  list.innerHTML=sorted.map(([name,d],i)=>{
+    const [c1]=COLORS[i%COLORS.length];
+    const pct=Math.max(3,(d.benef/maxBenef)*100);
+    const marge=d.revenu>0?((d.benef/d.revenu)*100).toFixed(1):'0.0';
+    return `<div class="form-card" style="margin-bottom:12px;border-left:3px solid ${c1};cursor:pointer" onclick="filterByMarque('${name.replace(/'/g,"\\'")}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:17px;font-weight:800">${name}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:800;color:${c1}">${fmt(d.benef)}</div>
+      </div>
+      <div style="height:7px;background:var(--border);border-radius:6px;overflow:hidden;margin-bottom:10px">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${c1},${COLORS[i%COLORS.length][1]});border-radius:6px"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="background:var(--surface2);border-radius:9px;padding:9px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">VENTES</div>
+          <div style="font-size:15px;font-weight:700">${d.count}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:9px;padding:9px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">REVENU</div>
+          <div style="font-size:13px;font-weight:700;color:var(--yellow)">${fmt(d.revenu)}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:9px;padding:9px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">MARGE</div>
+          <div style="font-size:15px;font-weight:700;color:var(--accent)">${marge}%</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:9px;padding:9px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">MOY/VENTE</div>
+          <div style="font-size:13px;font-weight:700;color:var(--green)">${fmt(d.benef/d.count)}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;background:var(--surface2);border-radius:9px;padding:9px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">🥇 1ÈRE VENTE</div>
+          <div style="font-size:12px;font-weight:600">${fmtD(d.first)}</div>
+        </div>
+        <div style="flex:1;background:var(--surface2);border-radius:9px;padding:9px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">🔚 DERNIÈRE</div>
+          <div style="font-size:12px;font-weight:600">${fmtD(d.last)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterByMarque(marque){
+  // Switch to Ventes tab and filter by marque name
+  const btn=document.querySelector('.tab-btn[onclick*="ventes"]');
+  showTab('ventes',btn);
+  const input=document.getElementById('searchInput');
+  if(input){ input.value=marque; renderSales(); }
+  showToast('🏷️ '+marque+' — ventes filtrées');
+}
+
 // ── DASHBOARD ──────────────────────────────────────────────────────────────
 function getMarque(model){
   if(!model) return 'Autre';
@@ -2238,29 +2434,25 @@ function renderDash(){
   }
 
   const c1=document.getElementById('cityList'),c2=document.getElementById('modelList');
-  const c3=document.getElementById('marqueList');
   const vc1=document.getElementById('dashVilleChart'),vc2=document.getElementById('dashModelChart');
-  const vmc=document.getElementById('dashMarqueChart');
 
   if(!sales.length){
     c1.innerHTML='<div class="empty"><div class="empty-icon">🗺️</div><div class="empty-text">Aucune donnée.</div></div>';
-    c2.innerHTML=''; if(c3) c3.innerHTML='';
+    c2.innerHTML='';
     if(vc1) vc1.innerHTML='';
     if(vc2) vc2.innerHTML='';
-    if(vmc) vmc.innerHTML='';
   } else {
     if(vc1) vc1.innerHTML=cssBarChart(cm);
-    if(vmc) vmc.innerHTML=cssBarChart(mq);
     if(vc2) vc2.innerHTML=cssBarChart(mm);
     c1.innerHTML=rg(cm);
-    if(c3) c3.innerHTML=rg(mq);
     c2.innerHTML=rg(mm);
   }
 
   // Charts and map are called from showTab with setTimeout
+}
 
-  // Fournisseurs
-  const cf=document.getElementById('fournList');
+function renderFournTab(){
+  const cf=document.getElementById('fournTabList');
   if(!cf) return;
   if(!fourns.length){cf.innerHTML='<div class="empty"><div class="empty-icon">🧑‍💼</div><div class="empty-text">Aucun fournisseur.</div></div>';return;}
   cf.innerHTML=fourns.map(f=>{
