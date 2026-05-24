@@ -2237,22 +2237,29 @@ function renderMarques(){
   const maxBenef=Math.max(...sorted.map(([,d])=>d.benef),1);
 
   // ── Canvas horizontal bar chart ──
-  const BAR_H=36, GAP=10, PAD={top:16,bottom:16,left:90,right:80};
-  const W=Math.min(window.innerWidth-32, 480);
+  const BAR_H=42, GAP=12, PAD={top:16,bottom:16,left:100,right:110};
+  const container=document.getElementById('marqueChartWrap');
+  const W=container.clientWidth||Math.min(window.innerWidth-32,900);
   const H=PAD.top + sorted.length*(BAR_H+GAP) - GAP + PAD.bottom;
 
   wrap.innerHTML=`
     <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">📈 Top 15 — Bénéfice</div>
-    <div style="overflow-x:auto;margin-bottom:6px">
-      <canvas id="marqueCanvas" width="${W}" height="${H}" style="cursor:pointer;border-radius:12px"></canvas>
+    <div style="margin-bottom:6px">
+      <canvas id="marqueCanvas" style="width:100%;cursor:pointer;border-radius:12px;display:block"></canvas>
     </div>
     <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:20px">Appuyer sur une barre pour filtrer les ventes</div>
     <div style="height:1px;background:var(--border);margin-bottom:18px"></div>
     <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">🗂️ Détail — Top 15</div>`;
 
-  // Draw canvas
+  // Draw canvas with high DPI
   const canvas=document.getElementById('marqueCanvas');
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=W*dpr;
+  canvas.height=H*dpr;
+  canvas.style.width=W+'px';
+  canvas.style.height=H+'px';
   const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
   const bgColor=isDark?'#1e1b2e':'#f5f0e8';
   const textColor=isDark?'#e2deff':'#1a1a2e';
@@ -2292,18 +2299,18 @@ function renderMarques(){
 
     // Label left
     ctx.fillStyle=textColor;
-    ctx.font=`bold 13px 'DM Sans',sans-serif`;
+    ctx.font=`bold 14px 'DM Sans',sans-serif`;
     ctx.textAlign='right';
     ctx.textBaseline='middle';
-    const label=name.length>10?name.slice(0,10)+'…':name;
-    ctx.fillText(label,PAD.left-8,y+BAR_H/2);
+    const label=name.length>11?name.slice(0,11)+'…':name;
+    ctx.fillText(label,PAD.left-10,y+BAR_H/2);
 
     // Value right
     ctx.fillStyle=c1;
-    ctx.font=`bold 11px 'DM Mono',monospace`;
+    ctx.font=`bold 12px 'DM Mono',monospace`;
     ctx.textAlign='left';
     const val=fmtI(d.benef);
-    ctx.fillText(val+' DT',PAD.left+availW+6,y+BAR_H/2);
+    ctx.fillText(val+' DT',PAD.left+availW+10,y+BAR_H/2);
   });
 
   // Click handler
