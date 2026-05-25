@@ -376,7 +376,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       </div>
       <div><label>Couleur</label><input type="text" id="fColor" placeholder="Noir" list="fColorList"><datalist id="fColorList"></datalist></div>
       <div><label>Ville</label><input type="text" id="fVille" placeholder="Tunis" list="fVilleList"><datalist id="fVilleList"></datalist></div>
-      <div><label>N° Client</label><input type="text" id="fClient" placeholder="C-0001" list="fClientList"><datalist id="fClientList"></datalist></div>
+      <div><label>N° Client</label><input type="text" id="fClient" placeholder="C-0001" list="fClientList" oninput="autoFillClientPhone(this.value)"><datalist id="fClientList"></datalist></div>
       <div><label>Téléphone</label><input type="tel" id="fPhone" placeholder="2X XXX XXX"></div>
       <div><label>Quantité</label><input type="number" id="fQty" placeholder="1" min="1"></div>
       <div><label>Fournisseur</label>
@@ -1768,6 +1768,7 @@ function cardHTML(s,q=''){
       <button class="btn-edit-card"  onclick="openEditModal(${s.id})">✏️ Modifier</button>
       <button class="btn-dup-card"   onclick="duplicateSale(${s.id})">📋 Copier</button>
       <button class="btn-print-card" onclick="printInvoice(${s.id})">🖨️</button>
+      ${!s.phone&&s.client?`<button class="btn-print-card" style="background:rgba(16,185,129,.15);color:var(--green)" onclick="fetchClientPhone(${s.id})">📞</button>`:''}
       <button class="btn-del-card"   onclick="deleteSale(${s.id})">🗑️</button>
     </div>
   </div>`;
@@ -2447,6 +2448,36 @@ function renderMarques(){
       </div>
     </div>`;
   }).join('');
+}
+
+function fetchClientPhone(id){
+  const s=sales.find(x=>x.id===id); if(!s) return;
+  const sc=s.client?.toLowerCase().trim();
+  const c=clients.find(x=>
+    (x.ref&&x.ref.toLowerCase().trim()===sc) ||
+    (x.nom&&x.nom.toLowerCase().trim()===sc)
+  );
+  if(c && c.tel){
+    s.phone=c.tel;
+    save();
+    renderSales();
+    showToast('📞 '+c.tel+' — ajouté!');
+  } else {
+    showToast('⚠️ Aucun téléphone trouvé pour ce client',true);
+  }
+}
+
+function autoFillClientPhone(val){
+  if(!val) return;
+  const sc=val.toLowerCase().trim();
+  const c=clients.find(x=>
+    (x.ref&&x.ref.toLowerCase().trim()===sc) ||
+    (x.nom&&x.nom.toLowerCase().trim()===sc)
+  );
+  if(c && c.tel){
+    const ph=document.getElementById('fPhone');
+    if(ph && !ph.value) ph.value=c.tel;
+  }
 }
 
 function filterByMarque(marque){
