@@ -370,7 +370,8 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       </div>
       <div><label>Couleur</label><input type="text" id="fColor" placeholder="Noir" list="fColorList"><datalist id="fColorList"></datalist></div>
       <div><label>Ville</label><input type="text" id="fVille" placeholder="Tunis" list="fVilleList"><datalist id="fVilleList"></datalist></div>
-      <div><label>N° Client</label><input type="text" id="fClient" placeholder="C-0001" list="fClientList"><datalist id="fClientList"></datalist></div>
+      <div><label>N° Client</label><input type="text" id="fClient" placeholder="C-0001" list="fClientList" oninput="autoFillClientPhone(this.value)"><datalist id="fClientList"></datalist></div>
+      <div><label>Téléphone</label><input type="tel" id="fPhone" placeholder="2X XXX XXX"></div>
       <div><label>Quantité</label><input type="number" id="fQty" placeholder="1" min="1"></div>
       <div><label>Fournisseur</label>
         <select id="fFourn" onchange="filterCartesByFourn(this.value,'fCarte')">
@@ -721,6 +722,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       <div><label>Couleur</label><input type="text" id="eColor" style="margin-top:5px"></div>
       <div><label>Ville</label><input type="text" id="eVille" style="margin-top:5px"></div>
       <div><label>N° Client</label><input type="text" id="eClient" style="margin-top:5px"></div>
+      <div><label>Téléphone</label><input type="tel" id="ePhone" style="margin-top:5px" placeholder="2X XXX XXX"></div>
       <div><label>Quantité</label><input type="number" id="eQty" min="1" style="margin-top:5px"></div>
       <div><label>Fournisseur</label>
         <select id="eFourn" style="margin-top:5px" onchange="filterCartesByFourn(this.value,'eCarte')">
@@ -1392,6 +1394,7 @@ function addSale(){
   const color=document.getElementById('fColor').value.trim();
   const ville=document.getElementById('fVille').value.trim();
   const client=document.getElementById('fClient').value.trim();
+  const phone=document.getElementById('fPhone').value.trim();
   const qty=parseFloat(document.getElementById('fQty').value)||1;
   const fourn=document.getElementById('fFourn').value;
   const carteId=document.getElementById('fCarte').value;
@@ -1399,7 +1402,7 @@ function addSale(){
   const cout=parseFloat(document.getElementById('fCout').value)||0;
   const envoi=parseFloat(document.getElementById('fEnvoi').value)||0;
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
-  sales.push({id:Date.now(),date,model,color,ville,client,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)});
+  sales.push({id:Date.now(),date,model,color,ville,client,phone,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)});
   // Mettre à jour stock si ce modèle existe
   const stockItem=stockItems.find(s=>s.model.toLowerCase()===model.toLowerCase());
   if(stockItem){
@@ -1410,7 +1413,7 @@ function addSale(){
     checkStockForModel();
   }
   save(); updateKPIs(); refreshFilterSelects(); refreshStockModelList();
-  ['fModel','fColor','fVille','fClient','fEnvoi','fQty','fPrix','fCout'].forEach(i=>document.getElementById(i).value='');
+  ['fModel','fColor','fVille','fClient','fPhone','fEnvoi','fQty','fPrix','fCout'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('fFourn').value='';
   document.getElementById('fCarte').value='';
   document.getElementById('fDate').value=new Date().toISOString().split('T')[0];
@@ -1745,6 +1748,7 @@ function cardHTML(s,q=''){
       ${s.color?`<span class="tag">🎨 ${hl(s.color,q)}</span>`:''}
       ${s.ville?`<span class="tag city">📍 ${hl(s.ville,q)}</span>`:''}
       ${s.client?`<span class="tag client">👤 ${hl(s.client,q)}</span>`:''}
+      ${s.phone?`<span class="tag" style="color:var(--green)">📞 ${s.phone}</span>`:''}
       ${fNom?`<span class="tag fourn">🧑‍💼 ${hl(fNom,q)}</span>`:''}
       ${carteObj?`<span class="tag carte">💳 ${carteObj.label}</span>`:''}
       <span class="tag">x${s.qty}</span>
@@ -1758,6 +1762,7 @@ function cardHTML(s,q=''){
       <button class="btn-edit-card"  onclick="openEditModal(${s.id})">✏️ Modifier</button>
       <button class="btn-dup-card"   onclick="duplicateSale(${s.id})">📋 Copier</button>
       <button class="btn-print-card" onclick="printInvoice(${s.id})">🖨️</button>
+      ${!s.phone&&s.client?`<button class="btn-print-card" style="background:rgba(16,185,129,.15);color:var(--green)" onclick="fetchClientPhone(${s.id})">📞</button>`:''}
       <button class="btn-del-card"   onclick="deleteSale(${s.id})">🗑️</button>
     </div>
   </div>`;
@@ -1903,6 +1908,7 @@ function printInvoice(id){
     <div style="background:#f7f7f7;border-radius:6px;padding:8px 10px;margin-bottom:10px">
       <div style="font-size:10px;color:#777;margin-bottom:2px">CLIENT</div>
       <div style="font-size:13px;font-weight:700">${s.client||'—'}</div>
+      ${s.phone?'<div style="font-size:12px;color:#555;margin-top:2px">📞 '+s.phone+'</div>':''}
       ${villeRow}
     </div>
     <table style="width:100%;border-collapse:collapse;margin-bottom:10px">
@@ -2441,6 +2447,27 @@ function renderMarques(){
   }).join('');
 }
 
+function fetchClientPhone(id){
+  const s=sales.find(x=>x.id===id); if(!s) return;
+  const sc=s.client?.toLowerCase().trim();
+  const c=clients.find(x=>
+    (x.ref&&x.ref.toLowerCase().trim()===sc)||
+    (x.nom&&x.nom.toLowerCase().trim()===sc)
+  );
+  if(c&&c.tel){ s.phone=c.tel; save(); renderSales(); showToast('📞 '+c.tel+' — ajouté!'); }
+  else showToast('⚠️ Aucun téléphone trouvé',true);
+}
+
+function autoFillClientPhone(val){
+  if(!val) return;
+  const sc=val.toLowerCase().trim();
+  const c=clients.find(x=>
+    (x.ref&&x.ref.toLowerCase().trim()===sc)||
+    (x.nom&&x.nom.toLowerCase().trim()===sc)
+  );
+  if(c&&c.tel){ const ph=document.getElementById('fPhone'); if(ph&&!ph.value) ph.value=c.tel; }
+}
+
 function filterByMarque(marque){
   // Switch to Ventes tab and filter by marque name
   const btn=document.querySelector('.tab-btn[onclick*="ventes"]');
@@ -2674,6 +2701,7 @@ function openEditModal(id){
   document.getElementById('eColor').value=s.color||'';
   document.getElementById('eVille').value=s.ville||'';
   document.getElementById('eClient').value=s.client||'';
+  document.getElementById('ePhone').value=s.phone||'';
   document.getElementById('eQty').value=s.qty||1;
   const fObj=fourns.find(x=>x.id===s.fourn||x.nom===s.fourn);
   const fVal=fObj?fObj.id:'';
@@ -2694,6 +2722,7 @@ function saveEdit(){
   const color=document.getElementById('eColor').value.trim();
   const ville=document.getElementById('eVille').value.trim();
   const client=document.getElementById('eClient').value.trim();
+  const phone=document.getElementById('ePhone').value.trim();
   const fourn=document.getElementById('eFourn').value;
   const carteId=document.getElementById('eCarte').value;
   const qty=parseFloat(document.getElementById('eQty').value)||1;
@@ -2701,7 +2730,7 @@ function saveEdit(){
   const cout=parseFloat(document.getElementById('eCout').value)||0;
   const envoi=parseFloat(document.getElementById('eEnvoi').value)||0;
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
-  sales[idx]={...sales[idx],date,model,color,ville,client,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)};
+  sales[idx]={...sales[idx],date,model,color,ville,client,phone,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)};
   save(); updateKPIs(); renderSales(); closeEditModal();
   showToast('✅ Vente modifiée!');
 }
