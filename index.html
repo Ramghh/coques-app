@@ -2304,7 +2304,7 @@ function renderMarques(){
   const maxBenef=Math.max(...sorted.map(([,d])=>d.benef),1);
 
   // ── Canvas horizontal bar chart ──
-  const BAR_H=42, GAP=12, PAD={top:16,bottom:16,left:100,right:110};
+  const BAR_H=38, GAP=10, PAD={top:16,bottom:16,left:110,right:115};
   const W=window.innerWidth;
   const H=PAD.top + sorted.length*(BAR_H+GAP) - GAP + PAD.bottom;
 
@@ -2322,7 +2322,7 @@ function renderMarques(){
   const dpr=window.devicePixelRatio||1;
   canvas.width=W*dpr;
   canvas.height=H*dpr;
-  canvas.style.width=W+'px';
+  canvas.style.width='100%';
   canvas.style.height=H+'px';
   const ctx=canvas.getContext('2d');
   ctx.scale(dpr,dpr);
@@ -2365,18 +2365,19 @@ function renderMarques(){
 
     // Label left
     ctx.fillStyle=textColor;
-    ctx.font=`bold 14px 'DM Sans',sans-serif`;
+    ctx.font=`600 11px 'DM Sans',sans-serif`;
     ctx.textAlign='right';
     ctx.textBaseline='middle';
-    const label=name.length>11?name.slice(0,11)+'…':name;
-    ctx.fillText(label,PAD.left-10,y+BAR_H/2);
+    const label=name.length>10?name.slice(0,10)+'…':name;
+    ctx.fillText(label,PAD.left-8,y+BAR_H/2);
 
-    // Value right
+    // Value on right - aligned to canvas logical width
+    const val=fmtI(d.benef)+' DT';
+    ctx.font=`bold 10px 'DM Mono',monospace`;
     ctx.fillStyle=c1;
-    ctx.font=`bold 12px 'DM Mono',monospace`;
-    ctx.textAlign='left';
-    const val=fmtI(d.benef);
-    ctx.fillText(val+' DT',PAD.left+availW+10,y+BAR_H/2);
+    ctx.textAlign='right';
+    ctx.textBaseline='middle';
+    ctx.fillText(val, W-10, y+BAR_H/2);
   });
 
   // Click handler
