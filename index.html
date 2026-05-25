@@ -32,7 +32,8 @@ header{background:var(--header-bg);padding:18px 18px 14px;border-bottom:1px soli
 .logo{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#fff;letter-spacing:-.5px}
 .logo span{color:#fbbf24}
 .header-right{display:flex;align-items:center;gap:10px}
-.badge{background:#fbbf24;color:#1a1a00;font-size:13px;font-weight:800;padding:5px 12px;border-radius:20px;font-family:'DM Mono',monospace}
+.badge{background:linear-gradient(135deg,#7c6cfc,#fc6c8f);color:#fff;font-size:13px;font-weight:900;padding:6px 14px;border-radius:20px;font-family:'DM Mono',monospace;box-shadow:0 4px 15px rgba(124,108,252,.4);letter-spacing:.5px;transition:transform .15s}
+.badge:active{transform:scale(.95)}
 .theme-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center}
 
 /* KPI */
@@ -206,7 +207,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
   <div class="header-top">
     <div class="logo">💰 Flous<span>Flow</span></div>
     <div class="header-right">
-      <div class="badge" id="totalCount">0 ventes</div>
+      <canvas id="totalCount" width="72" height="72" style="cursor:pointer" onclick="showTab('ventes',document.querySelector('.tab-btn[onclick*=ventes]'))"></canvas>
       <div class="bell-wrap" onclick="toggleBell()">
         <button class="bell-btn" id="bellBtn">🔔<span class="bell-dot" id="bellDot"></span></button>
         <div class="bell-popup" id="bellPopup">
@@ -594,10 +595,14 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 
 <!-- MARQUES -->
 <div class="section" id="tab-marques">
-  <div class="form-card">
-    <div class="form-title">🏷️ Marques</div>
-    <div id="marqueChartWrap"></div>
-    <div id="marqueCardsList"></div>
+  <div class="form-card" style="padding:16px 0;overflow:hidden">
+    <div style="padding:0 16px">
+      <div class="form-title">🏷️ Marques</div>
+    </div>
+    <div id="marqueChartWrap" style="width:100%;padding:0"></div>
+    <div style="padding:0 16px">
+      <div id="marqueCardsList"></div>
+    </div>
   </div>
 </div>
 
@@ -1421,6 +1426,66 @@ function addSale(){
 }
 
 // ── KPIs ───────────────────────────────────────────────────────────────────
+function drawCounter(val, total){
+  const canvas=document.getElementById('totalCount');
+  if(!canvas) return;
+  const dpr=window.devicePixelRatio||1;
+  const SIZE=72;
+  canvas.width=SIZE*dpr; canvas.height=SIZE*dpr;
+  canvas.style.width=SIZE+'px'; canvas.style.height=SIZE+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const cx=SIZE/2, cy=SIZE/2, R=30, lw=5;
+  // Background circle
+  ctx.beginPath();
+  ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.fillStyle='rgba(124,108,252,.15)';
+  ctx.fill();
+  // Track
+  ctx.beginPath();
+  ctx.arc(cx,cy,R,-Math.PI/2,Math.PI*3/2);
+  ctx.strokeStyle='rgba(255,255,255,.1)';
+  ctx.lineWidth=lw;
+  ctx.lineCap='round';
+  ctx.stroke();
+  // Arc progress (based on val, max visual at 300 ventes)
+  const pct=Math.min(val/Math.max(total,1),1);
+  const grad=ctx.createLinearGradient(cx-R,cy,cx+R,cy);
+  grad.addColorStop(0,'#7c6cfc');
+  grad.addColorStop(1,'#fc6c8f');
+  ctx.beginPath();
+  ctx.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+pct*Math.PI*2);
+  ctx.strokeStyle=grad;
+  ctx.lineWidth=lw;
+  ctx.lineCap='round';
+  ctx.stroke();
+  // Number
+  ctx.fillStyle='#fff';
+  ctx.font=`bold ${val>999?13:val>99?15:17}px 'DM Mono',monospace`;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(val, cx, cy-4);
+  // Label
+  ctx.fillStyle='rgba(255,255,255,.6)';
+  ctx.font=`700 8px 'DM Sans',sans-serif`;
+  ctx.fillText('ventes', cx, cy+9);
+}
+
+function animateCounter(target){
+  const canvas=document.getElementById('totalCount');
+  if(!canvas) return;
+  const duration=900, start=performance.now();
+  const from=0;
+  function step(now){
+    const p=Math.min((now-start)/duration,1);
+    const ease=1-Math.pow(1-p,3);
+    const val=Math.round(from+(target-from)*ease);
+    drawCounter(val, target);
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 function updateKPIs(){
   const tv=sales.reduce((a,s)=>a+s.revenu,0);
   const benef=sales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
@@ -1432,7 +1497,8 @@ function updateKPIs(){
   document.getElementById('kpiClients').textContent=uniqueClients;
   document.getElementById('kpiCout').textContent=fmt(cout);
   document.getElementById('kpiNbVentes').textContent=sales.length;
-  document.getElementById('totalCount').textContent=sales.length+' vente'+(sales.length>1?'s':'');
+  const badge=document.getElementById('totalCount');
+  animateCounter(sales.length);
 
   // Cartes banner
   const totalMont=fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>b+c.montant,0),0);
@@ -2242,9 +2308,8 @@ function renderMarques(){
   const maxBenef=Math.max(...sorted.map(([,d])=>d.benef),1);
 
   // ── Canvas horizontal bar chart ──
-  const BAR_H=42, GAP=12, PAD={top:16,bottom:16,left:100,right:110};
-  const container=document.getElementById('marqueChartWrap');
-  const W=container.clientWidth||Math.min(window.innerWidth-32,900);
+  const BAR_H=42, GAP=12, PAD={top:16,bottom:16,left:100,right:130};
+  const W=window.innerWidth;
   const H=PAD.top + sorted.length*(BAR_H+GAP) - GAP + PAD.bottom;
 
   wrap.innerHTML=`
@@ -2312,7 +2377,7 @@ function renderMarques(){
 
     // Value right
     ctx.fillStyle=c1;
-    ctx.font=`bold 12px 'DM Mono',monospace`;
+    ctx.font=`bold 10px 'DM Mono',monospace`;
     ctx.textAlign='left';
     const val=fmtI(d.benef);
     ctx.fillText(val+' DT',PAD.left+availW+10,y+BAR_H/2);
@@ -2387,6 +2452,11 @@ function filterByMarque(marque){
   if(input){ input.value=marque; renderSales(); }
   showToast('🏷️ '+marque+' — ventes filtrées');
 }
+
+// Responsive marques chart on orientation change
+window.addEventListener('resize',()=>{
+  if(document.getElementById('tab-marques').style.display!=='none') renderMarques();
+});
 
 // ── DASHBOARD ──────────────────────────────────────────────────────────────
 function getMarque(model){
