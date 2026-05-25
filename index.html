@@ -228,15 +228,9 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
   <div class="kpi"><div class="kpi-label">Clients uniques</div><div class="kpi-value purple" id="kpiClients">0</div></div>
 </div>
 
-<div style="margin:14px 18px;background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.3);border-radius:var(--radius);padding:16px 18px;display:flex;align-items:center;justify-content:space-between">
-  <div>
-    <div style="font-size:12px;color:var(--yellow);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:4px">🛒 Coût Total Achats</div>
-    <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--yellow)" id="kpiCout">0.000 DT</div>
-  </div>
-  <div style="text-align:right">
-    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Nb Ventes</div>
-    <div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:700;color:var(--text);margin-top:3px" id="kpiNbVentes">0</div>
-  </div>
+<div style="margin:14px 18px;background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.3);border-radius:var(--radius);padding:16px 18px">
+  <div style="font-size:12px;color:var(--yellow);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:4px">🛒 Coût Total Achats</div>
+  <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--yellow)" id="kpiCout">0.000 DT</div>
 </div>
 
 <div id="cartesBanner" style="margin:0 18px 14px;border-radius:var(--radius);padding:16px 18px;display:none">
@@ -376,8 +370,7 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       </div>
       <div><label>Couleur</label><input type="text" id="fColor" placeholder="Noir" list="fColorList"><datalist id="fColorList"></datalist></div>
       <div><label>Ville</label><input type="text" id="fVille" placeholder="Tunis" list="fVilleList"><datalist id="fVilleList"></datalist></div>
-      <div><label>N° Client</label><input type="text" id="fClient" placeholder="C-0001" list="fClientList" oninput="autoFillClientPhone(this.value)"><datalist id="fClientList"></datalist></div>
-      <div><label>Téléphone</label><input type="tel" id="fPhone" placeholder="2X XXX XXX"></div>
+      <div><label>N° Client</label><input type="text" id="fClient" placeholder="C-0001" list="fClientList"><datalist id="fClientList"></datalist></div>
       <div><label>Quantité</label><input type="number" id="fQty" placeholder="1" min="1"></div>
       <div><label>Fournisseur</label>
         <select id="fFourn" onchange="filterCartesByFourn(this.value,'fCarte')">
@@ -728,7 +721,6 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       <div><label>Couleur</label><input type="text" id="eColor" style="margin-top:5px"></div>
       <div><label>Ville</label><input type="text" id="eVille" style="margin-top:5px"></div>
       <div><label>N° Client</label><input type="text" id="eClient" style="margin-top:5px"></div>
-      <div><label>Téléphone</label><input type="tel" id="ePhone" style="margin-top:5px" placeholder="2X XXX XXX"></div>
       <div><label>Quantité</label><input type="number" id="eQty" min="1" style="margin-top:5px"></div>
       <div><label>Fournisseur</label>
         <select id="eFourn" style="margin-top:5px" onchange="filterCartesByFourn(this.value,'eCarte')">
@@ -1400,7 +1392,6 @@ function addSale(){
   const color=document.getElementById('fColor').value.trim();
   const ville=document.getElementById('fVille').value.trim();
   const client=document.getElementById('fClient').value.trim();
-  const phone=document.getElementById('fPhone').value.trim();
   const qty=parseFloat(document.getElementById('fQty').value)||1;
   const fourn=document.getElementById('fFourn').value;
   const carteId=document.getElementById('fCarte').value;
@@ -1408,7 +1399,7 @@ function addSale(){
   const cout=parseFloat(document.getElementById('fCout').value)||0;
   const envoi=parseFloat(document.getElementById('fEnvoi').value)||0;
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
-  sales.push({id:Date.now(),date,model,color,ville,client,phone,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)});
+  sales.push({id:Date.now(),date,model,color,ville,client,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)});
   // Mettre à jour stock si ce modèle existe
   const stockItem=stockItems.find(s=>s.model.toLowerCase()===model.toLowerCase());
   if(stockItem){
@@ -1419,7 +1410,7 @@ function addSale(){
     checkStockForModel();
   }
   save(); updateKPIs(); refreshFilterSelects(); refreshStockModelList();
-  ['fModel','fColor','fVille','fClient','fPhone','fEnvoi','fQty','fPrix','fCout'].forEach(i=>document.getElementById(i).value='');
+  ['fModel','fColor','fVille','fClient','fEnvoi','fQty','fPrix','fCout'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('fFourn').value='';
   document.getElementById('fCarte').value='';
   document.getElementById('fDate').value=new Date().toISOString().split('T')[0];
@@ -1499,7 +1490,7 @@ function updateKPIs(){
   const uniqueClients=new Set(sales.map(s=>s.client).filter(Boolean)).size;
   document.getElementById('kpiClients').textContent=uniqueClients;
   document.getElementById('kpiCout').textContent=fmt(cout);
-  document.getElementById('kpiNbVentes').textContent=sales.length;
+  const nbEl=document.getElementById('kpiNbVentes'); if(nbEl) nbEl.textContent=sales.length;
   const badge=document.getElementById('totalCount');
   animateCounter(sales.length);
 
@@ -1754,7 +1745,6 @@ function cardHTML(s,q=''){
       ${s.color?`<span class="tag">🎨 ${hl(s.color,q)}</span>`:''}
       ${s.ville?`<span class="tag city">📍 ${hl(s.ville,q)}</span>`:''}
       ${s.client?`<span class="tag client">👤 ${hl(s.client,q)}</span>`:''}
-      ${s.phone?`<span class="tag" style="color:var(--green)">📞 ${s.phone}</span>`:''}
       ${fNom?`<span class="tag fourn">🧑‍💼 ${hl(fNom,q)}</span>`:''}
       ${carteObj?`<span class="tag carte">💳 ${carteObj.label}</span>`:''}
       <span class="tag">x${s.qty}</span>
@@ -1768,7 +1758,6 @@ function cardHTML(s,q=''){
       <button class="btn-edit-card"  onclick="openEditModal(${s.id})">✏️ Modifier</button>
       <button class="btn-dup-card"   onclick="duplicateSale(${s.id})">📋 Copier</button>
       <button class="btn-print-card" onclick="printInvoice(${s.id})">🖨️</button>
-      ${!s.phone&&s.client?`<button class="btn-print-card" style="background:rgba(16,185,129,.15);color:var(--green)" onclick="fetchClientPhone(${s.id})">📞</button>`:''}
       <button class="btn-del-card"   onclick="deleteSale(${s.id})">🗑️</button>
     </div>
   </div>`;
@@ -1914,7 +1903,6 @@ function printInvoice(id){
     <div style="background:#f7f7f7;border-radius:6px;padding:8px 10px;margin-bottom:10px">
       <div style="font-size:10px;color:#777;margin-bottom:2px">CLIENT</div>
       <div style="font-size:13px;font-weight:700">${s.client||'—'}</div>
-      ${s.phone?'<div style="font-size:12px;color:#555;margin-top:2px">📞 '+s.phone+'</div>':''}
       ${villeRow}
     </div>
     <table style="width:100%;border-collapse:collapse;margin-bottom:10px">
@@ -2167,7 +2155,9 @@ function renderRapport(){
     <div class="month-kpi"><div class="month-kpi-label">💰 Total Ventes</div><div class="month-kpi-val" style="color:var(--yellow)">${fmt(tv)}</div></div>
     <div class="month-kpi"><div class="month-kpi-label">✅ Bénéfice</div><div class="month-kpi-val" style="color:var(--green)">${fmt(tb)}</div></div>
     <div class="month-kpi"><div class="month-kpi-label">🛒 Coût Total</div><div class="month-kpi-val" style="color:var(--red)">${fmt(tc)}</div></div>
-    <div class="month-kpi"><div class="month-kpi-label">📈 Marge Moy.</div><div class="month-kpi-val" style="color:var(--accent)">${fmtP(tv>0?tb/tv:0)}</div></div>`;
+    <div class="month-kpi"><div class="month-kpi-label">📈 Marge Moy.</div><div class="month-kpi-val" style="color:var(--accent)">${fmtP(tv>0?tb/tv:0)}</div></div>
+    <div class="month-kpi"><div class="month-kpi-label">🧾 Nb Ventes</div><div class="month-kpi-val" style="color:var(--text)">${ms.length}</div></div>
+    <div class="month-kpi"><div class="month-kpi-label">👤 Clients</div><div class="month-kpi-val" style="color:var(--accent)">${new Set(ms.map(s=>s.client).filter(Boolean)).size}</div></div>`;
 
   // Chart par jour
   const [year,month]=val.split('-').map(Number);
@@ -2314,7 +2304,7 @@ function renderMarques(){
   const maxBenef=Math.max(...sorted.map(([,d])=>d.benef),1);
 
   // ── Canvas horizontal bar chart ──
-  const BAR_H=42, GAP=12, PAD={top:16,bottom:16,left:100,right:130};
+  const BAR_H=42, GAP=12, PAD={top:16,bottom:16,left:100,right:110};
   const W=window.innerWidth;
   const H=PAD.top + sorted.length*(BAR_H+GAP) - GAP + PAD.bottom;
 
@@ -2383,7 +2373,7 @@ function renderMarques(){
 
     // Value right
     ctx.fillStyle=c1;
-    ctx.font=`bold 10px 'DM Mono',monospace`;
+    ctx.font=`bold 12px 'DM Mono',monospace`;
     ctx.textAlign='left';
     const val=fmtI(d.benef);
     ctx.fillText(val+' DT',PAD.left+availW+10,y+BAR_H/2);
@@ -2448,36 +2438,6 @@ function renderMarques(){
       </div>
     </div>`;
   }).join('');
-}
-
-function fetchClientPhone(id){
-  const s=sales.find(x=>x.id===id); if(!s) return;
-  const sc=s.client?.toLowerCase().trim();
-  const c=clients.find(x=>
-    (x.ref&&x.ref.toLowerCase().trim()===sc) ||
-    (x.nom&&x.nom.toLowerCase().trim()===sc)
-  );
-  if(c && c.tel){
-    s.phone=c.tel;
-    save();
-    renderSales();
-    showToast('📞 '+c.tel+' — ajouté!');
-  } else {
-    showToast('⚠️ Aucun téléphone trouvé pour ce client',true);
-  }
-}
-
-function autoFillClientPhone(val){
-  if(!val) return;
-  const sc=val.toLowerCase().trim();
-  const c=clients.find(x=>
-    (x.ref&&x.ref.toLowerCase().trim()===sc) ||
-    (x.nom&&x.nom.toLowerCase().trim()===sc)
-  );
-  if(c && c.tel){
-    const ph=document.getElementById('fPhone');
-    if(ph && !ph.value) ph.value=c.tel;
-  }
 }
 
 function filterByMarque(marque){
@@ -2713,7 +2673,6 @@ function openEditModal(id){
   document.getElementById('eColor').value=s.color||'';
   document.getElementById('eVille').value=s.ville||'';
   document.getElementById('eClient').value=s.client||'';
-  document.getElementById('ePhone').value=s.phone||'';
   document.getElementById('eQty').value=s.qty||1;
   const fObj=fourns.find(x=>x.id===s.fourn||x.nom===s.fourn);
   const fVal=fObj?fObj.id:'';
@@ -2734,7 +2693,6 @@ function saveEdit(){
   const color=document.getElementById('eColor').value.trim();
   const ville=document.getElementById('eVille').value.trim();
   const client=document.getElementById('eClient').value.trim();
-  const phone=document.getElementById('ePhone').value.trim();
   const fourn=document.getElementById('eFourn').value;
   const carteId=document.getElementById('eCarte').value;
   const qty=parseFloat(document.getElementById('eQty').value)||1;
@@ -2742,7 +2700,7 @@ function saveEdit(){
   const cout=parseFloat(document.getElementById('eCout').value)||0;
   const envoi=parseFloat(document.getElementById('eEnvoi').value)||0;
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
-  sales[idx]={...sales[idx],date,model,color,ville,client,phone,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)};
+  sales[idx]={...sales[idx],date,model,color,ville,client,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)};
   save(); updateKPIs(); renderSales(); closeEditModal();
   showToast('✅ Vente modifiée!');
 }
