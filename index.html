@@ -225,6 +225,17 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
   <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;letter-spacing:.5px">👤 Gharbi Ramzi</div>
 </header>
 
+<div id="todayCard" style="margin:14px 18px 0;background:linear-gradient(135deg,rgba(124,108,252,.15),rgba(252,108,143,.1));border:1px solid rgba(124,108,252,.3);border-radius:var(--radius);padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+  <div>
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:3px">📅 Aujourd'hui</div>
+    <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:800;color:var(--accent)" id="todayVentes">0 vente</div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:900;color:var(--green)" id="todayBenef">+0.000 DT</div>
+    <div style="font-size:12px;font-weight:600;margin-top:2px" id="todayVsYesterday"></div>
+  </div>
+</div>
+
 <div class="kpi-strip">
   <div class="kpi"><div class="kpi-label">Total Ventes</div><div class="kpi-value yellow" id="kpiVentes">0 DT</div></div>
   <div class="kpi"><div class="kpi-label">Bénéfice</div><div class="kpi-value green" id="kpiBenef">0 DT</div></div>
@@ -1526,6 +1537,29 @@ function animateCounter(target){
   requestAnimationFrame(step);
 }
 
+function updateTodayCard(){
+  const today=new Date().toISOString().split('T')[0];
+  const yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
+  const todaySales=sales.filter(s=>s.date===today);
+  const yestSales=sales.filter(s=>s.date===yesterday);
+  const todayB=todaySales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+  const yestB=yestSales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+  const n=todaySales.length;
+  const el=id=>document.getElementById(id);
+  if(el('todayVentes')) el('todayVentes').textContent=n+' vente'+(n>1?'s':'');
+  if(el('todayBenef')) el('todayBenef').textContent=(todayB>=0?'+':'')+fmt(todayB);
+  if(el('todayVsYesterday')){
+    if(yestB>0){
+      const diff=((todayB-yestB)/yestB*100).toFixed(0);
+      const up=todayB>=yestB;
+      el('todayVsYesterday').textContent=(up?'↑ +':'↓ ')+Math.abs(diff)+'% vs hier';
+      el('todayVsYesterday').style.color=up?'var(--green)':'var(--red)';
+    } else {
+      el('todayVsYesterday').textContent='';
+    }
+  }
+}
+
 function updateKPIs(){
   const tv=sales.reduce((a,s)=>a+s.revenu,0);
   const benef=sales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
@@ -1539,6 +1573,7 @@ function updateKPIs(){
   const nbEl=document.getElementById('kpiNbVentes'); if(nbEl) nbEl.textContent=sales.length;
   const badge=document.getElementById('totalCount');
   animateCounter(sales.length);
+  updateTodayCard();
 
   // Cartes banner
   const totalMont=fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>b+c.montant,0),0);
