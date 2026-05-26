@@ -852,8 +852,9 @@ loadDriveUrl();
 const lastTab=localStorage.getItem('flousFlowLastTab');
 if(lastTab){
   const btn=document.querySelector(`.tab-btn[onclick="showTab('${lastTab}',this)"]`);
-  if(btn) showTab(lastTab, btn);
+  if(btn) showTab(lastTab, btn, false);
 }
+try{ history.replaceState({tab:lastTab||'ajouter',idx:1},''); }catch(e){}
 // Re-build year select after data is loaded
 setTimeout(()=>{
   const ysel=document.getElementById('yearSelect');
@@ -1329,12 +1330,16 @@ function deleteAchat(id){
 }
 
 // ── TABS ───────────────────────────────────────────────────────────────────
-function showTab(id,btn){
+function showTab(id,btn,pushHistory=true){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
-  btn.classList.add('active');
+  if(btn) btn.classList.add('active');
   localStorage.setItem('flousFlowLastTab', id);
+  if(pushHistory){
+    _tabHistory.push(id);
+    try{ history.pushState({tab:id, idx:_tabHistory.length},''); }catch(e){}
+  }
   if(id==='clients') renderClients();
   if(id==='ventes') { refreshFilterSelects(); renderSales(); }
   if(id==='achats') { refreshAchatFournSelect(); renderAchats(); }
@@ -1346,6 +1351,18 @@ function showTab(id,btn){
   if(id==='fournisseurs') renderFournTab();
   if(id==='backup') loadDriveUrl();
 }
+
+// Tab history stack for back button
+const _tabHistory=['ajouter'];
+
+window.addEventListener('popstate', e=>{
+  if(_tabHistory.length>1){
+    _tabHistory.pop();
+    const prev=_tabHistory[_tabHistory.length-1];
+    const btn=document.querySelector(`.tab-btn[onclick*="'${prev}'"]`);
+    showTab(prev, btn||document.querySelector('.tab-btn'), false);
+  }
+});
 
 // ── STOCK INDICATOR IN FORM ────────────────────────────────────────────────
 function checkStockForModel(){
