@@ -205,7 +205,10 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 
 <header>
   <div class="header-top">
-    <div class="logo">💰 Flous<span>Flow</span></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button id="backBtn" onclick="goTabBack()" style="display:none;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:18px;width:34px;height:34px;border-radius:50%;cursor:pointer;line-height:1">◀</button>
+      <div class="logo">💰 Flous<span>Flow</span></div>
+    </div>
     <div class="header-right">
       <canvas id="totalCount" width="72" height="72" style="cursor:pointer" onclick="showTab('ventes',document.querySelector('.tab-btn[onclick*=ventes]'))"></canvas>
       <div class="bell-wrap" onclick="toggleBell()">
@@ -854,7 +857,6 @@ if(lastTab){
   const btn=document.querySelector(`.tab-btn[onclick="showTab('${lastTab}',this)"]`);
   if(btn) showTab(lastTab, btn, false);
 }
-location.hash=lastTab||'ajouter';
 // Re-build year select after data is loaded
 setTimeout(()=>{
   const ysel=document.getElementById('yearSelect');
@@ -1330,16 +1332,19 @@ function deleteAchat(id){
 }
 
 // ── TABS ───────────────────────────────────────────────────────────────────
+// Tab history stack
+var _tabHistory=['ajouter'];
+
 function showTab(id,btn,pushHistory=true){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
   if(btn) btn.classList.add('active');
   localStorage.setItem('flousFlowLastTab', id);
-  if(pushHistory){
-    _tabHistory.push(id);
-    location.hash=id;
-  }
+  if(pushHistory){ if(typeof _tabHistory!=='undefined') _tabHistory.push(id); }
+  // Show/hide back button
+  const bb=document.getElementById('backBtn');
+  if(bb) bb.style.display=(typeof _tabHistory!=='undefined'&&_tabHistory.length>1)?'flex':'none';
   if(id==='clients') renderClients();
   if(id==='ventes') { refreshFilterSelects(); renderSales(); }
   if(id==='achats') { refreshAchatFournSelect(); renderAchats(); }
@@ -1352,22 +1357,16 @@ function showTab(id,btn,pushHistory=true){
   if(id==='backup') loadDriveUrl();
 }
 
-// Tab history stack for back button
-const _tabHistory=['ajouter'];
-
-window.addEventListener('hashchange', ()=>{
+function goTabBack(){
   if(_tabHistory.length>1){
     _tabHistory.pop();
     const prev=_tabHistory[_tabHistory.length-1];
     const btn=document.querySelector(`.tab-btn[onclick*="'${prev}'"]`);
-    // Update hash silently
-    _suppressHashChange=true;
-    location.hash=prev;
     showTab(prev, btn||document.querySelector('.tab-btn'), false);
   }
-});
+}
 
-let _suppressHashChange=false;
+window.addEventListener('hashchange', ()=>goTabBack());
 
 // ── STOCK INDICATOR IN FORM ────────────────────────────────────────────────
 function checkStockForModel(){
