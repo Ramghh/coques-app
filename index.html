@@ -854,7 +854,7 @@ if(lastTab){
   const btn=document.querySelector(`.tab-btn[onclick="showTab('${lastTab}',this)"]`);
   if(btn) showTab(lastTab, btn, false);
 }
-try{ history.replaceState({tab:lastTab||'ajouter',idx:1},''); }catch(e){}
+location.hash=lastTab||'ajouter';
 // Re-build year select after data is loaded
 setTimeout(()=>{
   const ysel=document.getElementById('yearSelect');
@@ -1338,7 +1338,7 @@ function showTab(id,btn,pushHistory=true){
   localStorage.setItem('flousFlowLastTab', id);
   if(pushHistory){
     _tabHistory.push(id);
-    try{ history.pushState({tab:id, idx:_tabHistory.length},''); }catch(e){}
+    location.hash=id;
   }
   if(id==='clients') renderClients();
   if(id==='ventes') { refreshFilterSelects(); renderSales(); }
@@ -1355,14 +1355,19 @@ function showTab(id,btn,pushHistory=true){
 // Tab history stack for back button
 const _tabHistory=['ajouter'];
 
-window.addEventListener('popstate', e=>{
+window.addEventListener('hashchange', ()=>{
   if(_tabHistory.length>1){
     _tabHistory.pop();
     const prev=_tabHistory[_tabHistory.length-1];
     const btn=document.querySelector(`.tab-btn[onclick*="'${prev}'"]`);
+    // Update hash silently
+    _suppressHashChange=true;
+    location.hash=prev;
     showTab(prev, btn||document.querySelector('.tab-btn'), false);
   }
 });
+
+let _suppressHashChange=false;
 
 // ── STOCK INDICATOR IN FORM ────────────────────────────────────────────────
 function checkStockForModel(){
