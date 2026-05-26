@@ -1358,15 +1358,13 @@ function showTab(id,btn,pushHistory=true){
 }
 
 function goTabBack(){
-  if(_tabHistory.length>1){
+  if(typeof _tabHistory!=='undefined'&&_tabHistory.length>1){
     _tabHistory.pop();
     const prev=_tabHistory[_tabHistory.length-1];
     const btn=document.querySelector(`.tab-btn[onclick*="'${prev}'"]`);
     showTab(prev, btn||document.querySelector('.tab-btn'), false);
   }
 }
-
-window.addEventListener('hashchange', ()=>goTabBack());
 
 // ── STOCK INDICATOR IN FORM ────────────────────────────────────────────────
 function checkStockForModel(){
