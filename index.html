@@ -866,6 +866,8 @@ if(fourns.length && typeof fourns[0]==='string'){
 }
 
 let currentSort='newest', editingId=null, currentPage=1;
+const DRIVE_URL_KEY = 'flousFlowDriveUrl';
+const DEFAULT_DRIVE_URL = 'https://script.google.com/macros/s/AKfycbxHkvv_KlMIBIFKMGVytEiOrFm3UjDOSKfQRDqKU6Ipl8HtSbYFQZ0i5xarT_NW8u0S/exec';
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 document.documentElement.setAttribute('data-theme',theme);
@@ -3251,12 +3253,10 @@ function triggerImport(mode){
 }
 
 // ── GOOGLE DRIVE SYNC ──────────────────────────────────────────────────────
-const DRIVE_URL_KEY = 'flousFlowDriveUrl';
-
 function loadDriveUrl(){
   const el = document.getElementById('driveScriptUrl');
   if(!el) return;
-  const saved = localStorage.getItem(DRIVE_URL_KEY) || '';
+  const saved = localStorage.getItem(DRIVE_URL_KEY) || DEFAULT_DRIVE_URL;
   el.value = saved;
 }
 
@@ -3270,7 +3270,7 @@ function saveDriveUrl(){
 }
 
 function getDriveUrl(){
-  return localStorage.getItem(DRIVE_URL_KEY) || '';
+  return localStorage.getItem(DRIVE_URL_KEY) || DEFAULT_DRIVE_URL;
 }
 
 function setDriveStatus(msg, color='var(--muted)'){
