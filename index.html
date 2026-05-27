@@ -3292,14 +3292,19 @@ async function syncToDrive(){
     sales, fourns, achats, stockItems, clients
   });
   try {
-    const form = new FormData();
-    form.append('data', payload);
-    await fetch(url, { method: 'POST', mode: 'no-cors', body: form });
-    const now = new Date().toLocaleTimeString('fr-TN');
-    setDriveStatus('✅ Envoyé avec succès — ' + now, 'var(--green)');
-    localStorage.setItem('flousFlowLastBackup', Date.now().toString());
-    checkBackupReminder();
-    showToast('☁️ Sync Drive réussi!');
+    const urlWithData = url + '?data=' + encodeURIComponent(payload);
+    const res = await fetch(urlWithData, { method: 'GET', mode: 'cors' });
+    const json = await res.json();
+    if(json.success){
+      const now = new Date().toLocaleTimeString('fr-TN');
+      setDriveStatus('✅ Envoyé avec succès — ' + now, 'var(--green)');
+      localStorage.setItem('flousFlowLastBackup', Date.now().toString());
+      checkBackupReminder();
+      showToast('☁️ Sync Drive réussi!');
+    } else {
+      setDriveStatus('❌ Erreur: ' + (json.error||'inconnue'), 'var(--red)');
+      showToast('❌ Erreur Script', true);
+    }
   } catch(err){
     setDriveStatus('❌ Connexion échouée — vérifie l\'URL', 'var(--red)');
     showToast('❌ Connexion échouée', true);
