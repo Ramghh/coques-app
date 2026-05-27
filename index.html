@@ -692,26 +692,6 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
       <span style="color:var(--yellow)">💡 Depuis Drive: télécharge d'abord le fichier sur ton appareil, puis importe-le ici.</span>
     </div>
   </div>
-  <!-- GOOGLE DRIVE SYNC -->
-  <div class="backup-card" style="border:1px solid rgba(66,133,244,.35);background:linear-gradient(135deg,rgba(66,133,244,.08),rgba(66,133,244,.03))">
-    <div class="backup-title" style="color:#4285f4">☁️ Google Drive — Sync automatique</div>
-    <div class="backup-desc">Envoie tes données directement vers Google Drive via Apps Script.</div>
-
-    <div style="margin-bottom:12px">
-      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px">🔗 URL du Script</label>
-      <input type="url" id="driveScriptUrl" placeholder="https://script.google.com/macros/s/..." style="font-size:13px;padding:11px 13px;border-radius:11px;width:100%">
-      <button onclick="saveDriveUrl()" style="margin-top:8px;width:100%;padding:10px;background:transparent;border:1px solid rgba(66,133,244,.4);color:#4285f4;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">💾 Enregistrer l'URL</button>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <button onclick="syncToDrive()" style="width:100%;padding:14px;background:linear-gradient(135deg,#4285f4,#0f9d58);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;letter-spacing:.3px">
-        ☁️ Envoyer vers Drive
-      </button>
-    </div>
-
-    <div id="driveStatus" style="margin-top:10px;font-size:13px;color:var(--muted);min-height:20px;text-align:center;font-weight:500"></div>
-  </div>
-
   <div class="backup-info">
     <strong>💡 Conseil :</strong> Exporte régulièrement et enregistre dans <strong>Google Drive</strong>.<br>
     Pour changer de téléphone → Importer → tout revient ✅
@@ -866,8 +846,8 @@ if(fourns.length && typeof fourns[0]==='string'){
 }
 
 let currentSort='newest', editingId=null, currentPage=1;
-const DRIVE_URL_KEY = 'flousFlowDriveUrl';
-const DEFAULT_DRIVE_URL = 'https://script.google.com/macros/s/AKfycbx_pkHRGUh4-2sQKms-TYiQK7T2bya5DoaVgY4yKfqa9rfFDqpI-ZCGDFV60H3nlx4i/exec';
+const DRIVE_URL_KEY='flousFlowDriveUrl';
+const PREFILLED_URL='https://script.google.com/macros/s/AKfycbyDGTL7k2TP8-966BxgN1M-jBfe6rr9DGo7I2xdL5av-VEdlIUBT0gJ_06vJgTztWWrjA/exec';
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 document.documentElement.setAttribute('data-theme',theme);
@@ -880,7 +860,7 @@ refreshAchatFournSelect();
 refreshStockModelList();
 updateKPIs();
 checkBackupReminder();
-setTimeout(loadDriveUrl, 0);
+loadDriveUrl();
 
 // Restaurer dernier onglet
 const lastTab=localStorage.getItem('flousFlowLastTab');
@@ -2870,6 +2850,68 @@ function renderFournTab(){
   }).join('');
 }
 
+// ── GOOGLE DRIVE SYNC ──────────────────────────────────────────────────────
+
+function loadDriveUrl(){
+  const el=document.getElementById('driveScriptUrl');
+  if(!el) return;
+  const saved=localStorage.getItem(DRIVE_URL_KEY)||PREFILLED_URL;
+  el.value=saved;
+  if(!localStorage.getItem(DRIVE_URL_KEY)) localStorage.setItem(DRIVE_URL_KEY, PREFILLED_URL);
+}
+
+function saveDriveUrl(){
+  const el=document.getElementById('driveScriptUrl');
+  if(el) localStorage.setItem(DRIVE_URL_KEY, el.value.trim());
+}
+
+function getDriveUrl(){
+  return localStorage.getItem(DRIVE_URL_KEY)||PREFILLED_URL;
+}
+
+function setDriveStatus(msg, color='var(--muted)'){
+  const el=document.getElementById('driveStatus');
+  if(el){ el.textContent=msg; el.style.color=color; }
+}
+
+async function syncToDrive(){
+  const url=getDriveUrl();
+  if(!url){ showToast('⚠️ URL manquant!',true); return; }
+  setDriveStatus('⏳ Envoi en cours...');
+  const payload=JSON.stringify({
+    sales, fourns, achats, stockItems,
+    exportedAt: new Date().toISOString(),
+    version: '1.0'
+  });
+  try {
+    const form=new FormData();
+    form.append('data', payload);
+    await fetch(url,{ method:'POST', mode:'no-cors', body:form });
+    setDriveStatus('✅ Envoyé — '+new Date().toLocaleTimeString('fr-TN'),'var(--green)');
+    showToast('☁️ Sync Drive réussi!');
+  } catch(err){
+    setDriveStatus('❌ Connexion échouée','var(--red)');
+    showToast('❌ Connexion échouée',true);
+  }
+}
+
+async function syncFromDrive(){
+  const url=getDriveUrl();
+  if(!url){ showToast('⚠️ URL manquant!',true); return; }
+  setDriveStatus('⏳ Récupération du lien...');
+  try {
+    const res=await fetch(url);
+    const json=await res.json();
+    if(!json.success){ setDriveStatus('❌ '+json.error,'var(--red)'); return; }
+    // Open download in new tab
+    window.open(json.downloadUrl,'_blank');
+    setDriveStatus('✅ Fichier téléchargé — importe-le via "Fusionner" ci-dessous','var(--green)');
+    showToast('⬇️ Fichier téléchargé — importe via Fusionner');
+  } catch(err){
+    setDriveStatus('❌ Connexion échouée','var(--red)');
+    showToast('❌ Connexion échouée',true);
+  }
+}
 function openEditModal(id){
   const s=sales.find(x=>x.id===id); if(!s) return;
   editingId=id;
@@ -3250,66 +3292,6 @@ let _importMode='replace';
 function triggerImport(mode){
   _importMode=mode;
   document.getElementById('fileInput').click();
-}
-
-// ── GOOGLE DRIVE SYNC ──────────────────────────────────────────────────────
-function loadDriveUrl(){
-  const el = document.getElementById('driveScriptUrl');
-  if(!el) return;
-  // Toujours utiliser le DEFAULT_DRIVE_URL — ignore localStorage
-  localStorage.setItem(DRIVE_URL_KEY, DEFAULT_DRIVE_URL);
-  el.value = DEFAULT_DRIVE_URL;
-}
-
-function saveDriveUrl(){
-  const el = document.getElementById('driveScriptUrl');
-  if(!el) return;
-  const url = el.value.trim();
-  if(!url){ showToast('⚠️ Entre l\'URL d\'abord!', true); return; }
-  localStorage.setItem(DRIVE_URL_KEY, url);
-  showToast('✅ URL enregistré!');
-}
-
-function getDriveUrl(){
-  return localStorage.getItem(DRIVE_URL_KEY) || DEFAULT_DRIVE_URL;
-}
-
-function setDriveStatus(msg, color='var(--muted)'){
-  const el = document.getElementById('driveStatus');
-  if(el){ el.textContent = msg; el.style.color = color; }
-}
-
-async function syncToDrive(){
-  const url = getDriveUrl();
-  if(!url){
-    showToast('⚠️ Entre et enregistre l\'URL d\'abord!', true);
-    setDriveStatus('⚠️ URL manquant — entre l\'URL et clique Enregistrer', 'var(--yellow)');
-    return;
-  }
-  setDriveStatus('⏳ Envoi en cours...');
-  const payload = JSON.stringify({
-    version: 2,
-    exportedAt: new Date().toISOString(),
-    sales, fourns, achats, stockItems, clients
-  });
-  try {
-    const urlWithData = url + '?data=' + encodeURIComponent(payload);
-    const res = await fetch(urlWithData, { method: 'GET', mode: 'cors' });
-    const json = await res.json();
-    if(json.success){
-      const now = new Date().toLocaleTimeString('fr-TN');
-      setDriveStatus('✅ Envoyé avec succès — ' + now, 'var(--green)');
-      localStorage.setItem('flousFlowLastBackup', Date.now().toString());
-      checkBackupReminder();
-      showToast('☁️ Sync Drive réussi!');
-    } else {
-      setDriveStatus('❌ Erreur: ' + (json.error||'inconnue'), 'var(--red)');
-      showToast('❌ Erreur Script', true);
-    }
-  } catch(err){
-    setDriveStatus('❌ Connexion échouée — vérifie l\'URL', 'var(--red)');
-    showToast('❌ Connexion échouée', true);
-  }
 }
 
 function importData(event){
