@@ -3256,8 +3256,9 @@ function triggerImport(mode){
 function loadDriveUrl(){
   const el = document.getElementById('driveScriptUrl');
   if(!el) return;
-  const saved = localStorage.getItem(DRIVE_URL_KEY) || DEFAULT_DRIVE_URL;
-  el.value = saved;
+  // Toujours utiliser le DEFAULT_DRIVE_URL — ignore localStorage
+  localStorage.setItem(DRIVE_URL_KEY, DEFAULT_DRIVE_URL);
+  el.value = DEFAULT_DRIVE_URL;
 }
 
 function saveDriveUrl(){
