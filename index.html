@@ -225,20 +225,24 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
   <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;letter-spacing:.5px">👤 Gharbi Ramzi</div>
 </header>
 
-<div style="margin:14px 18px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px">
-  <!-- Aujourd'hui -->
-  <div id="todayCard" style="background:linear-gradient(135deg,rgba(124,108,252,.15),rgba(252,108,143,.1));border:1px solid rgba(124,108,252,.3);border-radius:var(--radius);padding:12px 14px">
-    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:4px">📅 Aujourd'hui</div>
-    <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:800;color:var(--accent);margin-bottom:4px" id="todayVentes">0 vente</div>
-    <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:900;color:var(--green)" id="todayBenef">+0.000 DT</div>
-    <div style="font-size:11px;font-weight:600;margin-top:3px" id="todayVsYesterday"></div>
+<div style="margin:14px 18px 0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+  <div id="todayCard" style="background:linear-gradient(135deg,rgba(124,108,252,.15),rgba(252,108,143,.1));border:1px solid rgba(124,108,252,.3);border-radius:var(--radius);padding:10px 12px">
+    <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">📅 Aujourd'hui</div>
+    <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:800;color:var(--accent);margin-bottom:3px" id="todayVentes">0 vente</div>
+    <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:900;color:var(--green)" id="todayBenef">+0.000 DT</div>
+    <div style="font-size:10px;font-weight:600;margin-top:3px" id="todayVsYesterday"></div>
   </div>
-  <!-- Cette semaine -->
-  <div id="weekCard" style="background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(245,158,11,.08));border:1px solid rgba(16,185,129,.3);border-radius:var(--radius);padding:12px 14px">
-    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:4px">📆 Cette semaine</div>
-    <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:800;color:var(--yellow);margin-bottom:4px" id="weekVentes">0 vente</div>
-    <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:900;color:var(--green)" id="weekBenef">+0.000 DT</div>
-    <div style="font-size:11px;font-weight:600;margin-top:3px" id="weekVsLast"></div>
+  <div style="background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(245,158,11,.08));border:1px solid rgba(16,185,129,.3);border-radius:var(--radius);padding:10px 12px">
+    <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">📆 Semaine</div>
+    <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:800;color:var(--yellow);margin-bottom:3px" id="weekVentes">0 vente</div>
+    <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:900;color:var(--green)" id="weekBenef">+0.000 DT</div>
+    <div style="font-size:10px;font-weight:600;margin-top:3px" id="weekVsLast"></div>
+  </div>
+  <div style="background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(139,92,246,.08));border:1px solid rgba(59,130,246,.3);border-radius:var(--radius);padding:10px 12px">
+    <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">🗓️ Ce mois</div>
+    <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:800;color:#60a5fa;margin-bottom:3px" id="monthVentes">0 vente</div>
+    <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:900;color:var(--green)" id="monthBenef">+0.000 DT</div>
+    <div style="font-size:10px;font-weight:600;margin-top:3px" id="monthVsLast"></div>
   </div>
 </div>
 
@@ -649,8 +653,20 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="width:12px;height:12px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Volume moyen</div>
         <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;display:inline-block"></span>Volume faible</div>
       </div>
-      <div id="tunisiaMap" style="height:380px;border-radius:10px;overflow:hidden;border:1px solid var(--border)"></div>
+      <div style="position:relative">
+        <div id="tunisiaMap" style="height:380px;border-radius:10px;overflow:hidden;border:1px solid var(--border);cursor:pointer" onclick="openMapFullscreen()"></div>
+        <button onclick="openMapFullscreen()" title="Plein écran" style="position:absolute;top:10px;right:10px;z-index:999;background:rgba(0,0,0,.55);border:none;border-radius:8px;padding:7px 10px;cursor:pointer;font-size:16px;color:#fff;backdrop-filter:blur(4px)">⛶</button>
+      </div>
       <div id="mapStats" style="margin-top:10px;font-size:12px;color:var(--muted);text-align:center"></div>
+
+      <!-- Fullscreen Map Overlay -->
+      <div id="mapFsOverlay" onclick="closeMapFullscreen(event)" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);backdrop-filter:blur(6px)">
+        <div id="mapFsContainer" style="position:absolute;inset:12px;border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.6)">
+          <div id="tunisiaMapFs" style="width:100%;height:100%"></div>
+          <button onclick="closeMapFullscreen(null)" style="position:absolute;top:12px;right:12px;z-index:10000;background:rgba(0,0,0,.6);border:none;border-radius:50%;width:38px;height:38px;font-size:18px;color:#fff;cursor:pointer;backdrop-filter:blur(4px)">&#x2715;</button>
+          <div id="mapFsStats" style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;font-size:12px;padding:6px 14px;border-radius:20px;backdrop-filter:blur(4px);white-space:nowrap"></div>
+        </div>
+      </div>
     </div>
   </div>
   <div class="dash-section">
@@ -1564,18 +1580,14 @@ function updateTodayCard(){
       el('todayVsYesterday').textContent='';
     }
   }
-
-  // ── Cette semaine ──────────────────────────────────────
+  // ── Cette semaine ──────────────────────────────────
   const now=new Date();
-  const dayOfWeek=now.getDay(); // 0=dim
+  const dow=now.getDay();
   const startOfWeek=new Date(now);
-  startOfWeek.setDate(now.getDate()-dayOfWeek);
+  startOfWeek.setDate(now.getDate()-dow);
   startOfWeek.setHours(0,0,0,0);
-
   const startOfLastWeek=new Date(startOfWeek);
   startOfLastWeek.setDate(startOfLastWeek.getDate()-7);
-  const endOfLastWeek=new Date(startOfWeek);
-
   const weekSales=sales.filter(s=>{
     if(!s.date) return false;
     const d=new Date(s.date); d.setHours(12,0,0,0);
@@ -1584,13 +1596,11 @@ function updateTodayCard(){
   const lastWeekSales=sales.filter(s=>{
     if(!s.date) return false;
     const d=new Date(s.date); d.setHours(12,0,0,0);
-    return d>=startOfLastWeek && d<endOfLastWeek;
+    return d>=startOfLastWeek && d<startOfWeek;
   });
-
   const weekB=weekSales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
   const lastWeekB=lastWeekSales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
   const nw=weekSales.length;
-
   if(el('weekVentes')) el('weekVentes').textContent=nw+' vente'+(nw>1?'s':'');
   if(el('weekBenef')) el('weekBenef').textContent=(weekB>=0?'+':'')+fmt(weekB);
   if(el('weekVsLast')){
@@ -1601,6 +1611,27 @@ function updateTodayCard(){
       el('weekVsLast').style.color=up?'var(--green)':'var(--red)';
     } else {
       el('weekVsLast').textContent='';
+    }
+  }
+  // ── Ce mois ────────────────────────────────────────
+  const thisMonth=now.toISOString().slice(0,7);
+  const lastMonthDate=new Date(now.getFullYear(),now.getMonth()-1,1);
+  const lastMonth=lastMonthDate.toISOString().slice(0,7);
+  const monthSales=sales.filter(s=>s.date&&s.date.slice(0,7)===thisMonth);
+  const lastMonthSales=sales.filter(s=>s.date&&s.date.slice(0,7)===lastMonth);
+  const monthB=monthSales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+  const lastMonthB=lastMonthSales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+  const nm=monthSales.length;
+  if(el('monthVentes')) el('monthVentes').textContent=nm+' vente'+(nm>1?'s':'');
+  if(el('monthBenef')) el('monthBenef').textContent=(monthB>=0?'+':'')+fmt(monthB);
+  if(el('monthVsLast')){
+    if(lastMonthB>0){
+      const diff=((monthB-lastMonthB)/lastMonthB*100).toFixed(0);
+      const up=monthB>=lastMonthB;
+      el('monthVsLast').textContent=(up?'↑ +':'↓ ')+Math.abs(diff)+'% vs M-1';
+      el('monthVsLast').style.color=up?'var(--green)':'var(--red)';
+    } else {
+      el('monthVsLast').textContent='';
     }
   }
 }
@@ -3162,41 +3193,7 @@ function initTunisiaMap(){
     'Dougga':[36.4228,9.2194],'El Fahs':[36.3667,10.1500],'Grombalia':[36.5961,10.5042],
     'Korba':[36.5731,10.8578],'Menzel Bourguiba':[37.1528,9.7944],'Soliman':[36.7006,10.4881],
     'Kalaa Kebira':[35.8667,10.5333],'Msaken':[35.7167,10.5833],'Rades':[36.7728,10.2767],
-    'La Marsa':[36.8781,10.3183],'Carthage':[36.8528,10.3233],
-    'Menzel Temime':[36.7833,10.9833],'Menzel Bouzelfa':[36.6775,10.5667],
-    'Mateur':[37.0400,9.6667],'Matir':[37.0400,9.6667],
-    'Haouaria':[37.0500,11.0333],'Béni Khalled':[36.5500,10.6167],
-    'Beni Khalled':[36.5500,10.6167],'Dar Chaabane':[36.5667,10.7833],
-    'Hammam Lif':[36.7319,10.3289],'El Mourouj':[36.7167,10.2167],
-    'Borj Cedria':[36.7167,10.3833],'Tebourba':[36.8333,9.8333],
-    'Enfidha':[36.1333,10.3833],'Hammam Sousse':[35.8597,10.5944],
-    'Akouda':[35.8667,10.5667],'Bou Argoub':[36.5333,10.5500],
-    'Ain Draham':[36.7667,8.6833],'Testour':[36.5500,9.4500],
-    'Medjez El Bab':[36.6500,9.6167],'Fouchana':[36.7167,10.1833],
-    'Moknine':[35.6333,10.9000],'Jemmal':[35.6167,10.7167],
-    'El Jem':[35.2967,10.7100],'Hergla':[36.0500,10.6167],
-    'Chebba':[35.2333,11.1167],'Ksour Essef':[35.0167,11.0167],
-    'Sbeitla':[35.2333,9.1000],'Sbeïtla':[35.2333,9.1000],
-    'Thala':[35.5667,8.6667],'Feriana':[34.9500,8.5667],
-    'Sidi Bou Said':[36.8694,10.3408],'Gammarth':[36.9167,10.2833],
-    'Ettadhamen':[36.8333,10.1333],'Douar Hicher':[36.8167,10.1167],
-    'Ras Jebel':[37.2167,10.1167],'Menzel Jemil':[37.2167,10.0000],
-    'Menzel Abderrahmane':[37.1833,9.9333],'Sejnane':[37.0556,9.2333],
-    'Bou Salem':[36.6167,8.9500],'Ghardimaou':[36.4500,8.4333],
-    'Fernana':[36.6333,8.7167],'Nebeur':[36.4500,8.8000],
-    'Bargou':[36.0667,9.5000],'Medjez el Bab':[36.6500,9.6167],
-    'Hammam Chott':[36.7333,10.3167],'Megrine':[36.7833,10.2333],
-    'Kalaa Srira':[35.8333,10.6000],'Bouficha':[36.2167,10.5000],
-    'Bou Salem':[36.6167,8.9500],'Chott Meriem':[35.9333,10.5667],
-    'Zeramdine':[35.6500,10.6833],'Teboulba':[35.6500,10.9500],
-    'Bekalta':[35.6167,10.9000],'Sidi Alouane':[35.4333,11.0000],
-    'El Guettar':[34.3333,8.9667],'Metlaoui':[34.3333,8.4000],
-    'Redeyef':[34.3833,8.1833],'El Hamma':[33.8833,9.7833],
-    'Mareth':[33.6333,10.2667],'Ghannouche':[33.9500,10.0000],
-    'Ben Gardane':[33.1333,11.2167],'Houmt Souk':[33.8767,10.8567],
-    'Midoun':[33.8167,11.0000],'Ajim':[33.7333,10.7500],
-    'Douz':[33.4500,9.0167],'Nefta':[33.8667,7.8833],
-    'Remada':[32.3333,10.4000],'Tamerza':[34.3833,7.9167]
+    'La Marsa':[36.8781,10.3183],'Carthage':[36.8528,10.3233]
   };
   const cityStats={};
   sales.forEach(sale=>{
@@ -3230,6 +3227,110 @@ function initTunisiaMap(){
   }
   setTimeout(()=>tunisiaMap.invalidateSize(),200);
 }
+
+// ── FULLSCREEN MAP ─────────────────────────────────────────────────────────
+let tunisiaMapFs=null;
+
+function openMapFullscreen(){
+  const overlay=document.getElementById('mapFsOverlay');
+  if(!overlay) return;
+  overlay.style.display='block';
+  document.body.style.overflow='hidden';
+
+  // Init fullscreen map if not already
+  const fsContainer=document.getElementById('tunisiaMapFs');
+  if(!fsContainer) return;
+
+  if(tunisiaMapFs){ tunisiaMapFs.remove(); tunisiaMapFs=null; }
+
+  tunisiaMapFs=L.map(fsContainer).setView([34.0,9.5],7);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+    attribution:'&copy; OSM',subdomains:'abcd',maxZoom:14
+  }).addTo(tunisiaMapFs);
+
+  const cityCoords={
+    'Tunis':[36.8065,10.1815],'Sfax':[34.7406,10.7603],'Sousse':[35.8256,10.6368],
+    'Bizerte':[37.2744,9.8739],'Nabeul':[36.4561,10.7376],'Gabès':[33.8815,10.0982],
+    'Kairouan':[35.6781,10.0964],'Gafsa':[34.4250,8.7842],'Monastir':[35.7646,10.8115],
+    'Zaghouan':[36.4029,10.1429],'Mahdia':[35.5045,11.0622],'Béja':[36.7256,9.1817],
+    'Jendouba':[36.5012,8.7802],'Kef':[36.1740,8.7050],'Tozeur':[33.9197,8.1335],
+    'Médenine':[33.3479,10.4972],'Kelibia':[36.8469,11.0953],'Hammamet':[36.3994,10.6133],
+    'Ariana':[36.8625,10.1956],'Ben Arous':[36.7531,10.2309],'Manouba':[36.8081,10.0989],
+    'Siliana':[36.0853,9.3704],'Kasserine':[35.1674,8.8365],'Sidi Bouzid':[35.0382,9.4849],
+    'Tataouine':[32.9297,10.4518],'Kebili':[33.7050,8.9712],'Tabarka':[36.9542,8.7576],
+    'Djerba':[33.8076,10.8451],'Zarzis':[33.5031,11.1119],'Bousalem':[36.6333,8.9667],
+    'Dougga':[36.4228,9.2194],'El Fahs':[36.3667,10.1500],'Grombalia':[36.5961,10.5042],
+    'Korba':[36.5731,10.8578],'Menzel Bourguiba':[37.1528,9.7944],'Soliman':[36.7006,10.4881],
+    'Kalaa Kebira':[35.8667,10.5333],'Msaken':[35.7167,10.5833],'Rades':[36.7728,10.2767],
+    'La Marsa':[36.8781,10.3183],'Carthage':[36.8528,10.3233],
+    'Menzel Temime':[36.7833,10.9833],'Menzel Bouzelfa':[36.6775,10.5667],
+    'Mateur':[37.0400,9.6667],'Matir':[37.0400,9.6667],
+    'Haouaria':[37.0500,11.0333],'Béni Khalled':[36.5500,10.6167],
+    'Beni Khalled':[36.5500,10.6167],'Dar Chaabane':[36.5667,10.7833],
+    'Hammam Lif':[36.7319,10.3289],'El Mourouj':[36.7167,10.2167],
+    'Borj Cedria':[36.7167,10.3833],'Tebourba':[36.8333,9.8333],
+    'Enfidha':[36.1333,10.3833],'Hammam Sousse':[35.8597,10.5944],
+    'Akouda':[35.8667,10.5667],'Bou Argoub':[36.5333,10.5500],
+    'Ain Draham':[36.7667,8.6833],'Testour':[36.5500,9.4500],
+    'Medjez El Bab':[36.6500,9.6167],'Fouchana':[36.7167,10.1833],
+    'Moknine':[35.6333,10.9000],'Jemmal':[35.6167,10.7167],
+    'El Jem':[35.2967,10.7100],'Hergla':[36.0500,10.6167],
+    'Ben Gardane':[33.1333,11.2167],'Houmt Souk':[33.8767,10.8567],
+    'Douz':[33.4500,9.0167],'Nefta':[33.8667,7.8833],
+    'Mareth':[33.6333,10.2667],'Ghannouche':[33.9500,10.0000],
+    'Hammam Chott':[36.7333,10.3167],'Megrine':[36.7833,10.2333],
+    'Sidi Bou Said':[36.8694,10.3408],'Gammarth':[36.9167,10.2833],
+    'Bouficha':[36.2167,10.5000],'Zeramdine':[35.6500,10.6833],
+    'Teboulba':[35.6500,10.9500],'Bekalta':[35.6167,10.9000],
+    'Bou Salem':[36.6167,8.9500],'Ghardimaou':[36.4500,8.4333],
+    'Fernana':[36.6333,8.7167],'Ras Jebel':[37.2167,10.1167],
+    'Menzel Jemil':[37.2167,10.0000],'Sejnane':[37.0556,9.2333],
+    'Sbeitla':[35.2333,9.1000],'Remada':[32.3333,10.4000],
+    'Ettadhamen':[36.8333,10.1333],'Midoun':[33.8167,11.0000]
+  };
+
+  const cityStats={};
+  sales.forEach(sale=>{
+    const city=sale.ville||'';
+    const key=Object.keys(cityCoords).find(c=>c.toLowerCase()===city.toLowerCase());
+    if(key){
+      if(!cityStats[key]) cityStats[key]={revenu:0,benef:0,count:0};
+      cityStats[key].revenu+=sale.revenu;
+      cityStats[key].benef+=(sale.benef||sale.benefBrut||0);
+      cityStats[key].count++;
+    }
+  });
+
+  const maxRevenue=Math.max(...Object.values(cityStats).map(c=>c.revenu),1);
+  for(const city in cityStats){
+    const stats=cityStats[city];
+    const radius=10+(stats.revenu/maxRevenue)*40;
+    const color=stats.revenu>maxRevenue*0.7?'#ef4444':(stats.revenu>maxRevenue*0.3?'#f59e0b':'#60a5fa');
+    const marker=L.circleMarker(cityCoords[city],{
+      radius,fillColor:color,color:'rgba(255,255,255,.4)',weight:1.5,fillOpacity:0.8
+    }).addTo(tunisiaMapFs);
+    marker.bindPopup(`<b>📍 ${city}</b><br>💰 ${fmt(stats.revenu)} DT<br>📈 Bénéf: ${fmt(stats.benef)} DT<br>🛒 ${stats.count} vente${stats.count>1?'s':''}`);
+  }
+
+  const totalRev=Object.values(cityStats).reduce((a,c)=>a+c.revenu,0);
+  const fsStats=document.getElementById('mapFsStats');
+  if(fsStats) fsStats.textContent=`🗺️ ${Object.keys(cityStats).length} villes · ${fmt(totalRev)} DT`;
+
+  setTimeout(()=>tunisiaMapFs.invalidateSize(),300);
+}
+
+function closeMapFullscreen(event){
+  if(event && event.target!==document.getElementById('mapFsOverlay')) return;
+  const overlay=document.getElementById('mapFsOverlay');
+  if(overlay) overlay.style.display='none';
+  document.body.style.overflow='';
+  if(tunisiaMapFs){ tunisiaMapFs.remove(); tunisiaMapFs=null; }
+}
+
+// Close with Escape key
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') closeMapFullscreen(null);
+});
 
 // ── CHART.JS: Grouped Bar Chart ────────────────────────────────────────────
 function buildYearSelectorForComp(){
