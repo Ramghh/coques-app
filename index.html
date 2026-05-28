@@ -225,14 +225,20 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
   <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;letter-spacing:.5px">👤 Gharbi Ramzi</div>
 </header>
 
-<div id="todayCard" style="margin:14px 18px 0;background:linear-gradient(135deg,rgba(124,108,252,.15),rgba(252,108,143,.1));border:1px solid rgba(124,108,252,.3);border-radius:var(--radius);padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
-  <div>
-    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:3px">📅 Aujourd'hui</div>
-    <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:800;color:var(--accent)" id="todayVentes">0 vente</div>
+<div style="margin:14px 18px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+  <!-- Aujourd'hui -->
+  <div id="todayCard" style="background:linear-gradient(135deg,rgba(124,108,252,.15),rgba(252,108,143,.1));border:1px solid rgba(124,108,252,.3);border-radius:var(--radius);padding:12px 14px">
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:4px">📅 Aujourd'hui</div>
+    <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:800;color:var(--accent);margin-bottom:4px" id="todayVentes">0 vente</div>
+    <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:900;color:var(--green)" id="todayBenef">+0.000 DT</div>
+    <div style="font-size:11px;font-weight:600;margin-top:3px" id="todayVsYesterday"></div>
   </div>
-  <div style="text-align:right">
-    <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:900;color:var(--green)" id="todayBenef">+0.000 DT</div>
-    <div style="font-size:12px;font-weight:600;margin-top:2px" id="todayVsYesterday"></div>
+  <!-- Cette semaine -->
+  <div id="weekCard" style="background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(245,158,11,.08));border:1px solid rgba(16,185,129,.3);border-radius:var(--radius);padding:12px 14px">
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:4px">📆 Cette semaine</div>
+    <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:800;color:var(--yellow);margin-bottom:4px" id="weekVentes">0 vente</div>
+    <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:900;color:var(--green)" id="weekBenef">+0.000 DT</div>
+    <div style="font-size:11px;font-weight:600;margin-top:3px" id="weekVsLast"></div>
   </div>
 </div>
 
@@ -1556,6 +1562,45 @@ function updateTodayCard(){
       el('todayVsYesterday').style.color=up?'var(--green)':'var(--red)';
     } else {
       el('todayVsYesterday').textContent='';
+    }
+  }
+
+  // ── Cette semaine ──────────────────────────────────────
+  const now=new Date();
+  const dayOfWeek=now.getDay(); // 0=dim
+  const startOfWeek=new Date(now);
+  startOfWeek.setDate(now.getDate()-dayOfWeek);
+  startOfWeek.setHours(0,0,0,0);
+
+  const startOfLastWeek=new Date(startOfWeek);
+  startOfLastWeek.setDate(startOfLastWeek.getDate()-7);
+  const endOfLastWeek=new Date(startOfWeek);
+
+  const weekSales=sales.filter(s=>{
+    if(!s.date) return false;
+    const d=new Date(s.date); d.setHours(12,0,0,0);
+    return d>=startOfWeek;
+  });
+  const lastWeekSales=sales.filter(s=>{
+    if(!s.date) return false;
+    const d=new Date(s.date); d.setHours(12,0,0,0);
+    return d>=startOfLastWeek && d<endOfLastWeek;
+  });
+
+  const weekB=weekSales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+  const lastWeekB=lastWeekSales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+  const nw=weekSales.length;
+
+  if(el('weekVentes')) el('weekVentes').textContent=nw+' vente'+(nw>1?'s':'');
+  if(el('weekBenef')) el('weekBenef').textContent=(weekB>=0?'+':'')+fmt(weekB);
+  if(el('weekVsLast')){
+    if(lastWeekB>0){
+      const diff=((weekB-lastWeekB)/lastWeekB*100).toFixed(0);
+      const up=weekB>=lastWeekB;
+      el('weekVsLast').textContent=(up?'↑ +':'↓ ')+Math.abs(diff)+'% vs S-1';
+      el('weekVsLast').style.color=up?'var(--green)':'var(--red)';
+    } else {
+      el('weekVsLast').textContent='';
     }
   }
 }
@@ -3117,7 +3162,41 @@ function initTunisiaMap(){
     'Dougga':[36.4228,9.2194],'El Fahs':[36.3667,10.1500],'Grombalia':[36.5961,10.5042],
     'Korba':[36.5731,10.8578],'Menzel Bourguiba':[37.1528,9.7944],'Soliman':[36.7006,10.4881],
     'Kalaa Kebira':[35.8667,10.5333],'Msaken':[35.7167,10.5833],'Rades':[36.7728,10.2767],
-    'La Marsa':[36.8781,10.3183],'Carthage':[36.8528,10.3233]
+    'La Marsa':[36.8781,10.3183],'Carthage':[36.8528,10.3233],
+    'Menzel Temime':[36.7833,10.9833],'Menzel Bouzelfa':[36.6775,10.5667],
+    'Mateur':[37.0400,9.6667],'Matir':[37.0400,9.6667],
+    'Haouaria':[37.0500,11.0333],'Béni Khalled':[36.5500,10.6167],
+    'Beni Khalled':[36.5500,10.6167],'Dar Chaabane':[36.5667,10.7833],
+    'Hammam Lif':[36.7319,10.3289],'El Mourouj':[36.7167,10.2167],
+    'Borj Cedria':[36.7167,10.3833],'Tebourba':[36.8333,9.8333],
+    'Enfidha':[36.1333,10.3833],'Hammam Sousse':[35.8597,10.5944],
+    'Akouda':[35.8667,10.5667],'Bou Argoub':[36.5333,10.5500],
+    'Ain Draham':[36.7667,8.6833],'Testour':[36.5500,9.4500],
+    'Medjez El Bab':[36.6500,9.6167],'Fouchana':[36.7167,10.1833],
+    'Moknine':[35.6333,10.9000],'Jemmal':[35.6167,10.7167],
+    'El Jem':[35.2967,10.7100],'Hergla':[36.0500,10.6167],
+    'Chebba':[35.2333,11.1167],'Ksour Essef':[35.0167,11.0167],
+    'Sbeitla':[35.2333,9.1000],'Sbeïtla':[35.2333,9.1000],
+    'Thala':[35.5667,8.6667],'Feriana':[34.9500,8.5667],
+    'Sidi Bou Said':[36.8694,10.3408],'Gammarth':[36.9167,10.2833],
+    'Ettadhamen':[36.8333,10.1333],'Douar Hicher':[36.8167,10.1167],
+    'Ras Jebel':[37.2167,10.1167],'Menzel Jemil':[37.2167,10.0000],
+    'Menzel Abderrahmane':[37.1833,9.9333],'Sejnane':[37.0556,9.2333],
+    'Bou Salem':[36.6167,8.9500],'Ghardimaou':[36.4500,8.4333],
+    'Fernana':[36.6333,8.7167],'Nebeur':[36.4500,8.8000],
+    'Bargou':[36.0667,9.5000],'Medjez el Bab':[36.6500,9.6167],
+    'Hammam Chott':[36.7333,10.3167],'Megrine':[36.7833,10.2333],
+    'Kalaa Srira':[35.8333,10.6000],'Bouficha':[36.2167,10.5000],
+    'Bou Salem':[36.6167,8.9500],'Chott Meriem':[35.9333,10.5667],
+    'Zeramdine':[35.6500,10.6833],'Teboulba':[35.6500,10.9500],
+    'Bekalta':[35.6167,10.9000],'Sidi Alouane':[35.4333,11.0000],
+    'El Guettar':[34.3333,8.9667],'Metlaoui':[34.3333,8.4000],
+    'Redeyef':[34.3833,8.1833],'El Hamma':[33.8833,9.7833],
+    'Mareth':[33.6333,10.2667],'Ghannouche':[33.9500,10.0000],
+    'Ben Gardane':[33.1333,11.2167],'Houmt Souk':[33.8767,10.8567],
+    'Midoun':[33.8167,11.0000],'Ajim':[33.7333,10.7500],
+    'Douz':[33.4500,9.0167],'Nefta':[33.8667,7.8833],
+    'Remada':[32.3333,10.4000],'Tamerza':[34.3833,7.9167]
   };
   const cityStats={};
   sales.forEach(sale=>{
