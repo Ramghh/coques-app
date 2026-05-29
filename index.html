@@ -24,10 +24,11 @@
 }
 :root{--accent:#7c6cfc;--accent2:#fc6c8f;--green:#10b981;--yellow:#f59e0b;--red:#ef4444;--radius:14px;}
 *{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:hidden;width:100%;max-width:100%}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:24px;transition:background .3s,color .3s}
 
 /* HEADER */
-header{background:var(--header-bg);padding:18px 18px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+header{background:var(--header-bg);padding:18px 18px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;width:100%;box-sizing:border-box;left:0}
 .header-top{display:flex;align-items:center;justify-content:space-between}
 .logo{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#fff;letter-spacing:-.5px}
 .logo span{color:#fbbf24}
@@ -63,7 +64,8 @@ header{background:var(--header-bg);padding:18px 18px 14px;border-bottom:1px soli
 .tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
 
 /* SECTIONS */
-.section{padding:0 18px;display:none}.section.active{display:block}
+.section{padding:0 18px;display:none;opacity:0;transform:translateY(6px)}.section.active{display:block;animation:sectionIn .25s ease forwards}
+@keyframes sectionIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 /* FORM */
 .form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;box-shadow:var(--shadow)}
@@ -97,6 +99,40 @@ input::placeholder{color:var(--muted)}
 .sales-list{display:flex;flex-direction:column;gap:12px}
 .sale-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 16px 12px;animation:slideIn .25s ease;box-shadow:var(--shadow)}
 @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── UI IMPROVEMENTS ──────────────────────────────────────────────────── */
+/* Skeleton */
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton{background:linear-gradient(90deg,var(--surface2) 25%,var(--border) 50%,var(--surface2) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:8px}
+.skeleton-line{height:11px;margin-bottom:8px}.skeleton-line.short{width:38%}.skeleton-line.medium{width:62%}.skeleton-line.long{width:88%}
+
+/* Empty states */
+.empty{text-align:center;padding:48px 24px;animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.empty-icon{font-size:52px;margin-bottom:14px;display:block;animation:floatIcon 3s ease-in-out infinite}
+@keyframes floatIcon{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.empty-text{font-size:15px;color:var(--muted);font-weight:600}
+.empty-sub{font-size:13px;color:var(--muted);opacity:.6;margin-top:5px}
+
+/* Micro-interactions */
+.tab-btn{transition:all .18s cubic-bezier(.34,1.56,.64,1)!important}
+.tab-btn:active{transform:scale(.91)!important}
+.btn-add{transition:all .2s cubic-bezier(.34,1.56,.64,1)!important}
+.btn-add:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(124,108,252,.45)!important}
+.btn-add:active{transform:scale(.97)!important}
+.sale-card{transition:transform .18s ease,box-shadow .18s ease!important}
+.sale-card:active{transform:scale(.985)!important}
+.fab{animation:fabPop .5s cubic-bezier(.34,1.56,.64,1)!important}
+.fab:hover{transform:scale(1.12) rotate(45deg)!important;box-shadow:0 6px 26px rgba(124,108,252,.65)!important}
+.fab:active{transform:scale(.9)!important}
+@keyframes fabPop{from{opacity:0;transform:scale(0) rotate(-90deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+.btn-edit-card,.btn-del-card,.btn-dup-card,.btn-print-card{transition:all .13s ease!important}
+.btn-edit-card:active,.btn-del-card:active,.btn-dup-card:active,.btn-print-card:active{transform:scale(.92)!important}
+input:focus,select:focus{outline:none;border-color:var(--accent)!important;box-shadow:0 0 0 3px rgba(124,108,252,.14)!important}
+.kpi{animation:slideIn .3s ease backwards}
+.kpi:nth-child(1){animation-delay:.05s}.kpi:nth-child(2){animation-delay:.1s}.kpi:nth-child(3){animation-delay:.15s}
+.form-card{animation:slideIn .3s ease backwards}
+/* ─────────────────────────────────────────────────────────────────────── */
 .sale-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
 .sale-model{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;line-height:1.2}
 .sale-benef{font-family:'DM Mono',monospace;font-size:16px;font-weight:700;padding:5px 12px;border-radius:10px;white-space:nowrap;flex-shrink:0;margin-left:8px}
@@ -182,8 +218,7 @@ input::placeholder{color:var(--muted)}
 
 /* MISC */
 .empty{text-align:center;padding:55px 20px;color:var(--muted)}
-.empty-icon{font-size:52px;margin-bottom:14px}
-.empty-text{font-size:16px;line-height:1.7}
+.empty{text-align:center;padding:44px 20px}
 .no-results{text-align:center;padding:30px;color:var(--muted);font-size:15px}
 .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green);color:#fff;font-weight:700;font-size:15px;padding:13px 24px;border-radius:30px;z-index:300;opacity:0;transition:all .3s;white-space:nowrap;font-family:'DM Sans',sans-serif}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -251,6 +286,8 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
   <div class="kpi"><div class="kpi-label">Bénéfice</div><div class="kpi-value green" id="kpiBenef">0 DT</div></div>
   <div class="kpi"><div class="kpi-label">Clients uniques</div><div class="kpi-value purple" id="kpiClients">0</div></div>
 </div>
+
+
 
 <div style="margin:14px 18px;background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.3);border-radius:var(--radius);padding:16px 18px">
   <div style="font-size:12px;color:var(--yellow);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:4px">🛒 Coût Total Achats</div>
@@ -1010,7 +1047,7 @@ function renderStock(){
   }
 
   if(!stockItems.length){
-    el.innerHTML='<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">Aucun produit en stock.<br>Ajoute ton premier produit!</div></div>';
+    el.innerHTML='<div class="empty"><span class="empty-icon">📦</span><div class="empty-text">Aucun produit en stock</div><div class="empty-sub">Ajoute ton premier produit via le formulaire</div></div>';
     if(resume) resume.style.display='none';
     return;
   }
@@ -1223,7 +1260,7 @@ function renderClients(){
   );
 
   if(!filtered.length){
-    el.innerHTML='<div class="empty"><div class="empty-icon">👤</div><div class="empty-text">Aucun client enregistré.<br>Ajoute ton premier client!</div></div>';
+    el.innerHTML='<div class="empty"><span class="empty-icon">👤</span><div class="empty-text">Aucun client enregistré</div><div class="empty-sub">Ajoute ton premier client ci-dessus</div></div>';
     return;
   }
 
@@ -1942,6 +1979,22 @@ function goPage(dir){
 // ── RENDER SALES ───────────────────────────────────────────────────────────
 function renderSales(){
   const el=document.getElementById('salesList');
+  // Show skeleton briefly on first load
+  if(el&&!el.dataset.loaded){
+    el.dataset.loaded='1';
+    el.innerHTML=`
+      ${[1,2,3].map(()=>`<div class="skeleton-card">
+        <div class="skeleton skeleton-line long"></div>
+        <div class="skeleton skeleton-line medium" style="margin-top:10px"></div>
+        <div class="skeleton skeleton-line short"></div>
+      </div>`).join('')}`;
+    setTimeout(()=>_doRenderSales(),120);
+    return;
+  }
+  _doRenderSales();
+}
+function _doRenderSales(){
+  const el=document.getElementById('salesList');
   const q=(document.getElementById('searchInput').value||'').toLowerCase().trim();
   const f=getFiltered();
   const perPageEl=document.getElementById('perPageSelect');
@@ -1950,7 +2003,7 @@ function renderSales(){
   currentPage=Math.max(1,Math.min(currentPage,totalPages||1));
 
   if(!f.length){
-    el.innerHTML=q?`<div class="no-results">🔍 Aucun résultat pour "<strong>${q}</strong>"</div>`:'<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">Aucune vente.<br>Ajoute ta première vente!</div></div>';
+    el.innerHTML=q?`<div class="empty"><span class="empty-icon">🔍</span><div class="empty-text">Aucun résultat pour "<strong>${q}</strong>"</div><div class="empty-sub">Essaie un autre terme de recherche</div></div>`:'<div class="empty"><span class="empty-icon">📦</span><div class="empty-text">Aucune vente enregistrée</div><div class="empty-sub">Appuie sur + pour ajouter ta première vente</div></div>';
     const pi=document.getElementById('pageInfo'); if(pi) pi.textContent='';
     const pb=document.getElementById('paginationBar'); if(pb) pb.style.display='none';
     return;
