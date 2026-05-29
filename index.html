@@ -3167,6 +3167,90 @@ function showCitySales(city) {
   if (salesList) salesList.scrollIntoView({ behavior: 'smooth' });
 }
 
+// ── CITY COORDS (shared) ───────────────────────────────────────────────────
+const CITY_COORDS={
+  // ── Grand Tunis ──────────────────────────────────────────────────────────
+  'Tunis':[36.8065,10.1815],'Ariana':[36.8625,10.1956],'Ben Arous':[36.7531,10.2309],
+  'Manouba':[36.8081,10.0989],'La Marsa':[36.8781,10.3183],'Sidi Bou Said':[36.8694,10.3408],
+  'Carthage':[36.8528,10.3233],'Gammarth':[36.9167,10.2833],'Rades':[36.7728,10.2767],
+  'Megrine':[36.7833,10.2333],'Hammam Chott':[36.7333,10.3167],'Hammam Lif':[36.7319,10.3289],
+  'Borj Cedria':[36.7167,10.3833],'Boumhal':[36.7667,10.3167],'Bir El Bey':[36.7167,10.2833],
+  'Ettadhamen':[36.8333,10.1333],'Douar Hicher':[36.8167,10.1167],'Fouchana':[36.7167,10.1833],
+  'Mohamedia':[36.6833,10.1167],'El Mourouj':[36.7167,10.2167],'El Aouina':[36.8417,10.2278],
+  'Djebel Jelloud':[36.7667,10.2167],'Tebourba':[36.8333,9.8333],
+  // ── Bizerte ──────────────────────────────────────────────────────────────
+  'Bizerte':[37.2744,9.8739],'Menzel Bourguiba':[37.1528,9.7944],'Ras Jebel':[37.2167,10.1167],
+  'Menzel Jemil':[37.2167,10.0000],'Menzel Abderrahmane':[37.1833,9.9333],
+  'Mateur':[37.0400,9.6667],'Matir':[37.0400,9.6667],'Sejnane':[37.0556,9.2333],
+  'Nefza':[37.0167,9.0333],'Ghezala':[37.1667,9.5333],'Utique':[37.0561,10.0583],
+  'Joumine':[37.1000,9.5333],'Kalaat Landlous':[37.0667,10.0167],
+  // ── Cap Bon / Nabeul ─────────────────────────────────────────────────────
+  'Nabeul':[36.4561,10.7376],'Hammamet':[36.3994,10.6133],'Kelibia':[36.8469,11.0953],
+  'Korba':[36.5731,10.8578],'Menzel Temime':[36.7833,10.9833],'Menzel Bouzelfa':[36.6775,10.5667],
+  'Haouaria':[37.0500,11.0333],'Béni Khalled':[36.5500,10.6167],'Beni Khalled':[36.5500,10.6167],
+  'Dar Chaabane':[36.5667,10.7833],'Grombalia':[36.5961,10.5042],'Bou Argoub':[36.5333,10.5500],
+  'Soliman':[36.7006,10.4881],'El Fahs':[36.3667,10.1500],'Zaghouan':[36.4029,10.1429],
+  // ── Béja / Jendouba / Kef / Siliana ─────────────────────────────────────
+  'Béja':[36.7256,9.1817],'Jendouba':[36.5012,8.7802],'Tabarka':[36.9542,8.7576],
+  'Ain Draham':[36.7667,8.6833],'Fernana':[36.6333,8.7167],'Bou Salem':[36.6167,8.9500],
+  'Ghardimaou':[36.4500,8.4333],'Nefza':[37.0167,9.0333],'Balta':[36.5500,9.1167],
+  'Kef':[36.1740,8.7050],'El Kef':[36.1740,8.7050],'Al-Kaf':[36.1740,8.7050],
+  'Le Kef':[36.1740,8.7050],'Nebeur':[36.4500,8.8000],'Sakiet Sidi Youssef':[36.2333,8.2500],
+  'Dahmani':[35.9500,8.8333],'Kalaat Khasba':[35.7833,8.6500],'Tajerouine':[35.8833,8.5500],
+  'Siliana':[36.0853,9.3704],'Bargou':[36.0667,9.5000],'Kesra':[35.8000,9.3667],
+  'Rohia':[35.7167,9.2500],'Makthar':[35.8583,9.2000],'Testour':[36.5500,9.4500],
+  'Medjez El Bab':[36.6500,9.6167],'Dougga':[36.4228,9.2194],
+  // ── Sousse / Monastir / Mahdia ───────────────────────────────────────────
+  'Sousse':[35.8256,10.6368],'Monastir':[35.7646,10.8115],'Mahdia':[35.5045,11.0622],
+  'Kalaa Kebira':[35.8667,10.5333],'Kalaa Srira':[35.8333,10.6000],'Msaken':[35.7167,10.5833],
+  'Hammam Sousse':[35.8597,10.5944],'Akouda':[35.8667,10.5667],'Enfidha':[36.1333,10.3833],
+  'Hergla':[36.0500,10.6167],'Sidi Bou Ali':[36.0833,10.5833],'Chott Meriem':[35.9333,10.5667],
+  'Bouficha':[36.2167,10.5000],'Takrouna':[36.0167,10.4000],'Beni Hassane':[35.7000,10.4000],
+  'Sidi El Heni':[35.6333,10.3500],'Kondar':[35.5667,10.6667],
+  'Moknine':[35.6333,10.9000],'Jemmal':[35.6167,10.7167],'Bembla':[35.7500,10.7333],
+  'Zeramdine':[35.6500,10.6833],'Teboulba':[35.6500,10.9500],'Bekalta':[35.6167,10.9000],
+  'Ksibet El Mediouni':[35.6833,10.8500],'El Jem':[35.2967,10.7100],
+  'Chebba':[35.2333,11.1167],'Ksour Essef':[35.0167,11.0167],'Sidi Alouane':[35.4333,11.0000],
+  // ── Kairouan / Sidi Bouzid / Kasserine ──────────────────────────────────
+  'Kairouan':[35.6781,10.0964],'Sbikha':[35.9333,10.0000],'Haffouz':[35.6333,9.6667],
+  'Nasrallah':[35.3667,9.9333],'Oued Haffouz':[35.5000,9.5833],'Bouhajla':[35.7167,9.8667],
+  'Hajeb El Ayoun':[35.3833,9.5333],'Chebika':[35.3333,9.5333],'El Alaa':[35.5667,9.6000],
+  'Menzel Mehiri':[35.8333,10.1000],
+  'Sidi Bouzid':[35.0382,9.4849],'Regueb':[34.7333,9.1167],'Bir El Hafey':[34.7167,9.6333],
+  'Meknassy':[34.9833,9.6667],'Mezzouna':[34.5333,9.8333],'Menzel Bouzaiane':[34.9667,9.4833],
+  'Ouled Haffouz':[35.1667,9.5000],'Sidi Ali Ben Aoun':[35.2500,9.2333],
+  'Kasserine':[35.1674,8.8365],'Sbeitla':[35.2333,9.1000],'Sbeïtla':[35.2333,9.1000],
+  'Thala':[35.5667,8.6667],'Feriana':[34.9500,8.5667],'Foussana':[35.2167,8.6167],
+  'Majel Bel Abbes':[35.4000,8.8333],'Hidra':[35.4167,8.5167],'El Ayoun':[35.6333,9.1833],
+  'Hassi El Frid':[35.3667,8.4000],
+  // ── Sfax ─────────────────────────────────────────────────────────────────
+  'Sfax':[34.7406,10.7603],'Sakiet Ezzit':[34.8167,10.7333],'Sakiet Eddaier':[34.8000,10.7667],
+  'Bir Ali Ben Khalifa':[34.7333,10.0833],'Bir Ali Ben Khalifa':[34.7333,10.0833],
+  'Agareb':[34.7500,10.5500],'Jebiniana':[35.0167,10.9167],'El Amra':[34.9167,10.6667],
+  'El Hencha':[34.6167,10.3000],'Menzel Chaker':[34.9833,10.4333],'Ghraiba':[34.5500,10.2500],
+  'Mahres':[34.5333,10.5000],'Skhira':[34.2833,10.0667],'Thyna':[34.6833,10.6667],
+  'Kerkennah':[34.7167,11.2333],'Kerkenah':[34.7167,11.2333],
+  // ── Gafsa / Tozeur / Kébili ──────────────────────────────────────────────
+  'Gafsa':[34.4250,8.7842],'El Guettar':[34.3333,8.9667],'Metlaoui':[34.3333,8.4000],
+  'Redeyef':[34.3833,8.1833],'Mdhilla':[34.3167,8.8667],'Om El Araies':[34.1167,8.7667],
+  'Sidi Aich':[34.6333,8.7333],'Belkhir':[34.5500,8.4000],'Sened':[34.4500,9.3667],
+  'Tozeur':[33.9197,8.1335],'Nefta':[33.8667,7.8833],'Degache':[33.9667,8.2000],
+  'Tamerza':[34.3833,7.9167],'Chebika':[34.2333,7.9167],'Midès':[34.4333,7.5833],
+  'Kebili':[33.7050,8.9712],'Douz':[33.4500,9.0167],'Souk Lahad':[32.9167,9.1667],
+  'El Faouar':[33.1667,8.7833],'Ksar Ghilane':[32.9833,9.6333],
+  // ── Gabès / Médenine / Tataouine ─────────────────────────────────────────
+  'Gabès':[33.8815,10.0982],'El Hamma':[33.8833,9.7833],'Mareth':[33.6333,10.2667],
+  'Ghannouche':[33.9500,10.0000],'El Metouia':[34.0500,10.0000],'Ghannouch':[33.9500,10.0000],
+  'Matmata':[33.5333,9.9667],'Nouvelle Matmata':[33.5500,9.9833],'Kettana':[33.8333,10.1833],
+  'Menzel El Habib':[34.0167,10.2167],'Oudhref':[33.5000,10.1000],
+  'Médenine':[33.3479,10.4972],'Zarzis':[33.5031,11.1119],'Ben Gardane':[33.1333,11.2167],
+  'Jerba':[33.8076,10.8451],'Djerba':[33.8076,10.8451],'Houmt Souk':[33.8767,10.8567],
+  'Midoun':[33.8167,11.0000],'Ajim':[33.7333,10.7500],'Aghir':[33.7833,10.9833],
+  'Beni Khedache':[33.0833,10.5833],'Sidi Makhlouf':[33.2667,10.8000],
+  'Tataouine':[32.9297,10.4518],'Remada':[32.3333,10.4000],'Ghomrassen':[32.9833,10.8333],
+  'Smar':[32.7167,10.8833],'Dehiba':[32.0000,10.7167],'Bir Lahmar':[32.8000,10.1333],
+  'Ksar Ouled Soltane':[32.7500,10.5500]
+};
 // ── LEAFLET MAP ────────────────────────────────────────────────────────────
 let tunisiaMap=null, groupedChartObj=null;
 
@@ -3179,26 +3263,10 @@ function initTunisiaMap(){
     attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
     subdomains:'abcd', maxZoom:12
   }).addTo(tunisiaMap);
-  const cityCoords={
-    'Tunis':[36.8065,10.1815],'Sfax':[34.7406,10.7603],'Sousse':[35.8256,10.6368],
-    'Bizerte':[37.2744,9.8739],'Nabeul':[36.4561,10.7376],'Gabès':[33.8815,10.0982],
-    'Kairouan':[35.6781,10.0964],'Gafsa':[34.4250,8.7842],'Monastir':[35.7646,10.8115],
-    'Zaghouan':[36.4029,10.1429],'Mahdia':[35.5045,11.0622],'Béja':[36.7256,9.1817],
-    'Jendouba':[36.5012,8.7802],'Kef':[36.1740,8.7050],'Tozeur':[33.9197,8.1335],
-    'Médenine':[33.3479,10.4972],'Kelibia':[36.8469,11.0953],'Hammamet':[36.3994,10.6133],
-    'Ariana':[36.8625,10.1956],'Ben Arous':[36.7531,10.2309],'Manouba':[36.8081,10.0989],
-    'Siliana':[36.0853,9.3704],'Kasserine':[35.1674,8.8365],'Sidi Bouzid':[35.0382,9.4849],
-    'Tataouine':[32.9297,10.4518],'Kebili':[33.7050,8.9712],'Tabarka':[36.9542,8.7576],
-    'Djerba':[33.8076,10.8451],'Zarzis':[33.5031,11.1119],'Bousalem':[36.6333,8.9667],
-    'Dougga':[36.4228,9.2194],'El Fahs':[36.3667,10.1500],'Grombalia':[36.5961,10.5042],
-    'Korba':[36.5731,10.8578],'Menzel Bourguiba':[37.1528,9.7944],'Soliman':[36.7006,10.4881],
-    'Kalaa Kebira':[35.8667,10.5333],'Msaken':[35.7167,10.5833],'Rades':[36.7728,10.2767],
-    'La Marsa':[36.8781,10.3183],'Carthage':[36.8528,10.3233]
-  };
   const cityStats={};
   sales.forEach(sale=>{
     const city=sale.ville||'';
-    const key=Object.keys(cityCoords).find(c=>c.toLowerCase()===city.toLowerCase());
+    const key=Object.keys(CITY_COORDS).find(c=>c.toLowerCase()===city.toLowerCase());
     if(key){
       if(!cityStats[key]) cityStats[key]={revenu:0,benef:0,count:0};
       cityStats[key].revenu+=sale.revenu;
@@ -3211,7 +3279,7 @@ function initTunisiaMap(){
     const stats=cityStats[city];
     const radius=10+(stats.revenu/maxRevenue)*35;
     const color=stats.revenu>maxRevenue*0.7?'#ef4444':(stats.revenu>maxRevenue*0.3?'#f59e0b':'#3b82f6');
-    const marker=L.circleMarker(cityCoords[city],{
+    const marker=L.circleMarker(CITY_COORDS[city],{
       radius,fillColor:color,color:'#fff',weight:1.5,fillOpacity:0.7
     }).addTo(tunisiaMap);
     marker.bindPopup(`<b>📍 ${city}</b><br>💰 Revenu: ${fmt(stats.revenu)}<br>📈 Bénéfice: ${fmt(stats.benef)}<br>🛒 Ventes: ${stats.count}`);
@@ -3248,51 +3316,10 @@ function openMapFullscreen(){
     attribution:'&copy; OSM',subdomains:'abcd',maxZoom:14
   }).addTo(tunisiaMapFs);
 
-  const cityCoords={
-    'Tunis':[36.8065,10.1815],'Sfax':[34.7406,10.7603],'Sousse':[35.8256,10.6368],
-    'Bizerte':[37.2744,9.8739],'Nabeul':[36.4561,10.7376],'Gabès':[33.8815,10.0982],
-    'Kairouan':[35.6781,10.0964],'Gafsa':[34.4250,8.7842],'Monastir':[35.7646,10.8115],
-    'Zaghouan':[36.4029,10.1429],'Mahdia':[35.5045,11.0622],'Béja':[36.7256,9.1817],
-    'Jendouba':[36.5012,8.7802],'Kef':[36.1740,8.7050],'Tozeur':[33.9197,8.1335],
-    'Médenine':[33.3479,10.4972],'Kelibia':[36.8469,11.0953],'Hammamet':[36.3994,10.6133],
-    'Ariana':[36.8625,10.1956],'Ben Arous':[36.7531,10.2309],'Manouba':[36.8081,10.0989],
-    'Siliana':[36.0853,9.3704],'Kasserine':[35.1674,8.8365],'Sidi Bouzid':[35.0382,9.4849],
-    'Tataouine':[32.9297,10.4518],'Kebili':[33.7050,8.9712],'Tabarka':[36.9542,8.7576],
-    'Djerba':[33.8076,10.8451],'Zarzis':[33.5031,11.1119],'Bousalem':[36.6333,8.9667],
-    'Dougga':[36.4228,9.2194],'El Fahs':[36.3667,10.1500],'Grombalia':[36.5961,10.5042],
-    'Korba':[36.5731,10.8578],'Menzel Bourguiba':[37.1528,9.7944],'Soliman':[36.7006,10.4881],
-    'Kalaa Kebira':[35.8667,10.5333],'Msaken':[35.7167,10.5833],'Rades':[36.7728,10.2767],
-    'La Marsa':[36.8781,10.3183],'Carthage':[36.8528,10.3233],
-    'Menzel Temime':[36.7833,10.9833],'Menzel Bouzelfa':[36.6775,10.5667],
-    'Mateur':[37.0400,9.6667],'Matir':[37.0400,9.6667],
-    'Haouaria':[37.0500,11.0333],'Béni Khalled':[36.5500,10.6167],
-    'Beni Khalled':[36.5500,10.6167],'Dar Chaabane':[36.5667,10.7833],
-    'Hammam Lif':[36.7319,10.3289],'El Mourouj':[36.7167,10.2167],
-    'Borj Cedria':[36.7167,10.3833],'Tebourba':[36.8333,9.8333],
-    'Enfidha':[36.1333,10.3833],'Hammam Sousse':[35.8597,10.5944],
-    'Akouda':[35.8667,10.5667],'Bou Argoub':[36.5333,10.5500],
-    'Ain Draham':[36.7667,8.6833],'Testour':[36.5500,9.4500],
-    'Medjez El Bab':[36.6500,9.6167],'Fouchana':[36.7167,10.1833],
-    'Moknine':[35.6333,10.9000],'Jemmal':[35.6167,10.7167],
-    'El Jem':[35.2967,10.7100],'Hergla':[36.0500,10.6167],
-    'Ben Gardane':[33.1333,11.2167],'Houmt Souk':[33.8767,10.8567],
-    'Douz':[33.4500,9.0167],'Nefta':[33.8667,7.8833],
-    'Mareth':[33.6333,10.2667],'Ghannouche':[33.9500,10.0000],
-    'Hammam Chott':[36.7333,10.3167],'Megrine':[36.7833,10.2333],
-    'Sidi Bou Said':[36.8694,10.3408],'Gammarth':[36.9167,10.2833],
-    'Bouficha':[36.2167,10.5000],'Zeramdine':[35.6500,10.6833],
-    'Teboulba':[35.6500,10.9500],'Bekalta':[35.6167,10.9000],
-    'Bou Salem':[36.6167,8.9500],'Ghardimaou':[36.4500,8.4333],
-    'Fernana':[36.6333,8.7167],'Ras Jebel':[37.2167,10.1167],
-    'Menzel Jemil':[37.2167,10.0000],'Sejnane':[37.0556,9.2333],
-    'Sbeitla':[35.2333,9.1000],'Remada':[32.3333,10.4000],
-    'Ettadhamen':[36.8333,10.1333],'Midoun':[33.8167,11.0000]
-  };
-
   const cityStats={};
   sales.forEach(sale=>{
     const city=sale.ville||'';
-    const key=Object.keys(cityCoords).find(c=>c.toLowerCase()===city.toLowerCase());
+    const key=Object.keys(CITY_COORDS).find(c=>c.toLowerCase()===city.toLowerCase());
     if(key){
       if(!cityStats[key]) cityStats[key]={revenu:0,benef:0,count:0};
       cityStats[key].revenu+=sale.revenu;
@@ -3306,7 +3333,7 @@ function openMapFullscreen(){
     const stats=cityStats[city];
     const radius=10+(stats.revenu/maxRevenue)*40;
     const color=stats.revenu>maxRevenue*0.7?'#ef4444':(stats.revenu>maxRevenue*0.3?'#f59e0b':'#60a5fa');
-    const marker=L.circleMarker(cityCoords[city],{
+    const marker=L.circleMarker(CITY_COORDS[city],{
       radius,fillColor:color,color:'rgba(255,255,255,.4)',weight:1.5,fillOpacity:0.8
     }).addTo(tunisiaMapFs);
     marker.bindPopup(`<b>📍 ${city}</b><br>💰 ${fmt(stats.revenu)} DT<br>📈 Bénéf: ${fmt(stats.benef)} DT<br>🛒 ${stats.count} vente${stats.count>1?'s':''}`);
