@@ -233,6 +233,12 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
 .bell-popup-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:6px}
 .bell-popup-msg{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px}
 .bell-popup-btn{width:100%;padding:9px;background:var(--accent);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif}
+
+/* MAP FULLSCREEN BUTTON */
+.map-container{position:relative;}
+.map-fullscreen-btn{position:absolute;top:10px;right:10px;z-index:1000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);border:none;border-radius:8px;width:36px;height:36px;font-size:20px;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+.map-fullscreen-btn:hover{background:rgba(0,0,0,0.8);transform:scale(1.05);}
+#tunisiaMap.fullscreen-map{position:fixed !important;top:0;left:0;width:100vw !important;height:100vh !important;z-index:9999;border-radius:0 !important;}
 </style>
 </head>
 <body>
@@ -689,8 +695,9 @@ mark.hl{background:rgba(124,108,252,.3);border-radius:3px;color:inherit}
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="width:12px;height:12px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Volume moyen</div>
         <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;display:inline-block"></span>Volume faible</div>
       </div>
-      <div style="position:relative">
+      <div class="map-container" style="position:relative">
         <div id="tunisiaMap" style="height:380px;border-radius:10px;overflow:hidden;border:1px solid var(--border)"></div>
+        <button class="map-fullscreen-btn" onclick="toggleMapFullScreen()" title="Plein écran">⤢</button>
       </div>
       <div id="mapStats" style="margin-top:10px;font-size:12px;color:var(--muted);text-align:center"></div>
     </div>
@@ -2134,7 +2141,7 @@ function buildInvoiceHTML(s,color,accent,merci){
   const envoi=s.envoi||0;
   const villeRow=s.ville?'<div style="font-size:12px;color:#555;margin-top:2px">📍 '+s.ville+'</div>':'';
   const phoneRow=s.phone?'<div style="font-size:12px;color:#555;margin-top:2px">📞 '+s.phone+'</div>':'';
-  const envoiRow=envoi>0?'<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:12px;color:#555">Frais de livraison</td><td style="padding:7px 6px;text-align:center;font-size:12px;color:#555">1</td><td style="padding:7px 10px;text-align:right;font-size:12px;color:#555">'+fmtI(envoi)+' DT</td></tr>':'';
+  const envoiRow=envoi>0?'<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:12px;color:#555">Frais de livraison<tr><td style="padding:7px 6px;text-align:center;font-size:12px;color:#555">1</td><td style="padding:7px 10px;text-align:right;font-size:12px;color:#555">'+fmtI(envoi)+' DT</td></tr>':'';
   const invNum=s.invNum||('INV-'+(s.date||'').slice(0,4)+'-???');
   return `<div style="font-family:'Segoe UI',Arial,sans-serif;width:100%;box-sizing:border-box;color:#111;padding:14px 20px;page-break-after:avoid">
     <div style="text-align:center;border-bottom:2px solid ${color};padding-bottom:8px;margin-bottom:10px">
@@ -3293,8 +3300,45 @@ const CITY_COORDS={
   'Smar':[32.7167,10.8833],'Dehiba':[32.0000,10.7167],'Bir Lahmar':[32.8000,10.1333],
   'Ksar Ouled Soltane':[32.7500,10.5500]
 };
+
 // ── LEAFLET MAP ────────────────────────────────────────────────────────────
 let tunisiaMap=null, groupedChartObj=null;
+
+// Function to toggle fullscreen
+function toggleMapFullScreen() {
+  const mapDiv = document.getElementById('tunisiaMap');
+  if (!mapDiv) return;
+
+  if (!document.fullscreenElement) {
+    mapDiv.classList.add('fullscreen-map');
+    mapDiv.requestFullscreen().then(() => {
+      setTimeout(() => {
+        if (tunisiaMap) tunisiaMap.invalidateSize();
+      }, 100);
+    }).catch(err => {
+      mapDiv.classList.remove('fullscreen-map');
+      console.error('Erreur plein écran:', err);
+    });
+  } else {
+    document.exitFullscreen().then(() => {
+      mapDiv.classList.remove('fullscreen-map');
+      setTimeout(() => {
+        if (tunisiaMap) tunisiaMap.invalidateSize();
+      }, 100);
+    }).catch(err => console.error('Erreur sortie plein écran:', err));
+  }
+}
+
+// Listen for fullscreen change to adjust map size
+document.addEventListener('fullscreenchange', () => {
+  const mapDiv = document.getElementById('tunisiaMap');
+  if (!document.fullscreenElement && mapDiv) {
+    mapDiv.classList.remove('fullscreen-map');
+    setTimeout(() => {
+      if (tunisiaMap) tunisiaMap.invalidateSize();
+    }, 100);
+  }
+});
 
 function initTunisiaMap(){
   const container=document.getElementById('tunisiaMap');
