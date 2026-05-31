@@ -317,18 +317,73 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .map-fullscreen-btn{position:absolute;top:10px;right:10px;z-index:1000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);border:none;border-radius:8px;width:36px;height:36px;font-size:20px;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
 .map-fullscreen-btn:hover{background:rgba(0,0,0,0.8);transform:scale(1.05);}
 #tunisiaMap.fullscreen-map{position:fixed !important;top:0;left:0;width:100vw !important;height:100vh !important;z-index:9999;border-radius:0 !important;}
+
+/* SIDE DRAWER */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(2px)}
+.drawer-overlay.open{opacity:1;pointer-events:all}
+.side-drawer{position:fixed;top:0;left:0;height:100%;width:270px;background:var(--surface);border-right:1px solid var(--border);z-index:401;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
+.side-drawer.open{transform:translateX(0)}
+.drawer-header{padding:22px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface2)}
+.drawer-logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff}
+.drawer-logo span{color:#fbbf24}
+.drawer-close{background:rgba(255,255,255,.1);border:none;color:var(--muted);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.drawer-close:active{transform:scale(.9)}
+.drawer-body{flex:1;overflow-y:auto;padding:14px 12px}
+.drawer-section-label{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:6px 8px 8px;margin-top:6px}
+.drawer-btn{width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:12px;border:none;background:transparent;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .18s;text-align:left;margin-bottom:4px}
+.drawer-btn:hover{background:var(--surface2)}
+.drawer-btn.active{background:linear-gradient(135deg,rgba(255,122,0,.2),rgba(255,154,60,.1));border:1px solid rgba(255,122,0,.35);color:var(--accent);font-weight:600}
+.drawer-btn .d-icon{font-size:20px;width:28px;text-align:center}
+.drawer-btn .d-label{flex:1}
+.drawer-divider{height:1px;background:var(--border);margin:10px 8px}
+.menu-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.menu-btn:active{transform:scale(.9)}
+/* active tab label in header */
+.active-tab-pill{background:rgba(255,122,0,.15);border:1px solid rgba(255,122,0,.3);color:var(--accent);font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;font-family:'DM Mono',monospace;letter-spacing:.3px;margin-top:6px;display:inline-block}
 </style>
 </head>
 <body>
+
+<!-- SIDE DRAWER OVERLAY -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<!-- SIDE DRAWER -->
+<div class="side-drawer" id="sideDrawer">
+  <div class="drawer-header">
+    <div class="drawer-logo">💰 Flous<span>Flow</span></div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section-label">📆 Quotidien</div>
+    <button class="drawer-btn active" id="dbtn-ajouter" onclick="drawerNav('ajouter')"><span class="d-icon">➕</span><span class="d-label">Ajouter</span></button>
+    <button class="drawer-btn" id="dbtn-ventes" onclick="drawerNav('ventes')"><span class="d-icon">📋</span><span class="d-label">Ventes</span></button>
+    <button class="drawer-btn" id="dbtn-clients" onclick="drawerNav('clients')"><span class="d-icon">👤</span><span class="d-label">Clients</span></button>
+    <button class="drawer-btn" id="dbtn-stock" onclick="drawerNav('stock')"><span class="d-icon">📦</span><span class="d-label">Stock</span></button>
+    <div class="drawer-divider"></div>
+    <div class="drawer-section-label">📊 Analyse</div>
+    <button class="drawer-btn" id="dbtn-top" onclick="drawerNav('top')"><span class="d-icon">🏆</span><span class="d-label">Top</span></button>
+    <button class="drawer-btn" id="dbtn-marques" onclick="drawerNav('marques')"><span class="d-icon">🏷️</span><span class="d-label">Marques</span></button>
+    <button class="drawer-btn" id="dbtn-fournisseurs" onclick="drawerNav('fournisseurs')"><span class="d-icon">🧑‍💼</span><span class="d-label">Fournisseurs</span></button>
+    <button class="drawer-btn" id="dbtn-rapport" onclick="drawerNav('rapport')"><span class="d-icon">📊</span><span class="d-label">Rapport</span></button>
+    <button class="drawer-btn" id="dbtn-annuel" onclick="drawerNav('annuel')"><span class="d-icon">📅</span><span class="d-label">Annuel</span></button>
+    <button class="drawer-btn" id="dbtn-dashboard" onclick="drawerNav('dashboard')"><span class="d-icon">🗺️</span><span class="d-label">Dashboard</span></button>
+    <div class="drawer-divider"></div>
+    <button class="drawer-btn" id="dbtn-backup" onclick="drawerNav('backup')"><span class="d-icon">💾</span><span class="d-label">Backup</span></button>
+  </div>
+</div>
 
 <header>
   <div class="header-top">
     <div style="display:flex;align-items:center;gap:8px">
       <button id="backBtn" onclick="goTabBack()" style="display:none;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:18px;width:34px;height:34px;border-radius:50%;cursor:pointer;line-height:1">◀</button>
-      <div class="logo">💰 Flous<span>Flow</span></div>
+      <button class="menu-btn" onclick="openDrawer()" aria-label="Menu">☰</button>
+      <div>
+        <div class="logo">💰 Flous<span>Flow</span></div>
+        <div class="active-tab-pill" id="activeTabPill">➕ Ajouter</div>
+      </div>
     </div>
     <div class="header-right">
-      <canvas id="totalCount" width="72" height="72" style="cursor:pointer" onclick="showTab('ventes',document.querySelector('.tab-btn[onclick*=ventes]'))"></canvas>
+      <canvas id="totalCount" width="72" height="72" style="cursor:pointer" onclick="showTab('ventes',null)"></canvas>
       <div class="bell-wrap" onclick="toggleBell()">
         <button class="bell-btn" id="bellBtn">🔔<span class="bell-dot" id="bellDot"></span></button>
         <div class="bell-popup" id="bellPopup">
@@ -409,25 +464,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   </div>
 </div>
 
-<div class="nav-wrap">
-  <div class="nav-label">Quotidien</div>
-  <div class="nav-tabs">
-    <button class="tab-btn active" onclick="showTab('ajouter',this)">➕ Ajouter</button>
-    <button class="tab-btn" onclick="showTab('ventes',this)">📋 Ventes</button>
-    <button class="tab-btn" onclick="showTab('clients',this)">👤 Clients</button>
-    <button class="tab-btn" onclick="showTab('stock',this)">📦 Stock</button>
-  </div>
-  <div class="nav-label" style="margin-top:6px">Analyse</div>
-  <div class="nav-tabs">
-    <button class="tab-btn" onclick="showTab('top',this)">🏆 Top</button>
-    <button class="tab-btn" onclick="showTab('marques',this)">🏷️ Marques</button>
-    <button class="tab-btn" onclick="showTab('fournisseurs',this)">🧑‍💼 Fournisseurs</button>
-    <button class="tab-btn" onclick="showTab('rapport',this)">📊 Rapport</button>
-    <button class="tab-btn" onclick="showTab('annuel',this)">📅 Annuel</button>
-    <button class="tab-btn" onclick="showTab('dashboard',this)">🗺️ Dashboard</button>
-    <button class="tab-btn" onclick="showTab('backup',this)">💾 Backup</button>
-  </div>
-</div>
+<!-- nav-wrap replaced by side drawer -->
 
 <!-- CLIENTS -->
 <div class="section" id="tab-clients">
@@ -957,6 +994,63 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 </div>
 
 <script>
+const DRAWER_LABELS = {
+  ajouter:'➕ Ajouter', ventes:'📋 Ventes', clients:'👤 Clients', stock:'📦 Stock',
+  top:'🏆 Top', marques:'🏷️ Marques', fournisseurs:'🧑‍💼 Fournisseurs',
+  rapport:'📊 Rapport', annuel:'📅 Annuel', dashboard:'🗺️ Dashboard', backup:'💾 Backup'
+};
+
+function openDrawer(){
+  document.getElementById('sideDrawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('sideDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+}
+function drawerNav(id){
+  closeDrawer();
+  showTab(id, null);
+}
+function syncDrawerActive(id){
+  document.querySelectorAll('.drawer-btn').forEach(b=>b.classList.remove('active'));
+  const db=document.getElementById('dbtn-'+id);
+  if(db) db.classList.add('active');
+  const pill=document.getElementById('activeTabPill');
+  if(pill) pill.textContent = DRAWER_LABELS[id]||id;
+}
+
+function showTab(id,btn,pushHistory=true){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  syncDrawerActive(id);
+  localStorage.setItem('flousFlowLastTab', id);
+  if(pushHistory){ if(typeof _tabHistory!=='undefined') _tabHistory.push(id); }
+  // Show/hide back button
+  const bb=document.getElementById('backBtn');
+  if(bb) bb.style.display=(typeof _tabHistory!=='undefined'&&_tabHistory.length>1)?'flex':'none';
+  if(id==='clients') renderClients();
+  if(id==='ventes') { refreshFilterSelects(); renderSales(); }
+  if(id==='achats') { refreshAchatFournSelect(); renderAchats(); }
+  if(id==='top') setTimeout(()=>renderTop(), 50);
+  if(id==='rapport') setTimeout(()=>renderRapport(), 50);
+  if(id==='annuel') renderAnnuel();
+  if(id==='dashboard') { renderDash(); setTimeout(()=>{ buildYearSelectorForComp(); updateGroupedChart(); initTunisiaMap(); },400); }
+  if(id==='marques') renderMarques();
+  if(id==='fournisseurs') renderFournTab();
+  if(id==='backup') loadDriveUrl();
+}
+
+function goTabBack(){
+  if(typeof _tabHistory!=='undefined'&&_tabHistory.length>1){
+    _tabHistory.pop();
+    const prev=_tabHistory[_tabHistory.length-1];
+    showTab(prev, null, false);
+  }
+}
+
 // ── STATE ──────────────────────────────────────────────────────────────────
 // Migration: charge depuis ancien ou nouveau key
 function loadData(newKey, oldKey, def='[]'){
@@ -1003,8 +1097,7 @@ loadDriveUrl();
 // Restaurer dernier onglet
 const lastTab=localStorage.getItem('flousFlowLastTab');
 if(lastTab){
-  const btn=document.querySelector(`.tab-btn[onclick="showTab('${lastTab}',this)"]`);
-  if(btn) showTab(lastTab, btn, false);
+  showTab(lastTab, null, false);
 }
 // Re-build year select after data is loaded
 setTimeout(()=>{
@@ -1484,36 +1577,7 @@ function deleteAchat(id){
 // Tab history stack
 var _tabHistory=['ajouter'];
 
-function showTab(id,btn,pushHistory=true){
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
-  if(btn) btn.classList.add('active');
-  localStorage.setItem('flousFlowLastTab', id);
-  if(pushHistory){ if(typeof _tabHistory!=='undefined') _tabHistory.push(id); }
-  // Show/hide back button
-  const bb=document.getElementById('backBtn');
-  if(bb) bb.style.display=(typeof _tabHistory!=='undefined'&&_tabHistory.length>1)?'flex':'none';
-  if(id==='clients') renderClients();
-  if(id==='ventes') { refreshFilterSelects(); renderSales(); }
-  if(id==='achats') { refreshAchatFournSelect(); renderAchats(); }
-  if(id==='top') setTimeout(()=>renderTop(), 50);
-  if(id==='rapport') setTimeout(()=>renderRapport(), 50);
-  if(id==='annuel') renderAnnuel();
-  if(id==='dashboard') { renderDash(); setTimeout(()=>{ buildYearSelectorForComp(); updateGroupedChart(); initTunisiaMap(); },400); }
-  if(id==='marques') renderMarques();
-  if(id==='fournisseurs') renderFournTab();
-  if(id==='backup') loadDriveUrl();
-}
-
-function goTabBack(){
-  if(typeof _tabHistory!=='undefined'&&_tabHistory.length>1){
-    _tabHistory.pop();
-    const prev=_tabHistory[_tabHistory.length-1];
-    const btn=document.querySelector(`.tab-btn[onclick*="'${prev}'"]`);
-    showTab(prev, btn||document.querySelector('.tab-btn'), false);
-  }
-}
+// DRAWER LABELS MAP
 
 // ── STOCK INDICATOR IN FORM ────────────────────────────────────────────────
 function checkStockForModel(){
@@ -1942,19 +2006,16 @@ function gsearchRun(){
 function gsearchGo(type, id){
   gsearchClear();
   if(type==='sale'){
-    const btn=document.querySelector('.tab-btn[onclick*="ventes"]');
-    showTab('ventes',btn);
+    showTab('ventes',null);
     // Highlight card after render
     setTimeout(()=>{
       const card=document.querySelector(`.sale-card[data-id="${id}"]`);
       if(card){ card.scrollIntoView({behavior:'smooth',block:'center'}); card.style.outline='2px solid var(--accent)'; setTimeout(()=>card.style.outline='',1800); }
     },200);
   } else if(type==='client'){
-    const btn=document.querySelector('.tab-btn[onclick*="clients"]');
-    showTab('clients',btn);
+    showTab('clients',null);
   } else if(type==='stock'){
-    const btn=document.querySelector('.tab-btn[onclick*="stock"]');
-    showTab('stock',btn);
+    showTab('stock',null);
   }
 }
 
@@ -2351,8 +2412,7 @@ function duplicateSale(id){
   document.getElementById('fFourn').value=s.fourn||'';
   document.getElementById('fCarte').value=s.carteId||'';
   // Switch to Ajouter tab
-  const btn=document.querySelector('.tab-btn[onclick*="ajouter"]');
-  showTab('ajouter', btn);
+  showTab('ajouter',null);
   window.scrollTo({top:0,behavior:'smooth'});
   showToast('📋 Vente copiée — vérifier et enregistrer!');
 }
@@ -2460,8 +2520,7 @@ function buildInvoiceHTML(s,color,accent,merci,nom){
   </div>`;
 }
 function goAddSale(){
-  const btn=document.querySelector('.tab-btn[onclick*="ajouter"]');
-  showTab('ajouter', btn);
+  showTab('ajouter',null);
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -3087,8 +3146,7 @@ function autoFillClientPhone(val){
 
 function filterByMarque(marque){
   // Switch to Ventes tab and filter by marque name
-  const btn=document.querySelector('.tab-btn[onclick*="ventes"]');
-  showTab('ventes',btn);
+  showTab('ventes',null);
   const input=document.getElementById('searchInput');
   if(input){ input.value=marque; renderSales(); }
   showToast('🏷️ '+marque+' — ventes filtrées');
@@ -3471,8 +3529,7 @@ function deleteCarte(fournId,carteId){
 // ── CLICK ON CITY (NEW FEATURE) ────────────────────────────────────────────
 function showCitySales(city) {
   // Basculer vers l'onglet Ventes
-  const ventesBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => btn.textContent.includes('📋 Ventes'));
-  if (ventesBtn) showTab('ventes', ventesBtn);
+    if (ventesBtn) showTab('ventes', null);
   // Réinitialiser tous les filtres
   resetFilters();
   // Rafraîchir les selects pour s'assurer que la ville existe
