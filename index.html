@@ -375,7 +375,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 <header>
   <div class="header-top">
     <div style="display:flex;align-items:center;gap:8px">
-      <button id="backBtn" onclick="goTabBack()" style="display:none;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:18px;width:34px;height:34px;border-radius:50%;cursor:pointer;line-height:1">◀</button>
+
       <button class="menu-btn" onclick="openDrawer()" aria-label="Menu">☰</button>
       <div>
         <div class="logo">💰 Flous<span>Flow</span></div>
@@ -1028,9 +1028,6 @@ function showTab(id,btn,pushHistory=true){
   syncDrawerActive(id);
   localStorage.setItem('flousFlowLastTab', id);
   if(pushHistory){ if(typeof _tabHistory!=='undefined') _tabHistory.push(id); }
-  // Show/hide back button
-  const bb=document.getElementById('backBtn');
-  if(bb) bb.style.display=(typeof _tabHistory!=='undefined'&&_tabHistory.length>1)?'flex':'none';
   if(id==='clients') renderClients();
   if(id==='ventes') { refreshFilterSelects(); renderSales(); }
   if(id==='achats') { refreshAchatFournSelect(); renderAchats(); }
@@ -1099,6 +1096,8 @@ const lastTab=localStorage.getItem('flousFlowLastTab');
 if(lastTab){
   showTab(lastTab, null, false);
 }
+// Force refresh today/week/month cards after full init
+setTimeout(()=>updateTodayCard(), 100);
 // Re-build year select after data is loaded
 setTimeout(()=>{
   const ysel=document.getElementById('yearSelect');
@@ -1692,7 +1691,7 @@ function drawCounter(val, total){
   // Background circle
   ctx.beginPath();
   ctx.arc(cx,cy,R,0,Math.PI*2);
-  ctx.fillStyle='rgba(255,122,0,.15)';
+  ctx.fillStyle='rgba(57,255,20,.12)';
   ctx.fill();
   // Track
   ctx.beginPath();
@@ -1701,25 +1700,29 @@ function drawCounter(val, total){
   ctx.lineWidth=lw;
   ctx.lineCap='round';
   ctx.stroke();
-  // Arc progress (based on val, max visual at 300 ventes)
+  // Arc progress
   const pct=Math.min(val/Math.max(total,1),1);
   const grad=ctx.createLinearGradient(cx-R,cy,cx+R,cy);
-  grad.addColorStop(0,'#ff7a00');
-  grad.addColorStop(1,'#ff9a3c');
+  grad.addColorStop(0,'#39ff14');
+  grad.addColorStop(1,'#00ffaa');
   ctx.beginPath();
   ctx.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+pct*Math.PI*2);
   ctx.strokeStyle=grad;
   ctx.lineWidth=lw;
   ctx.lineCap='round';
+  // Glow effect
+  ctx.shadowColor='#39ff14';
+  ctx.shadowBlur=8;
   ctx.stroke();
+  ctx.shadowBlur=0;
   // Number
-  ctx.fillStyle='#fff';
+  ctx.fillStyle='#39ff14';
   ctx.font=`bold ${val>999?13:val>99?15:17}px 'DM Mono',monospace`;
   ctx.textAlign='center';
   ctx.textBaseline='middle';
   ctx.fillText(val, cx, cy-4);
   // Label
-  ctx.fillStyle='rgba(255,255,255,.6)';
+  ctx.fillStyle='rgba(57,255,20,.7)';
   ctx.font=`700 8px 'DM Sans',sans-serif`;
   ctx.fillText('ventes', cx, cy+9);
 }
@@ -1739,9 +1742,14 @@ function animateCounter(target){
   requestAnimationFrame(step);
 }
 
+function localDateStr(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
 function updateTodayCard(){
-  const today=new Date().toISOString().split('T')[0];
-  const yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
+  const today=localDateStr(new Date());
+  const yestD=new Date(); yestD.setDate(yestD.getDate()-1);
+  const yesterday=localDateStr(yestD);
   const todaySales=sales.filter(s=>s.date===today);
   const yestSales=sales.filter(s=>s.date===yesterday);
   const todayB=todaySales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
@@ -1794,9 +1802,9 @@ function updateTodayCard(){
     }
   }
   // ── Ce mois ────────────────────────────────────────
-  const thisMonth=now.toISOString().slice(0,7);
+  const thisMonth=localDateStr(now).slice(0,7);
   const lastMonthDate=new Date(now.getFullYear(),now.getMonth()-1,1);
-  const lastMonth=lastMonthDate.toISOString().slice(0,7);
+  const lastMonth=localDateStr(lastMonthDate).slice(0,7);
   const monthSales=sales.filter(s=>s.date&&s.date.slice(0,7)===thisMonth);
   const lastMonthSales=sales.filter(s=>s.date&&s.date.slice(0,7)===lastMonth);
   const monthB=monthSales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
