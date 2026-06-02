@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="dark">
+<html lang="fr" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💰 FlousFlow</title>
+<title>🏪 MegaStore</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -16,29 +16,35 @@
   --header-bg:linear-gradient(180deg,#0d0f1a,#0a0c18);
   --shadow:0 2px 12px rgba(0,0,0,.6);
 }
+[data-theme="light"]{
+  --bg:#f2ede8;--surface:#fffdf9;--surface2:#f7f2ec;
+  --border:#e4ddd5;--text:#1a1410;--muted:#8a7f76;
+  --header-bg:linear-gradient(180deg,#fffdf9,#f7f2ec);
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+}
 :root{--accent:#ff7a00;--accent2:#ff9a3c;--green:#10b981;--yellow:#f59e0b;--red:#ef4444;--radius:14px;}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:24px;transition:background .3s,color .3s}
 
 /* HEADER */
-header{background:#0d0f1a;padding:18px 18px 14px;border-bottom:2px solid var(--accent);position:sticky;top:0;z-index:100;width:100%;box-sizing:border-box;left:0}
+header{background:var(--surface);padding:18px 18px 14px;position:sticky;top:0;z-index:100;width:100%;box-sizing:border-box;left:0;border-bottom:2px solid var(--accent)}
 .header-top{display:flex;align-items:center;justify-content:space-between}
-.logo{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#fff;letter-spacing:-.5px}
+.logo{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.5px}
 .logo span{color:#fbbf24}
 .header-right{display:flex;align-items:center;gap:10px}
 .badge{background:linear-gradient(135deg,#ff7a00,#ff9a3c);color:#fff;font-size:13px;font-weight:900;padding:6px 14px;border-radius:20px;font-family:'DM Mono',monospace;box-shadow:0 4px 15px rgba(255,122,0,.4);letter-spacing:.5px;transition:transform .15s}
 .badge:active{transform:scale(.95)}
-.theme-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center}
+.theme-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center}
 
 /* KPI */
-.kpi-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 18px;background:var(--surface);border-bottom:1px solid var(--border)}
+.kpi-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 12px;background:var(--surface);border-bottom:1px solid var(--border)}
 .kpi{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 8px;text-align:center;box-shadow:var(--shadow)}
 .kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:6px}
 .kpi-value{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;line-height:1.2}
 .kpi-value.green{color:var(--green)}.kpi-value.yellow{color:var(--yellow)}.kpi-value.purple{color:var(--accent)}
 
 /* RECUPERER BANNER */
-.rec-banner{margin:14px 18px;border-radius:var(--radius);padding:16px 18px;display:flex;align-items:center;justify-content:space-between}
+.rec-banner{margin:14px 0;border-radius:var(--radius);padding:16px 18px;display:flex;align-items:center;justify-content:space-between}
 .rec-banner.rouge{background:linear-gradient(135deg,rgba(239,68,68,.15),rgba(239,68,68,.05));border:1px solid rgba(239,68,68,.3)}
 .rec-banner.vert{background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(16,185,129,.05));border:1px solid rgba(16,185,129,.3)}
 .rec-banner.neutre{background:linear-gradient(135deg,rgba(107,107,138,.12),rgba(107,107,138,.05));border:1px solid rgba(107,107,138,.25)}
@@ -57,7 +63,7 @@ header{background:#0d0f1a;padding:18px 18px 14px;border-bottom:2px solid var(--a
 .tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
 
 /* SECTIONS */
-.section{padding:0 18px;display:none;opacity:0;transform:translateY(6px)}.section.active{display:block;animation:sectionIn .25s ease forwards}
+.section{padding:0 12px;display:none;opacity:0;transform:translateY(6px)}.section.active{display:block;animation:sectionIn .25s ease forwards}
 @keyframes sectionIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 /* FORM */
@@ -85,7 +91,7 @@ input::placeholder{color:var(--muted)}
 .sort-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
 
 /* DATE GROUP */
-.date-group-header{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 4px 6px;border-bottom:1px solid var(--border);margin:10px 0;display:flex;align-items:center;justify-content:space-between}
+.date-group-header{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 4px 6px;border-bottom:1px solid var(--border);background:var(--bg);margin:10px 0;display:flex;align-items:center;justify-content:space-between}
 .date-group-header span{color:var(--accent);font-family:'DM Mono',monospace;font-size:12px}
 
 /* SALE CARDS */
@@ -94,10 +100,10 @@ input::placeholder{color:var(--muted)}
 @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 /* ── GLOBAL SEARCH ─────────────────────────────────────────────────────── */
-.gsearch-wrap{position:relative;margin:10px 18px 0}
+.gsearch-wrap{position:relative;margin:10px 12px 0}
 .gsearch-input{
   width:100%;padding:11px 16px 11px 42px;
-  background:rgba(255,255,255,.13);border:1.5px solid rgba(255,255,255,.35);
+  background:var(--surface2);border:1.5px solid var(--border);
   color:#fff;border-radius:30px;font-size:14px;font-family:'DM Sans',sans-serif;
   transition:background .2s,border-color .2s,box-shadow .2s;
   -webkit-appearance:none;
@@ -324,22 +330,25 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .side-drawer{position:fixed;top:0;left:0;height:100%;width:270px;background:var(--surface);border-right:1px solid var(--border);z-index:401;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
 .side-drawer.open{transform:translateX(0)}
 .drawer-header{padding:22px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface2)}
-.drawer-logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff}
+.drawer-logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text)}
 .drawer-logo span{color:#fbbf24}
-.drawer-close{background:rgba(255,255,255,.1);border:none;color:var(--muted);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.drawer-close{background:var(--surface2);border:1px solid var(--border);color:var(--muted);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s}
 .drawer-close:active{transform:scale(.9)}
 .drawer-body{flex:1;overflow-y:auto;padding:14px 12px}
 .drawer-section-label{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:6px 8px 8px;margin-top:6px}
-.drawer-btn{width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:12px;border:none;background:transparent;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .18s;text-align:left;margin-bottom:4px}
+.drawer-btn{width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:12px;border:1px solid transparent;background:transparent;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .18s;text-align:left;margin-bottom:4px}
 .drawer-btn:hover{background:var(--surface2)}
 .drawer-btn.active{background:linear-gradient(135deg,rgba(255,122,0,.2),rgba(255,154,60,.1));border:1px solid rgba(255,122,0,.35);color:var(--accent);font-weight:600}
 .drawer-btn .d-icon{font-size:20px;width:28px;text-align:center}
 .drawer-btn .d-label{flex:1}
 .drawer-divider{height:1px;background:var(--border);margin:10px 8px}
-.menu-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.menu-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:transform .15s}
 .menu-btn:active{transform:scale(.9)}
 /* active tab label in header */
-.active-tab-pill{background:rgba(255,122,0,.15);border:1px solid rgba(255,122,0,.3);color:var(--accent);font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;font-family:'DM Mono',monospace;letter-spacing:.3px;margin-top:6px;display:inline-block}
+.active-tab-pill{background:rgba(255,122,0,.12);border:1px solid rgba(255,122,0,.3);color:var(--accent);font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;font-family:'DM Mono',monospace;letter-spacing:.3px;margin-top:6px;display:inline-block}
+.drawer-footer{padding:14px 18px;border-top:1px solid var(--border);background:var(--surface2)}
+.drawer-user{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
+.drawer-user-sub{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:.5px}
 </style>
 </head>
 <body>
@@ -350,7 +359,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 <!-- SIDE DRAWER -->
 <div class="side-drawer" id="sideDrawer">
   <div class="drawer-header">
-    <div class="drawer-logo">💰 Flous<span>Flow</span></div>
+    <div class="drawer-logo">🏪 Mega<span>Store</span></div>
     <button class="drawer-close" onclick="closeDrawer()">✕</button>
   </div>
   <div class="drawer-body">
@@ -370,6 +379,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <div class="drawer-divider"></div>
     <button class="drawer-btn" id="dbtn-backup" onclick="drawerNav('backup')"><span class="d-icon">💾</span><span class="d-label">Backup</span></button>
   </div>
+  <div class="drawer-footer">
+    <div class="drawer-user">👤 Gharbi Ramzi</div>
+    <div class="drawer-user-sub">CouvriTN</div>
+  </div>
 </div>
 
 <header>
@@ -378,7 +391,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 
       <button class="menu-btn" onclick="openDrawer()" aria-label="Menu">☰</button>
       <div>
-        <div class="logo">💰 Flous<span>Flow</span></div>
+        <div class="logo">🏪 Mega<span>Store</span></div>
         <div class="active-tab-pill" id="activeTabPill">➕ Ajouter</div>
       </div>
     </div>
@@ -392,10 +405,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
           <button class="bell-popup-btn" onclick="exportJSON();toggleBell()">⬇️ Sauvegarder maintenant</button>
         </div>
       </div>
-      <button class="theme-btn" id="themeBtn" style="display:none"></button>
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()"></button>
     </div>
   </div>
-  <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;letter-spacing:.5px">👤 Gharbi Ramzi</div>
+  
   <div class="gsearch-wrap" id="gsearchWrap">
     <span class="gsearch-icon">🔍</span>
     <input class="gsearch-input" id="gsearchInput" type="text" placeholder="Rechercher vente, client, ville, facture…" oninput="gsearchRun()" onfocus="gsearchRun()">
@@ -432,12 +445,12 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 
 
 
-<div style="margin:14px 18px;background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.3);border-radius:var(--radius);padding:16px 18px">
+<div style="margin:14px 0;background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.3);border-radius:var(--radius);padding:16px 18px">
   <div style="font-size:12px;color:var(--yellow);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:4px">🛒 Coût Total Achats</div>
   <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--yellow)" id="kpiCout">0.000 DT</div>
 </div>
 
-<div id="cartesBanner" style="margin:0 18px 14px;border-radius:var(--radius);padding:16px 18px;display:none">
+<div id="cartesBanner" style="margin:0 0 14px;border-radius:var(--radius);padding:16px 18px;display:none">
   <div style="font-size:12px;text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:12px;color:var(--accent)">💳 Suivi Cartes</div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 8px;text-align:center">
@@ -1048,8 +1061,8 @@ function goTabBack(){
   }
 }
 
-// ── STATE ──────────────────────────────────────────────────────────────────
-// Migration: charge depuis ancien ou nouveau key
+// ── UTILITIES (needed before state init) ───────────────────────────────────
+function uid(){return Date.now()+'-'+Math.random().toString(36).slice(2);}
 function loadData(newKey, oldKey, def='[]'){
   const newData=localStorage.getItem(newKey);
   if(newData) return JSON.parse(newData);
@@ -1067,7 +1080,7 @@ let fourns = loadData('flousFlowFourns', 'coquesFourns');
 let achats = JSON.parse(localStorage.getItem('flousFlowAchats') || '[]');
 let stockItems = JSON.parse(localStorage.getItem('flousFlowStock') || '[]');
 let clients = JSON.parse(localStorage.getItem('flousFlowClients') || '[]');
-let theme  = localStorage.getItem('flousFlowTheme') || localStorage.getItem('coquesTheme') || 'dark';
+let theme  = localStorage.getItem('flousFlowTheme') || localStorage.getItem('coquesTheme') || 'light';
 
 // Migration: si anciens fourns étaient des strings
 if(fourns.length && typeof fourns[0]==='string'){
@@ -1129,7 +1142,6 @@ setTimeout(()=>{
 function fmt(n){return (n||0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' DT';}
 function fmtI(n){return (n||0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g,' ');}
 function fmtP(n){return ((n||0)*100).toFixed(1)+'%';}
-function uid(){return Date.now()+'-'+Math.random().toString(36).slice(2);}
 function save(){
   localStorage.setItem('flousFlowSales',JSON.stringify(sales));
   localStorage.setItem('flousFlowFourns',JSON.stringify(fourns));
@@ -1160,6 +1172,7 @@ function toggleTheme(){
   theme=theme==='dark'?'light':'dark';
   document.documentElement.setAttribute('data-theme',theme);
   document.getElementById('themeBtn').textContent=theme==='dark'?'🌙':'☀️';
+  animateCounter(sales.filter(s=>s.statut!=='Annulé').length);
   save();
 }
 
@@ -1681,6 +1694,7 @@ function addSale(){
 function drawCounter(val, total){
   const canvas=document.getElementById('totalCount');
   if(!canvas) return;
+  const isDarkC=document.documentElement.getAttribute('data-theme')==='dark';
   const dpr=window.devicePixelRatio||1;
   const SIZE=72;
   canvas.width=SIZE*dpr; canvas.height=SIZE*dpr;
@@ -1691,38 +1705,37 @@ function drawCounter(val, total){
   // Background circle
   ctx.beginPath();
   ctx.arc(cx,cy,R,0,Math.PI*2);
-  ctx.fillStyle='rgba(57,255,20,.12)';
+  ctx.fillStyle=isDarkC?'rgba(57,255,20,.12)':'rgba(0,150,0,.1)';
   ctx.fill();
   // Track
   ctx.beginPath();
   ctx.arc(cx,cy,R,-Math.PI/2,Math.PI*3/2);
-  ctx.strokeStyle='rgba(255,255,255,.1)';
+  ctx.strokeStyle=isDarkC?'rgba(255,255,255,.1)':'rgba(0,0,0,.08)';
   ctx.lineWidth=lw;
   ctx.lineCap='round';
   ctx.stroke();
   // Arc progress
   const pct=Math.min(val/Math.max(total,1),1);
   const grad=ctx.createLinearGradient(cx-R,cy,cx+R,cy);
-  grad.addColorStop(0,'#39ff14');
-  grad.addColorStop(1,'#00ffaa');
+  grad.addColorStop(0,isDarkC?'#39ff14':'#16a34a');
+  grad.addColorStop(1,isDarkC?'#00ffaa':'#22c55e');
   ctx.beginPath();
   ctx.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+pct*Math.PI*2);
   ctx.strokeStyle=grad;
   ctx.lineWidth=lw;
   ctx.lineCap='round';
-  // Glow effect
-  ctx.shadowColor='#39ff14';
-  ctx.shadowBlur=8;
+  ctx.shadowColor=isDarkC?'#39ff14':'#16a34a';
+  ctx.shadowBlur=isDarkC?8:4;
   ctx.stroke();
   ctx.shadowBlur=0;
   // Number
-  ctx.fillStyle='#39ff14';
+  ctx.fillStyle=isDarkC?'#39ff14':'#14532d';
   ctx.font=`bold ${val>999?13:val>99?15:17}px 'DM Mono',monospace`;
   ctx.textAlign='center';
   ctx.textBaseline='middle';
   ctx.fillText(val, cx, cy-4);
   // Label
-  ctx.fillStyle='rgba(57,255,20,.7)';
+  ctx.fillStyle=isDarkC?'rgba(57,255,20,.7)':'rgba(20,83,45,.7)';
   ctx.font=`700 8px 'DM Sans',sans-serif`;
   ctx.fillText('ventes', cx, cy+9);
 }
