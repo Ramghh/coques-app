@@ -349,6 +349,27 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .drawer-footer{padding:14px 18px;border-top:1px solid var(--border);background:var(--surface2)}
 .drawer-user{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
 .drawer-user-sub{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:.5px}
+
+/* GIST SYNC MODAL */
+.gist-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.gist-modal-overlay.open{display:flex}
+.gist-modal-box{background:var(--surface);border-radius:24px 24px 0 0;padding:24px 20px 32px;width:100%;max-width:480px;animation:slideUpModal .3s ease}
+@keyframes slideUpModal{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.gist-modal-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.gist-modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.gist-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:14px;padding:13px 14px;border-radius:12px;font-family:'DM Mono',monospace;margin-bottom:10px;box-sizing:border-box}
+.gist-input:focus{outline:none;border-color:var(--accent)}
+.gist-status{font-size:12px;padding:10px 14px;border-radius:10px;margin-bottom:14px;display:none;line-height:1.5}
+.gist-status.ok{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:var(--green)}
+.gist-status.err{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+.gist-status.loading{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:var(--yellow)}
+.gist-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gist-btn{padding:14px;border-radius:14px;border:none;font-size:15px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;transition:opacity .2s,transform .1s}
+.gist-btn:active{transform:scale(.97);opacity:.85}
+.gist-btn.push{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.gist-btn.pull{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
+.gist-btn.cancel{grid-column:1/-1;background:transparent;border:1px solid var(--border);color:var(--muted);padding:12px}
+.gist-link{font-size:11px;color:var(--accent);text-decoration:none;display:block;margin-top:10px;text-align:center}
 </style>
 </head>
 <body>
@@ -404,6 +425,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
           <button class="bell-popup-btn" onclick="exportJSON();toggleBell()">⬇️ Sauvegarder maintenant</button>
         </div>
       </div>
+      <button class="theme-btn" id="gistBtn" onclick="openGistModal()" title="Sync Gist">☁️</button>
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()"></button>
     </div>
   </div>
@@ -3924,6 +3946,112 @@ function importData(event){
 }
 </script>
 
+<script>
+// ── GIST SYNC ──────────────────────────────────────────────────────────────
+const GIST_TOKEN_KEY = 'ff_gist_token';
+const GIST_ID_KEY    = 'ff_gist_id';
+const GIST_FILENAME  = 'megastore-backup.json';
+
+function openGistModal(){
+  document.getElementById('gistToken').value = localStorage.getItem(GIST_TOKEN_KEY)||'';
+  document.getElementById('gistId').value    = localStorage.getItem(GIST_ID_KEY)||'';
+  gistUpdateLink();
+  document.getElementById('gistStatus').style.display='none';
+  document.getElementById('gistModal').classList.add('open');
+}
+function closeGistModal(){
+  document.getElementById('gistModal').classList.remove('open');
+}
+function gistTokenChanged(){
+  const t=document.getElementById('gistToken').value.trim();
+  if(t) localStorage.setItem(GIST_TOKEN_KEY,t);
+}
+function gistSetStatus(msg,type){
+  const el=document.getElementById('gistStatus');
+  el.textContent=msg; el.className='gist-status '+type; el.style.display='block';
+}
+function gistUpdateLink(){
+  const id=localStorage.getItem(GIST_ID_KEY);
+  const lnk=document.getElementById('gistLink');
+  if(id){ lnk.href=`https://gist.github.com/${id}`; lnk.style.display='block'; }
+  else lnk.style.display='none';
+}
+function gistBuildPayload(){
+  return JSON.stringify({version:2,exportDate:new Date().toISOString(),sales,fourns,achats,stockItems,clients},null,2);
+}
+
+async function gistPush(){
+  const token=document.getElementById('gistToken').value.trim()||localStorage.getItem(GIST_TOKEN_KEY)||'';
+  if(!token){gistSetStatus('❌ Token manquant!','err');return;}
+  if(!sales.length){gistSetStatus('⚠️ Aucune donnée à uploader.','err');return;}
+  localStorage.setItem(GIST_TOKEN_KEY,token);
+  gistSetStatus('⏳ Upload en cours...','loading');
+  const existingId=localStorage.getItem(GIST_ID_KEY);
+  const body={files:{[GIST_FILENAME]:{content:gistBuildPayload()}}};
+  try{
+    let res,json;
+    if(existingId){
+      res=await fetch(`https://api.github.com/gists/${existingId}`,{
+        method:'PATCH',
+        headers:{'Authorization':`token ${token}`,'Content-Type':'application/json','Accept':'application/vnd.github+json'},
+        body:JSON.stringify(body)
+      });
+    } else {
+      body.description='MegaStore backup';
+      body.public=false;
+      res=await fetch('https://api.github.com/gists',{
+        method:'POST',
+        headers:{'Authorization':`token ${token}`,'Content-Type':'application/json','Accept':'application/vnd.github+json'},
+        body:JSON.stringify(body)
+      });
+    }
+    if(!res.ok){const e=await res.json();throw new Error(e.message||res.status);}
+    json=await res.json();
+    localStorage.setItem(GIST_ID_KEY,json.id);
+    document.getElementById('gistId').value=json.id;
+    gistUpdateLink();
+    const d=new Date().toLocaleTimeString('fr-TN');
+    gistSetStatus(`✅ Uploadé avec succès! (${d})\n${sales.length} ventes • ${fourns.length} fournisseurs`,'ok');
+    showToast('☁️ Gist mis à jour!');
+  }catch(e){gistSetStatus('❌ Erreur: '+e.message,'err');}
+}
+
+async function gistPull(){
+  const token=document.getElementById('gistToken').value.trim()||localStorage.getItem(GIST_TOKEN_KEY)||'';
+  const id=localStorage.getItem(GIST_ID_KEY)||document.getElementById('gistId').value.trim();
+  if(!token){gistSetStatus('❌ Token manquant!','err');return;}
+  if(!id){gistSetStatus('❌ Gist ID manquant — fais un Push d\'abord.','err');return;}
+  gistSetStatus('⏳ Téléchargement...','loading');
+  try{
+    const res=await fetch(`https://api.github.com/gists/${id}`,{
+      headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github+json'}
+    });
+    if(!res.ok){const e=await res.json();throw new Error(e.message||res.status);}
+    const json=await res.json();
+    const fileContent=json.files?.[GIST_FILENAME]?.content;
+    if(!fileContent) throw new Error('Fichier introuvable dans le Gist');
+    const data=JSON.parse(fileContent);
+    if(!data.sales||!Array.isArray(data.sales)) throw new Error('Format invalide');
+    if(!confirm(`⬇️ Remplacer les données locales par le Gist?\n(${data.sales.length} ventes • exporté le ${data.exportDate?.slice(0,10)||'?'})`)) {
+      gistSetStatus('⚠️ Annulé.','err'); return;
+    }
+    sales=data.sales;
+    if(data.fourns) fourns=data.fourns;
+    if(data.achats) achats=data.achats;
+    if(data.stockItems){stockItems=data.stockItems;saveStock();}
+    if(data.clients){clients=data.clients;saveClients();}
+    save(); updateKPIs(); renderSales(); refreshFournSelects(); refreshStockModelList();
+    gistSetStatus(`✅ ${sales.length} ventes importées depuis le Gist!`,'ok');
+    showToast('☁️ Données synchronisées!');
+  }catch(e){gistSetStatus('❌ Erreur: '+e.message,'err');}
+}
+// close modal on overlay click — wait for DOM
+document.addEventListener('DOMContentLoaded',function(){
+  const gm=document.getElementById('gistModal');
+  if(gm) gm.addEventListener('click',function(e){if(e.target===this) closeGistModal();});
+});
+</script>
+
 <!-- INVOICE PRINT AREA -->
 <div id="invoicePrintArea" style="display:none"></div>
 
@@ -3954,6 +4082,23 @@ function importData(event){
       <button class="btn-cancel" onclick="closeInvoicePreview()">Annuler</button>
       <button class="btn-save" onclick="doPrint()">🖨️ Imprimer</button>
     </div>
+  </div>
+</div>
+
+<!-- GIST SYNC MODAL -->
+<div class="gist-modal-overlay" id="gistModal">
+  <div class="gist-modal-box">
+    <div class="gist-modal-title">☁️ Sync GitHub Gist</div>
+    <div class="gist-modal-sub">Synchronise tes données sur n'importe quel appareil via un Gist privé.<br><a href="https://github.com/settings/tokens/new?scopes=gist&description=MegaStore+Sync" target="_blank" style="color:var(--accent)">🔑 Créer un Token ici</a> (cocher : <b>gist</b>)</div>
+    <input class="gist-input" type="password" id="gistToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" oninput="gistTokenChanged()">
+    <input class="gist-input" type="text" id="gistId" placeholder="Gist ID (auto-rempli après 1er push)" readonly style="opacity:.7;font-size:13px">
+    <div class="gist-status" id="gistStatus"></div>
+    <div class="gist-btns">
+      <button class="gist-btn push" onclick="gistPush()">⬆️ Push (Upload)</button>
+      <button class="gist-btn pull" onclick="gistPull()">⬇️ Pull (Télécharger)</button>
+      <button class="gist-btn cancel" onclick="closeGistModal()">Fermer</button>
+    </div>
+    <a id="gistLink" class="gist-link" href="#" target="_blank" style="display:none">🔗 Voir le Gist sur GitHub</a>
   </div>
 </div>
 
