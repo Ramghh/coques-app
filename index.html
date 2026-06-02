@@ -400,6 +400,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 /* active tab label in header */
 .active-tab-pill{background:rgba(255,122,0,.12);border:1px solid rgba(255,122,0,.3);color:var(--accent);font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;font-family:'JetBrains Mono',monospace;letter-spacing:.3px;margin-top:6px;display:inline-block}
 .drawer-footer{padding:14px 18px;border-top:1px solid var(--border);background:var(--surface2)}
+.drawer-footer-btns button:hover{background:var(--surface)!important;border-color:var(--accent)!important;color:var(--accent)!important}
+.drawer-footer-btns button:active{transform:scale(.95)}
 .drawer-user{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
 .drawer-user-sub{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:.5px}
 
@@ -454,7 +456,11 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <button class="drawer-btn" id="dbtn-backup" onclick="drawerNav('backup')"><span class="d-icon">💾</span><span class="d-label">Backup</span></button>
   </div>
   <div class="drawer-footer">
-    <div class="drawer-user">👤 Gharbi Ramzi</div>
+    <div class="drawer-user">👤 Gharbi Ramzi<span class="drawer-user-sub" style="display:block">CouvriTN · Kélibia</span></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button id="themeBtn" onclick="toggleTheme()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s"></button>
+      <button onclick="openGistModal();closeDrawer()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s" title="Sync GitHub Gist">☁️ <span>Sync</span></button>
+    </div>
   </div>
 </div>
 
@@ -478,8 +484,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
           <button class="bell-popup-btn" onclick="exportJSON();toggleBell()">⬇️ Sauvegarder maintenant</button>
         </div>
       </div>
-      <button class="theme-btn" id="gistBtn" onclick="openGistModal()" title="Sync Gist">☁️</button>
-      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()"></button>
     </div>
   </div>
   
@@ -1184,7 +1188,7 @@ const PREFILLED_URL='https://script.google.com/macros/s/AKfycbyDGTL7k2TP8-966Bxg
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 document.documentElement.setAttribute('data-theme',theme);
-document.getElementById('themeBtn').textContent=theme==='dark'?'🌙':'☀️';
+updateThemeBtn();
 document.getElementById('fDate').value=new Date().toISOString().split('T')[0];
 document.getElementById('aDate').value=new Date().toISOString().split('T')[0];
 buildMonthSelect();
@@ -1260,10 +1264,17 @@ function calcARecuperer(){
 }
 
 // ── THEME ──────────────────────────────────────────────────────────────────
+function updateThemeBtn(){
+  const btn=document.getElementById('themeBtn');
+  if(!btn) return;
+  btn.innerHTML=theme==='dark'
+    ? '🌙 <span>Sombre</span>'
+    : '☀️ <span>Clair</span>';
+}
 function toggleTheme(){
   theme=theme==='dark'?'light':'dark';
   document.documentElement.setAttribute('data-theme',theme);
-  document.getElementById('themeBtn').textContent=theme==='dark'?'🌙':'☀️';
+  updateThemeBtn();
   animateCounter(sales.filter(s=>s.statut!=='Annulé').length);
   save();
 }
