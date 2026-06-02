@@ -3948,15 +3948,27 @@ function importData(event){
 
 <script>
 // ── GIST SYNC ──────────────────────────────────────────────────────────────
-const GIST_TOKEN_KEY = 'ff_gist_token';
-const GIST_ID_KEY    = 'ff_gist_id';
-const GIST_FILENAME  = 'megastore-backup.json';
+const GIST_TOKEN_KEY  = 'ff_gist_token';
+const GIST_ID_KEY     = 'ff_gist_id';
+const GIST_LAST_PUSH  = 'ff_gist_last_push';
+const GIST_LAST_PULL  = 'ff_gist_last_pull';
+const GIST_FILENAME   = 'megastore-backup.json';
 
 function openGistModal(){
   document.getElementById('gistToken').value = localStorage.getItem(GIST_TOKEN_KEY)||'';
   document.getElementById('gistId').value    = localStorage.getItem(GIST_ID_KEY)||'';
   gistUpdateLink();
-  document.getElementById('gistStatus').style.display='none';
+  // Show last sync info
+  const lastPush=localStorage.getItem(GIST_LAST_PUSH);
+  const lastPull=localStorage.getItem(GIST_LAST_PULL);
+  if(lastPush||lastPull){
+    const lines=[];
+    if(lastPush) lines.push(`⬆️ Dernier Push : ${new Date(+lastPush).toLocaleString('fr-TN')}`);
+    if(lastPull) lines.push(`⬇️ Dernier Pull : ${new Date(+lastPull).toLocaleString('fr-TN')}`);
+    gistSetStatus(lines.join('\n'),'ok');
+  } else {
+    document.getElementById('gistStatus').style.display='none';
+  }
   document.getElementById('gistModal').classList.add('open');
 }
 function closeGistModal(){
@@ -4008,10 +4020,11 @@ async function gistPush(){
     if(!res.ok){const e=await res.json();throw new Error(e.message||res.status);}
     json=await res.json();
     localStorage.setItem(GIST_ID_KEY,json.id);
+    localStorage.setItem(GIST_LAST_PUSH, Date.now().toString());
     document.getElementById('gistId').value=json.id;
     gistUpdateLink();
-    const d=new Date().toLocaleTimeString('fr-TN');
-    gistSetStatus(`✅ Uploadé avec succès! (${d})\n${sales.length} ventes • ${fourns.length} fournisseurs`,'ok');
+    const d=new Date().toLocaleString('fr-TN');
+    gistSetStatus(`✅ Uploadé avec succès!\n📅 ${d}\n📦 ${sales.length} ventes • ${fourns.length} fournisseurs`,'ok');
     showToast('☁️ Gist mis à jour!');
   }catch(e){gistSetStatus('❌ Erreur: '+e.message,'err');}
 }
@@ -4041,7 +4054,9 @@ async function gistPull(){
     if(data.stockItems){stockItems=data.stockItems;saveStock();}
     if(data.clients){clients=data.clients;saveClients();}
     save(); updateKPIs(); renderSales(); refreshFournSelects(); refreshStockModelList();
-    gistSetStatus(`✅ ${sales.length} ventes importées depuis le Gist!`,'ok');
+    localStorage.setItem(GIST_LAST_PULL, Date.now().toString());
+    const dp=new Date().toLocaleString('fr-TN');
+    gistSetStatus(`✅ ${sales.length} ventes importées depuis le Gist!\n📅 ${dp}`,'ok');
     showToast('☁️ Données synchronisées!');
   }catch(e){gistSetStatus('❌ Erreur: '+e.message,'err');}
 }
