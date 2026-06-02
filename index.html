@@ -381,7 +381,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   </div>
   <div class="drawer-footer">
     <div class="drawer-user">👤 Gharbi Ramzi</div>
-    <div class="drawer-user-sub">CouvriTN</div>
   </div>
 </div>
 
@@ -2447,13 +2446,13 @@ function printInvoice(id){
   updateInvoicePreview();
   // Add live listeners
   // Load saved company name
-  const savedNom=localStorage.getItem('flousFlowNomEntreprise')||'CouvriTN';
+  const savedNom=localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
   const nomEl=document.getElementById('invNomEntreprise');
   if(nomEl) nomEl.value=savedNom;
   ['invColor','invAccent','invMerci','invNomEntreprise'].forEach(i=>{
     const el=document.getElementById(i);
     if(el) el.oninput=()=>{
-      if(i==='invNomEntreprise') localStorage.setItem('flousFlowNomEntreprise', el.value.trim()||'CouvriTN');
+      if(i==='invNomEntreprise') localStorage.setItem('flousFlowNomEntreprise', el.value.trim()||'MegaStore');
       updateInvoicePreview();
     };
   });
@@ -2465,7 +2464,7 @@ function updateInvoicePreview(){
   const color=document.getElementById('invColor').value||'#111111';
   const accent=document.getElementById('invAccent').value||'#ff7a00';
   const merci=document.getElementById('invMerci').value||'Merci pour votre confiance 🙏';
-  const nom=(document.getElementById('invNomEntreprise').value.trim())||localStorage.getItem('flousFlowNomEntreprise')||'CouvriTN';
+  const nom=(document.getElementById('invNomEntreprise').value.trim())||localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
   document.getElementById('invoicePreviewContent').innerHTML=buildInvoiceHTML(s,color,accent,merci,nom);
 }
 
@@ -2479,7 +2478,7 @@ function doPrint(){
   const color=document.getElementById('invColor').value||'#111111';
   const accent=document.getElementById('invAccent').value||'#ff7a00';
   const merci=document.getElementById('invMerci').value||'Merci pour votre confiance 🙏';
-  const nom=(document.getElementById('invNomEntreprise').value.trim())||localStorage.getItem('flousFlowNomEntreprise')||'CouvriTN';
+  const nom=(document.getElementById('invNomEntreprise').value.trim())||localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
   const area=document.getElementById('invoicePrintArea');
   area.innerHTML=buildInvoiceHTML(s,color,accent,merci,nom);
   area.style.display='block';
@@ -2489,7 +2488,7 @@ function doPrint(){
 }
 
 function buildInvoiceHTML(s,color,accent,merci,nom){
-  nom=nom||localStorage.getItem('flousFlowNomEntreprise')||'CouvriTN';
+  nom=nom||localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
   const ds=s.date?new Date(s.date+'T00:00:00').toLocaleDateString('fr-TN',{day:'2-digit',month:'long',year:'numeric'}):'—';
   const revenu=s.revenu||((s.prix||0)*(s.qty||1));
   const envoi=s.envoi||0;
@@ -3799,7 +3798,7 @@ function exportJSON(){
   const blob=new Blob([JSON.stringify({version:2,exportDate:new Date().toISOString(),sales,fourns,achats,stockItems,clients},null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download=`flousflow-${new Date().toISOString().split('T')[0]}.json`;
+  a.download=`megastore-${new Date().toISOString().split('T')[0]}.json`;
   a.click(); URL.revokeObjectURL(a.href);
   localStorage.setItem('flousFlowLastBackup', Date.now().toString());
   checkBackupReminder();
@@ -3864,7 +3863,7 @@ function exportExcel(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(summary),'Résumé');
   if(cartesRows.length) XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(cartesRows),'Cartes');
   if(stockRows.length) XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(stockRows),'Stock');
-  XLSX.writeFile(wb,`flousflow-${new Date().toISOString().split('T')[0]}.xlsx`);
+  XLSX.writeFile(wb,`megastore-${new Date().toISOString().split('T')[0]}.xlsx`);
   showToast('✅ Excel téléchargé!');
 }
 
