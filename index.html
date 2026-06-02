@@ -4106,7 +4106,7 @@ document.addEventListener('DOMContentLoaded',function(){
     <div class="gist-modal-title">☁️ Sync GitHub Gist</div>
     <div class="gist-modal-sub">Synchronise tes données sur n'importe quel appareil via un Gist privé.<br><a href="https://github.com/settings/tokens/new?scopes=gist&description=MegaStore+Sync" target="_blank" style="color:var(--accent)">🔑 Créer un Token ici</a> (cocher : <b>gist</b>)</div>
     <input class="gist-input" type="password" id="gistToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" oninput="gistTokenChanged()">
-    <input class="gist-input" type="text" id="gistId" placeholder="Gist ID (auto-rempli après 1er push)" readonly style="opacity:.7;font-size:13px">
+    <input class="gist-input" type="text" id="gistId" placeholder="Gist ID (auto-rempli après 1er push)" oninput="localStorage.setItem('ff_gist_id',this.value.trim())" style="font-size:13px">
     <div class="gist-status" id="gistStatus"></div>
     <div class="gist-btns">
       <button class="gist-btn push" onclick="gistPush()">⬆️ Push (Upload)</button>
