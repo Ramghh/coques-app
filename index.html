@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🏪 MegaStore</title>
+<meta name="theme-color" content="#ff7a00">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MegaStore">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -456,8 +463,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <button class="drawer-btn" id="dbtn-backup" onclick="drawerNav('backup')"><span class="d-icon">💾</span><span class="d-label">Backup</span></button>
   </div>
   <div class="drawer-footer">
-    <div id="lastSaveLabel" style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px;min-height:16px"></div>
-    <div style="display:flex;gap:8px">
+    <div class="drawer-user" style="margin-bottom:10px">👤 Gharbi Ramzi</div>
+    <div style="display:flex;gap:8px;margin-top:0">
       <button id="themeBtn" onclick="toggleTheme()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s"></button>
       <button onclick="openGistModal();closeDrawer()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s" title="Sync GitHub Gist">☁️ <span>Sync</span></button>
     </div>
@@ -1207,7 +1214,6 @@ if(lastTab){
 // Force refresh today/week/month cards after full init
 setTimeout(()=>updateTodayCard(), 100);
 setTimeout(()=>drawMiniChart7d(), 200);
-setTimeout(()=>updateLastSaveLabel(), 300);
 // Re-build year select after data is loaded
 setTimeout(()=>{
   const ysel=document.getElementById('yearSelect');
@@ -1239,25 +1245,10 @@ setTimeout(()=>{
 function fmt(n){return (n||0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' DT';}
 function fmtI(n){return (n||0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g,' ');}
 function fmtP(n){return ((n||0)*100).toFixed(1)+'%';}
-function updateLastSaveLabel(){
-  const el=document.getElementById('lastSaveLabel');
-  if(!el) return;
-  const ts=localStorage.getItem('flousFlowLastSave');
-  if(!ts){ el.textContent=''; return; }
-  const diff=Math.floor((Date.now()-parseInt(ts))/1000);
-  let txt;
-  if(diff<60) txt=`💾 Sauvegardé à l'instant`;
-  else if(diff<3600) txt=`💾 Il y a ${Math.floor(diff/60)} min`;
-  else if(diff<86400) txt=`💾 Il y a ${Math.floor(diff/3600)}h`;
-  else txt=`💾 Il y a ${Math.floor(diff/86400)} jour${Math.floor(diff/86400)>1?'s':''}`;
-  el.textContent=txt;
-}
 function save(){
   localStorage.setItem('flousFlowSales',JSON.stringify(sales));
   localStorage.setItem('flousFlowFourns',JSON.stringify(fourns));
   localStorage.setItem('flousFlowTheme',theme);
-  localStorage.setItem('flousFlowLastSave', Date.now());
-  updateLastSaveLabel();
 }
 function calc(qty,prix,cout,envoi){
   const r=qty*prix, c=qty*cout+envoi, b=r-c;
@@ -4343,6 +4334,58 @@ document.addEventListener('DOMContentLoaded',function(){
 
 <!-- FAB -->
 <button class="fab" onclick="goAddSale()" title="Nouvelle vente">＋</button>
+
+
+<script>
+// ── PWA Service Worker Registration ──────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('✅ SW registered:', reg.scope))
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
+
+// ── PWA Install Prompt ────────────────────────────────────────────────────
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  setTimeout(() => showInstallToast(), 3000);
+});
+
+function showInstallToast() {
+  if (!deferredPrompt) return;
+  if (document.getElementById('pwa-toast')) return;
+  const toast = document.createElement('div');
+  toast.id = 'pwa-toast';
+  toast.style.cssText = [
+    'position:fixed','bottom:90px','left:50%','transform:translateX(-50%)',
+    'background:var(--surface)','border:1px solid var(--accent)',
+    'border-radius:14px','padding:14px 18px','display:flex','align-items:center',
+    'gap:12px','z-index:9999','box-shadow:0 8px 30px rgba(0,0,0,.25)',
+    'font-family:Outfit,sans-serif','font-size:14px','color:var(--text)',
+    'white-space:nowrap'
+  ].join(';');
+  toast.innerHTML = `
+    <span style="font-size:22px">📲</span>
+    <span>Installer <strong>MegaStore</strong> sur l'écran ?</span>
+    <button onclick="installPWA()" style="background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:700;font-size:13px;font-family:Outfit,sans-serif;">Installer</button>
+    <button onclick="document.getElementById('pwa-toast').remove()" style="background:transparent;border:none;cursor:pointer;font-size:18px;color:var(--muted);padding:2px 4px;">✕</button>
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => { const t = document.getElementById('pwa-toast'); if(t) t.remove(); }, 8000);
+}
+
+async function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('pwa-toast')?.remove();
+  if (outcome === 'accepted') showToast('✅ MegaStore installé avec succès !');
+}
+</script>
 
 </body>
 </html>
