@@ -456,8 +456,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <button class="drawer-btn" id="dbtn-backup" onclick="drawerNav('backup')"><span class="d-icon">💾</span><span class="d-label">Backup</span></button>
   </div>
   <div class="drawer-footer">
-    <div class="drawer-user">👤 Gharbi Ramzi<span class="drawer-user-sub" style="display:block">CouvriTN · Kélibia</span></div>
-    <div style="display:flex;gap:8px;margin-top:12px">
+    <div id="lastSaveLabel" style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px;min-height:16px"></div>
+    <div style="display:flex;gap:8px">
       <button id="themeBtn" onclick="toggleTheme()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s"></button>
       <button onclick="openGistModal();closeDrawer()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s" title="Sync GitHub Gist">☁️ <span>Sync</span></button>
     </div>
@@ -1207,6 +1207,7 @@ if(lastTab){
 // Force refresh today/week/month cards after full init
 setTimeout(()=>updateTodayCard(), 100);
 setTimeout(()=>drawMiniChart7d(), 200);
+setTimeout(()=>updateLastSaveLabel(), 300);
 // Re-build year select after data is loaded
 setTimeout(()=>{
   const ysel=document.getElementById('yearSelect');
@@ -1238,10 +1239,25 @@ setTimeout(()=>{
 function fmt(n){return (n||0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' DT';}
 function fmtI(n){return (n||0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g,' ');}
 function fmtP(n){return ((n||0)*100).toFixed(1)+'%';}
+function updateLastSaveLabel(){
+  const el=document.getElementById('lastSaveLabel');
+  if(!el) return;
+  const ts=localStorage.getItem('flousFlowLastSave');
+  if(!ts){ el.textContent=''; return; }
+  const diff=Math.floor((Date.now()-parseInt(ts))/1000);
+  let txt;
+  if(diff<60) txt=`💾 Sauvegardé à l'instant`;
+  else if(diff<3600) txt=`💾 Il y a ${Math.floor(diff/60)} min`;
+  else if(diff<86400) txt=`💾 Il y a ${Math.floor(diff/3600)}h`;
+  else txt=`💾 Il y a ${Math.floor(diff/86400)} jour${Math.floor(diff/86400)>1?'s':''}`;
+  el.textContent=txt;
+}
 function save(){
   localStorage.setItem('flousFlowSales',JSON.stringify(sales));
   localStorage.setItem('flousFlowFourns',JSON.stringify(fourns));
   localStorage.setItem('flousFlowTheme',theme);
+  localStorage.setItem('flousFlowLastSave', Date.now());
+  updateLastSaveLabel();
 }
 function calc(qty,prix,cout,envoi){
   const r=qty*prix, c=qty*cout+envoi, b=r-c;
