@@ -1239,6 +1239,13 @@ setTimeout(()=>{
 function fmt(n){return (n||0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' DT';}
 function fmtI(n){return (n||0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g,' ');}
 function fmtP(n){return ((n||0)*100).toFixed(1)+'%';}
+function saveLocal(){
+  localStorage.setItem('flousFlowSales',JSON.stringify(sales));
+  localStorage.setItem('flousFlowFourns',JSON.stringify(fourns));
+  localStorage.setItem('flousFlowTheme',theme);
+  localStorage.setItem('flousFlowLastSave', Date.now());
+  updateAutoSyncLabel();
+}
 function save(){
   localStorage.setItem('flousFlowSales',JSON.stringify(sales));
   localStorage.setItem('flousFlowFourns',JSON.stringify(fourns));
@@ -4323,7 +4330,7 @@ async function gistPull(){
     if(data.achats) achats=data.achats;
     if(data.stockItems){stockItems=data.stockItems;saveStock();}
     if(data.clients){clients=data.clients;saveClients();}
-    save(); updateKPIs(); renderSales(); refreshFournSelects(); refreshStockModelList();
+    saveLocal(); updateKPIs(); renderSales(); refreshFournSelects(); refreshStockModelList();
     localStorage.setItem(GIST_LAST_PULL, Date.now().toString());
     const dp=new Date().toLocaleString('fr-TN');
     gistSetStatus(`✅ ${sales.length} ventes importées depuis le Gist!\n📅 ${dp}`,'ok');
