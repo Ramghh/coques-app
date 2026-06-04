@@ -1267,11 +1267,10 @@ function allCartes(){
 function totalInvesti(){
   return fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>b+c.montant,0),0);
 }
-// À récupérer = total investi - revenu des ventes liées aux cartes
-// (on récupère l'investissement via le revenu généré par chaque carte, pas le bénéfice global)
+// Récupéré = bénéfice cumulé des ventes liées aux cartes - total investi
 function calcARecuperer(){
-  const revCartes=sales.filter(s=>s.carteId).reduce((a,s)=>a+s.revenu,0);
-  return totalInvesti()-revCartes;
+  const benefCartes=sales.filter(s=>s.carteId).reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
+  return benefCartes-totalInvesti();
 }
 
 // ── THEME ──────────────────────────────────────────────────────────────────
@@ -1973,8 +1972,12 @@ function updateKPIs(){
     const v=sales.filter(s=>s.carteId===c.id);
     return b+v.reduce((x,s)=>x+s.revenu,0);
   },0),0);
-  const aRec=totalMont-totalRevCartes;
-  const pct=totalMont>0?Math.min(100,(totalRevCartes/totalMont)*100):0;
+  const totalBenefCartes=fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>{
+    const v=sales.filter(s=>s.carteId===c.id);
+    return b+v.reduce((x,s)=>x+(s.benef||s.benefBrut||0),0);
+  },0),0);
+  const aRec=totalMont-totalBenefCartes;
+  const pct=totalMont>0?Math.min(100,(totalBenefCartes/totalMont)*100):0;
 
   const banner=document.getElementById('cartesBanner');
   if(totalMont>0){
@@ -3503,9 +3506,9 @@ function renderFournTab(){
       // Revenu = total des ventes liées à cette carte
       const revenu=ventes.reduce((a,s)=>a+s.revenu,0);
       const benef=ventes.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
-      // À récupérer = montant carte - revenu généré
-      const aRecuperer=c.montant-revenu;
-      const pct=c.montant>0?Math.min(100,(revenu/c.montant)*100):0;
+      // Récupéré = bénéfice cumulé - montant investi
+      const aRecuperer=c.montant-benef;
+      const pct=c.montant>0?Math.min(100,(benef/c.montant)*100):0;
       // Couleur progressive rouge → jaune → vert
       const r=Math.round(239*(1-pct/100)+16*(pct/100));
       const g=Math.round(68*(1-pct/100)+185*(pct/100));
@@ -3550,7 +3553,7 @@ function renderFournTab(){
     const totalRev=f.cartes.reduce((a,c)=>{const v=sales.filter(s=>s.carteId===c.id);return a+v.reduce((b,s)=>b+s.revenu,0);},0);
     const totalBen=f.cartes.reduce((a,c)=>{const v=sales.filter(s=>s.carteId===c.id);return a+v.reduce((b,s)=>b+(s.benef||s.benefBrut||0),0);},0);
     const totalMont=f.cartes.reduce((a,c)=>a+c.montant,0);
-    const totalRec=totalMont-totalRev;
+    const totalRec=totalMont-totalBen;
     return `<div class="city-row" style="flex-direction:column;align-items:stretch">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div class="city-name">🧑‍💼 ${f.nom}</div>
