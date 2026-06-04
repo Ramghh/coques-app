@@ -532,9 +532,15 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 
 
 
-<div style="margin:14px 0;background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.3);border-radius:var(--radius);padding:16px 18px">
-  <div style="font-size:12px;color:var(--yellow);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:4px">🛒 Coût Total Achats</div>
-  <div style="font-family:'Cabinet Grotesk',sans-serif;font-size:26px;font-weight:800;color:var(--yellow)" id="kpiCout">0.000 DT</div>
+<div style="margin:14px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+  <div style="background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.3);border-radius:var(--radius);padding:16px 18px">
+    <div style="font-size:11px;color:var(--yellow);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:4px">🛒 Coût Total Achats</div>
+    <div style="font-family:'Cabinet Grotesk',sans-serif;font-size:22px;font-weight:800;color:var(--yellow)" id="kpiCout">0.000 DT</div>
+  </div>
+  <div style="background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(239,68,68,.05));border:1px solid rgba(239,68,68,.3);border-radius:var(--radius);padding:16px 18px">
+    <div style="font-size:11px;color:var(--red);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:4px">🚚 Coût Livraison</div>
+    <div style="font-family:'Cabinet Grotesk',sans-serif;font-size:22px;font-weight:800;color:var(--red)" id="kpiEnvoi">0.000 DT</div>
+  </div>
 </div>
 
 <div id="cartesBanner" style="margin:0 0 14px;border-radius:var(--radius);padding:16px 18px;display:none">
@@ -1954,12 +1960,14 @@ function updateKPIs(){
   const tv=sales.reduce((a,s)=>a+s.revenu,0);
   const benef=sales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
   const cout=sales.reduce((a,s)=>a+s.coutTotal,0);
+  const envoi=sales.reduce((a,s)=>a+(s.envoi||0),0);
   const mg=tv>0?benef/tv:0;
   document.getElementById('kpiVentes').textContent=fmt(tv);
   document.getElementById('kpiBenef').textContent=fmt(benef);
   const uniqueClients=new Set(sales.map(s=>s.client).filter(Boolean)).size;
   document.getElementById('kpiClients').textContent=uniqueClients;
   document.getElementById('kpiCout').textContent=fmt(cout);
+  const envoiEl=document.getElementById('kpiEnvoi'); if(envoiEl) envoiEl.textContent=fmt(envoi);
   const nbEl=document.getElementById('kpiNbVentes'); if(nbEl) nbEl.textContent=sales.length;
   const badge=document.getElementById('totalCount');
   animateCounter(sales.length);
