@@ -488,6 +488,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
           </div>
           <button class="bell-popup-btn" style="margin-top:10px" onclick="exportJSON();toggleBell()">⬇️ Sauvegarder maintenant</button>
           <button onclick="dismissBell()" style="width:100%;padding:8px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:9px;font-size:12px;cursor:pointer;margin-top:6px;font-family:'Cabinet Grotesk',sans-serif">✕ Ignorer</button>
+          <button onclick="diagSync()" style="width:100%;padding:8px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:9px;font-size:11px;cursor:pointer;margin-top:6px;font-family:'JetBrains Mono',sans-serif">🔍 Diagnostic</button>
         </div>
       </div>
     </div>
@@ -2263,6 +2264,37 @@ function checkBackupReminder(){
     msg.textContent=`Dernière sauvegarde il y a ${days} jour${days>1?'s':''}.`;
   }
   updateBellSync(null);
+}
+
+function diagSync(){
+  const token = localStorage.getItem('ff_gist_token');
+  const id    = localStorage.getItem('ff_gist_id');
+  const pending = localStorage.getItem('ff_pending_sync');
+  const lastPush = localStorage.getItem('ff_gist_auto_push');
+  const lastSave = localStorage.getItem('flousFlowLastSave');
+
+  const elapsed = pending ? Math.floor((Date.now()-parseInt(pending))/1000) : null;
+  const sinceLastPush = lastPush ? Math.floor((Date.now()-parseInt(lastPush))/60000) : null;
+  const sinceLastSave = lastSave ? Math.floor((Date.now()-parseInt(lastSave))/1000) : null;
+
+  const msg = [
+    '── TOKEN ──',
+    token ? `✅ Présent (${token.length} chars)` : '❌ Absent',
+    '',
+    '── GIST ID ──',
+    id ? `✅ ${id.substring(0,8)}...` : '❌ Absent',
+    '',
+    '── PENDING SYNC ──',
+    pending ? `⏳ Oui — il y a ${elapsed}s (${elapsed>=300?'✅ doit se déclencher':'⏳ pas encore 5min'})` : '✅ Aucun pending',
+    '',
+    '── DERNIER AUTO-PUSH ──',
+    lastPush ? `${sinceLastPush} min` : '❌ Jamais',
+    '',
+    '── DERNIER SAVE ──',
+    lastSave ? `il y a ${sinceLastSave}s` : '❌ Jamais',
+  ].join('\n');
+
+  alert(msg);
 }
 
 function dismissBell(){
