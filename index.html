@@ -277,8 +277,23 @@ input:focus,select:focus{outline:none;border-color:var(--accent)!important;box-s
 
 @media print{
   body > *{display:none!important}
-  #invoicePrintArea{display:block!important;position:fixed;inset:0;background:#fff;z-index:9999;padding:0}
-  @page{size:A5 landscape;margin:6mm}
+  #invoicePrintArea{
+    display:block!important;
+    position:fixed!important;
+    top:0!important;left:0!important;right:0!important;bottom:0!important;
+    background:#fff!important;
+    z-index:99999!important;
+    padding:0!important;
+    margin:0!important;
+    width:100%!important;
+    height:auto!important;
+    overflow:visible!important;
+    color:#111!important;
+    -webkit-print-color-adjust:exact!important;
+    print-color-adjust:exact!important;
+  }
+  #invoicePrintArea *{visibility:visible!important;display:revert!important}
+  @page{size:A5;margin:8mm}
 }
 .fab{position:fixed;bottom:28px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;font-size:28px;border:none;cursor:pointer;box-shadow:0 4px 18px rgba(255,122,0,.5);z-index:150;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s;line-height:1}
 .fab:active{transform:scale(.93);box-shadow:0 2px 10px rgba(255,122,0,.4)}
@@ -2682,7 +2697,7 @@ function printInvoice(id){
   const savedNom=localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
   const nomEl=document.getElementById('invNomEntreprise');
   if(nomEl) nomEl.value=savedNom;
-  ['invColor','invAccent','invMerci','invNomEntreprise'].forEach(i=>{
+  ['invColor','invAccent','invMerci','invNomEntreprise','invRemise','invTVA'].forEach(i=>{
     const el=document.getElementById(i);
     if(el) el.oninput=()=>{
       if(i==='invNomEntreprise') localStorage.setItem('flousFlowNomEntreprise', el.value.trim()||'MegaStore');
@@ -2698,7 +2713,9 @@ function updateInvoicePreview(){
   const accent=document.getElementById('invAccent').value||'#ff7a00';
   const merci=document.getElementById('invMerci').value||'Merci pour votre confiance 🙏';
   const nom=(document.getElementById('invNomEntreprise').value.trim())||localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
-  document.getElementById('invoicePreviewContent').innerHTML=buildInvoiceHTML(s,color,accent,merci,nom);
+  const remise=parseFloat(document.getElementById('invRemise').value)||0;
+  const tva=parseFloat(document.getElementById('invTVA').value)||0;
+  document.getElementById('invoicePreviewContent').innerHTML=buildInvoiceHTML(s,color,accent,merci,nom,remise,tva);
 }
 
 function closeInvoicePreview(){
@@ -2712,22 +2729,32 @@ function doPrint(){
   const accent=document.getElementById('invAccent').value||'#ff7a00';
   const merci=document.getElementById('invMerci').value||'Merci pour votre confiance 🙏';
   const nom=(document.getElementById('invNomEntreprise').value.trim())||localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
+  const remise=parseFloat(document.getElementById('invRemise').value)||0;
+  const tva=parseFloat(document.getElementById('invTVA').value)||0;
+  const html=buildInvoiceHTML(s,color,accent,merci,nom,remise,tva);
   const area=document.getElementById('invoicePrintArea');
-  area.innerHTML=buildInvoiceHTML(s,color,accent,merci,nom);
+  area.innerHTML=html;
   area.style.display='block';
   closeInvoicePreview();
-  window.onafterprint=()=>{ area.style.display='none'; window.onafterprint=null; };
-  window.print();
+  setTimeout(()=>{
+    window.print();
+    window.onafterprint=()=>{ area.style.display='none'; window.onafterprint=null; };
+  }, 300);
 }
 
-function buildInvoiceHTML(s,color,accent,merci,nom){
+function buildInvoiceHTML(s,color,accent,merci,nom,remise=0,tva=0){
   nom=nom||localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
   const ds=s.date?new Date(s.date+'T00:00:00').toLocaleDateString('fr-TN',{day:'2-digit',month:'long',year:'numeric'}):'—';
   const revenu=s.revenu||((s.prix||0)*(s.qty||1));
   const envoi=s.envoi||0;
   const villeRow=s.ville?'<div style="font-size:12px;color:#555;margin-top:2px">📍 '+s.ville+'</div>':'';
   const phoneRow=s.phone?'<div style="font-size:12px;color:#555;margin-top:2px">📞 '+s.phone+'</div>':'';
-  const envoiRow=envoi>0?'<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:12px;color:#555">Frais de livraison<tr><td style="padding:7px 6px;text-align:center;font-size:12px;color:#555">1</td><td style="padding:7px 10px;text-align:right;font-size:12px;color:#555">'+fmtI(envoi)+' DT</td></tr>':'';
+  const envoiRow=envoi>0?`<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:12px;color:#555">Frais de livraison</td><td style="padding:7px 6px;text-align:center;font-size:12px;color:#555">1</td><td style="padding:7px 10px;text-align:right;font-size:12px;color:#555">${fmtI(envoi)} DT</td></tr>`:'';
+  const remiseRow=remise>0?`<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:12px;color:#e53e3e">🏷️ Remise</td><td style="padding:7px 6px;text-align:center;font-size:12px;color:#e53e3e">—</td><td style="padding:7px 10px;text-align:right;font-size:12px;color:#e53e3e">-${fmtI(remise)} DT</td></tr>`:'';
+  const subtotal=revenu-remise;
+  const tvaAmount=tva>0?subtotal*(tva/100):0;
+  const tvaRow=tva>0?`<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:12px;color:#555">📊 TVA (${tva}%)</td><td style="padding:7px 6px;text-align:center;font-size:12px;color:#555">—</td><td style="padding:7px 10px;text-align:right;font-size:12px;color:#555">+${fmtI(tvaAmount)} DT</td></tr>`:'';
+  const total=subtotal+tvaAmount;
   const invNum=s.invNum||('INV-'+(s.date||'').slice(0,4)+'-???');
   return `<div style="font-family:'Segoe UI',Arial,sans-serif;width:100%;box-sizing:border-box;color:#111;padding:14px 20px;page-break-after:avoid">
     <div style="text-align:center;border-bottom:2px solid ${color};padding-bottom:8px;margin-bottom:10px">
@@ -2760,12 +2787,12 @@ function buildInvoiceHTML(s,color,accent,merci,nom){
           <td style="padding:8px 6px;text-align:center;font-size:13px">${s.qty||1}</td>
           <td style="padding:8px 10px;text-align:right;font-size:13px">${fmtI(s.prix||0)} DT</td>
         </tr>
-        ${envoiRow}
+        ${envoiRow}${remiseRow}${tvaRow}
       </tbody>
     </table>
     <div style="background:${color};color:#fff;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:13px;font-weight:700">TOTAL</div>
-      <div style="font-size:17px;font-weight:900">${fmtI(revenu)} DT</div>
+      <div style="font-size:17px;font-weight:900">${fmtI(total)} DT</div>
     </div>
     <div style="text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:8px">
       ${merci}<br>${nom} — Kélibia, Tunisie
@@ -4519,6 +4546,16 @@ setInterval(()=>{
       <div>
         <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Couleur accent</label>
         <input type="color" id="invAccent" value="#ff7a00" style="width:100%;height:38px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);margin-top:4px;cursor:pointer">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div>
+        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">🏷️ Remise (DT) — optionnel</label>
+        <input type="number" id="invRemise" value="0" min="0" step="0.001" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;margin-top:4px;box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">📊 TVA (%) — optionnel</label>
+        <input type="number" id="invTVA" value="0" min="0" max="100" step="0.1" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;margin-top:4px;box-sizing:border-box">
       </div>
     </div>
     <div style="margin-bottom:14px">
