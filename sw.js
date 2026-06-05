@@ -1,10 +1,10 @@
 // ╔══════════════════════════════════════════════════════╗
 // ║   FlousFlow Service Worker  – Gharbi Ramzi           ║
-// ║   Cache-first strategy for full offline support      ║
+// ║   Network-first for index.html, cache-first for CDN  ║
 // ╚══════════════════════════════════════════════════════╝
 
-const CACHE_NAME = 'flousflow-v1';
-const CACHE_VERSION = 1;
+const CACHE_NAME = 'flousflow-v2';
+const CACHE_VERSION = 2;
 
 // App shell + external CDN resources to cache on install
 const PRECACHE_URLS = [
@@ -55,52 +55,42 @@ self.addEventListener('activate', event => {
   );
 });
 
-// ── Fetch: cache-first, fallback to network ───────────────────────────────
+// ── Fetch: network-first for index.html, cache-first for CDN ─────────────
 self.addEventListener('fetch', event => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
   // Skip Gist API calls (always need network)
   if (event.request.url.includes('api.github.com')) return;
   if (event.request.url.includes('gist.github.com')) return;
 
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) {
-        // Serve from cache, update cache in background (stale-while-revalidate)
-        const networkFetch = fetch(event.request)
-          .then(response => {
-            if (response && response.status === 200) {
-              caches.open(CACHE_NAME).then(cache => {
-                cache.put(event.request, response.clone());
-              });
-            }
-            return response;
-          })
-          .catch(() => {}); // Ignore network errors in background
-        return cached;
-      }
+  const url = new URL(event.request.url);
+  const isHTML = url.pathname.endsWith('.html') || url.pathname.endsWith('/') || event.request.mode === 'navigate';
 
-      // Not in cache → fetch from network and cache it
-      return fetch(event.request)
+  if (isHTML) {
+    // ── Network-first pour index.html ──────────────────────────────────────
+    event.respondWith(
+      fetch(event.request)
         .then(response => {
-          if (!response || response.status !== 200 || response.type === 'opaque') {
-            return response;
+          if (response && response.status === 200) {
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
           }
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseClone);
-          });
           return response;
         })
-        .catch(() => {
-          // Offline fallback for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
-        });
-    })
-  );
+        .catch(() => caches.match(event.request)) // fallback cache si offline
+    );
+  } else {
+    // ── Cache-first pour CDN, fonts, libs ─────────────────────────────────
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        return fetch(event.request).then(response => {
+          if (!response || response.status !== 200 || response.type === 'opaque') return response;
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
+          return response;
+        }).catch(() => {});
+      })
+    );
+  }
 });
 
 // ── Message handler: force update ─────────────────────────────────────────
