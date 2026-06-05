@@ -3306,15 +3306,15 @@ function filterByMarque(marque){
 // Auto-sync on visibility change (quand l'app revient au premier plan)
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState === 'visible'){
+    updateAutoSyncLabel();
     const pending = localStorage.getItem('ff_pending_sync');
     if(pending){
       const elapsed = Date.now() - parseInt(pending);
       if(elapsed >= 5 * 60 * 1000){
-        // 5 min passées → sync maintenant
-        autoSyncGist().then(()=> localStorage.removeItem('ff_pending_sync'));
+        localStorage.removeItem('ff_pending_sync');
+        autoSyncGist();
       }
     }
-    updateAutoSyncLabel();
   }
 });
 
@@ -4220,14 +4220,15 @@ async function autoSyncGist(){
     localStorage.setItem(GIST_AUTO_PUSH, now.toString());
     localStorage.removeItem('ff_pending_sync');
     updateAutoSyncLabel();
-    showToast('☁️ Sync automatique effectué!');
+    const t=new Date(now);
+    const hm=t.toLocaleTimeString('fr-TN',{hour:'2-digit',minute:'2-digit'});
+    showToast(`☁️ Sync automatique réussi — ${hm}`);
   } catch(e){ /* silencieux */ }
 }
 
 function scheduleAutoSync(){
   clearTimeout(_autoSyncTimer);
   localStorage.setItem('ff_pending_sync', Date.now().toString());
-  _autoSyncTimer = setTimeout(()=> autoSyncGist(), 5 * 60 * 1000); // 5 minutes
 }
 
 function updateAutoSyncLabel(){
