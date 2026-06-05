@@ -2191,7 +2191,7 @@ document.addEventListener('click',e=>{
 // ── THEME ──────────────────────────────────────────────────────────────────
 
 // ── BELL SYNC UPDATE ───────────────────────────────────────────────────────
-function updateBellSync(success){
+function updateBellSync(success, errMsg){
   const dot = document.getElementById('bellDot');
   const section = document.getElementById('bellSyncSection');
   const title = document.getElementById('bellSyncTitle');
@@ -2215,7 +2215,7 @@ function updateBellSync(success){
     dot.style.display = 'block';
     dot.style.background = 'var(--red)';
     title.textContent = '❌ Sync échoué';
-    msg.textContent = 'Vérifie ta connexion ou ton token.';
+    msg.textContent = errMsg || 'Vérifie ta connexion ou ton token.';
   } else if(tsSync){
     // état normal
     const diff = Math.floor((Date.now() - parseInt(tsSync)) / 1000);
@@ -4254,7 +4254,7 @@ let _autoSyncTimer = null;
 async function autoSyncGist(){
   const token = localStorage.getItem(GIST_TOKEN_KEY);
   const id    = localStorage.getItem(GIST_ID_KEY);
-  if(!token || !id) return; // pas de config → on fait rien silencieusement
+  if(!token || !id) return;
   const body  = {files:{[GIST_FILENAME]:{content:gistBuildPayload()}}};
   try{
     const res = await fetch(`https://api.github.com/gists/${id}`,{
@@ -4262,14 +4262,22 @@ async function autoSyncGist(){
       headers:{'Authorization':`token ${token}`,'Content-Type':'application/json','Accept':'application/vnd.github+json'},
       body:JSON.stringify(body)
     });
-    if(!res.ok) return;
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      console.error('AutoSync failed:', res.status, err.message||'');
+      updateBellSync(false, `Erreur ${res.status}: ${err.message||'token/id invalide'}`);
+      return;
+    }
     const now = Date.now();
     localStorage.setItem(GIST_LAST_PUSH, now.toString());
     localStorage.setItem(GIST_AUTO_PUSH, now.toString());
     localStorage.removeItem('ff_pending_sync');
     updateAutoSyncLabel();
     updateBellSync(true);
-  } catch(e){ updateBellSync(false); }
+  } catch(e){
+    console.error('AutoSync network error:', e);
+    updateBellSync(false, 'Erreur réseau');
+  }
 }
 
 function scheduleAutoSync(){
