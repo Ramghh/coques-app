@@ -456,7 +456,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <button class="drawer-btn" id="dbtn-backup" onclick="drawerNav('backup')"><span class="d-icon">💾</span><span class="d-label">Backup</span></button>
   </div>
   <div class="drawer-footer">
-    <div id="lastSaveLabel" style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px;min-height:16px"></div>
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">👤 Gharbi Ramzi</div>
+    <div id="lastSaveLabel" style="font-size:11px;color:var(--muted);margin-bottom:10px;min-height:16px"></div>
     <div style="display:flex;gap:8px">
       <button id="themeBtn" onclick="toggleTheme()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s"></button>
       <button onclick="openGistModal();closeDrawer()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s" title="Sync GitHub Gist">☁️ <span>Sync</span></button>
@@ -486,6 +487,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
             <div style="font-size:12px;color:var(--muted)" id="bellSyncMsg"></div>
           </div>
           <button class="bell-popup-btn" style="margin-top:10px" onclick="exportJSON();toggleBell()">⬇️ Sauvegarder maintenant</button>
+          <button onclick="dismissBell()" style="width:100%;padding:8px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:9px;font-size:12px;cursor:pointer;margin-top:6px;font-family:'Cabinet Grotesk',sans-serif">✕ Ignorer</button>
         </div>
       </div>
     </div>
@@ -2261,6 +2263,12 @@ function checkBackupReminder(){
     msg.textContent=`Dernière sauvegarde il y a ${days} jour${days>1?'s':''}.`;
   }
   updateBellSync(null);
+}
+
+function dismissBell(){
+  localStorage.setItem('flousFlowLastBackup', Date.now().toString());
+  document.getElementById('bellDot').style.display='none';
+  document.getElementById('bellPopup').classList.remove('open');
 }
 
 function toggleBell(){
