@@ -1124,6 +1124,8 @@ const DRAWER_LABELS = {
 function openDrawer(){
   document.getElementById('sideDrawer').classList.add('open');
   document.getElementById('drawerOverlay').classList.add('open');
+  checkBackupReminder();
+  checkPendingSync();
 }
 function closeDrawer(){
   document.getElementById('sideDrawer').classList.remove('open');
@@ -1131,6 +1133,7 @@ function closeDrawer(){
 }
 function drawerNav(id){
   closeDrawer();
+  checkPendingSync();
   showTab(id, null);
 }
 function syncDrawerActive(id){
@@ -1142,6 +1145,7 @@ function syncDrawerActive(id){
 }
 
 function showTab(id,btn,pushHistory=true){
+  checkPendingSync();
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
@@ -2193,7 +2197,16 @@ document.addEventListener('click',e=>{
 
 // ── THEME ──────────────────────────────────────────────────────────────────
 
-// ── BELL SYNC UPDATE ───────────────────────────────────────────────────────
+// ── CHECK PENDING SYNC on any interaction ─────────────────────────────────
+function checkPendingSync(){
+  const pending = localStorage.getItem('ff_pending_sync');
+  if(!pending) return;
+  const elapsed = Date.now() - parseInt(pending);
+  if(elapsed >= 5 * 60 * 1000){
+    localStorage.removeItem('ff_pending_sync');
+    autoSyncGist();
+  }
+}
 function updateBellSync(success, errMsg){
   const dot = document.getElementById('bellDot');
   const section = document.getElementById('bellSyncSection');
@@ -2304,6 +2317,7 @@ function dismissBell(){
 }
 
 function toggleBell(){
+  checkPendingSync();
   const popup=document.getElementById('bellPopup');
   popup.classList.toggle('open');
   // Fermer si on clique ailleurs
