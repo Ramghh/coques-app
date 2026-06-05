@@ -481,7 +481,11 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
         <div class="bell-popup" id="bellPopup">
           <div class="bell-popup-title" id="bellTitle">🔔 Sauvegarde</div>
           <div class="bell-popup-msg" id="bellMsg">Chargement...</div>
-          <button class="bell-popup-btn" onclick="exportJSON();toggleBell()">⬇️ Sauvegarder maintenant</button>
+          <div id="bellSyncSection" style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:none">
+            <div style="font-size:12px;font-weight:700;margin-bottom:4px" id="bellSyncTitle">☁️ Sync GitHub</div>
+            <div style="font-size:12px;color:var(--muted)" id="bellSyncMsg"></div>
+          </div>
+          <button class="bell-popup-btn" style="margin-top:10px" onclick="exportJSON();toggleBell()">⬇️ Sauvegarder maintenant</button>
         </div>
       </div>
     </div>
@@ -2186,6 +2190,60 @@ document.addEventListener('click',e=>{
 
 // ── THEME ──────────────────────────────────────────────────────────────────
 
+// ── BELL SYNC UPDATE ───────────────────────────────────────────────────────
+function updateBellSync(success){
+  const dot = document.getElementById('bellDot');
+  const section = document.getElementById('bellSyncSection');
+  const title = document.getElementById('bellSyncTitle');
+  const msg = document.getElementById('bellSyncMsg');
+  if(!section) return;
+
+  const tsSync = localStorage.getItem(GIST_AUTO_PUSH);
+  const pending = localStorage.getItem('ff_pending_sync');
+
+  section.style.display = 'block';
+
+  if(success === true){
+    // sync réussi → dot vert momentané puis disparaît
+    dot.style.display = 'block';
+    dot.style.background = 'var(--green)';
+    title.textContent = '✅ Sync réussi';
+    const t = new Date();
+    msg.textContent = `Dernière sync: ${t.toLocaleTimeString('fr-TN',{hour:'2-digit',minute:'2-digit'})}`;
+    setTimeout(()=>{ dot.style.display='none'; }, 5000);
+  } else if(success === false){
+    dot.style.display = 'block';
+    dot.style.background = 'var(--red)';
+    title.textContent = '❌ Sync échoué';
+    msg.textContent = 'Vérifie ta connexion ou ton token.';
+  } else if(tsSync){
+    // état normal
+    const diff = Math.floor((Date.now() - parseInt(tsSync)) / 1000);
+    let txt;
+    if(diff < 60) txt = 'il y a quelques secondes';
+    else if(diff < 3600) txt = `il y a ${Math.floor(diff/60)} min`;
+    else txt = `il y a ${Math.floor(diff/3600)}h`;
+    title.textContent = '☁️ Sync GitHub';
+    msg.textContent = `Dernière sync: ${txt}`;
+  } else if(pending){
+    title.textContent = '⏳ Sync en attente';
+    msg.textContent = 'Sync automatique dans moins de 5 min.';
+  } else {
+    section.style.display = 'none';
+  }
+}
+
+// ── AUTO SYNC INTERVAL (fonctionne même si l'app reste ouverte) ────────────
+setInterval(()=>{
+  const pending = localStorage.getItem('ff_pending_sync');
+  if(!pending) return;
+  const elapsed = Date.now() - parseInt(pending);
+  if(elapsed >= 5 * 60 * 1000){
+    localStorage.removeItem('ff_pending_sync');
+    autoSyncGist();
+  }
+}, 60 * 1000); // vérifie chaque minute
+
 // ── BELL / BACKUP REMINDER ─────────────────────────────────────────────────
 function checkBackupReminder(){
   const lastBackup=localStorage.getItem('flousFlowLastBackup');
@@ -2213,6 +2271,7 @@ function checkBackupReminder(){
     title.textContent='✅ Sauvegarde OK';
     msg.textContent=`Dernière sauvegarde il y a ${days} jour${days>1?'s':''}.`;
   }
+  updateBellSync(null);
 }
 
 function toggleBell(){
@@ -4220,10 +4279,8 @@ async function autoSyncGist(){
     localStorage.setItem(GIST_AUTO_PUSH, now.toString());
     localStorage.removeItem('ff_pending_sync');
     updateAutoSyncLabel();
-    const t=new Date(now);
-    const hm=t.toLocaleTimeString('fr-TN',{hour:'2-digit',minute:'2-digit'});
-    showToast(`☁️ Sync automatique réussi — ${hm}`);
-  } catch(e){ /* silencieux */ }
+    updateBellSync(true);
+  } catch(e){ updateBellSync(false); }
 }
 
 function scheduleAutoSync(){
