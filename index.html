@@ -6,6 +6,8 @@
 <title>🏪 MegaStore</title>
 <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -2723,7 +2725,7 @@ function closeInvoicePreview(){
   _printSaleId=null;
 }
 
-function doPrint(){
+async function doPrint(){
   const s=sales.find(x=>x.id===_printSaleId); if(!s) return;
   const color=document.getElementById('invColor').value||'#111111';
   const accent=document.getElementById('invAccent').value||'#ff7a00';
@@ -2732,32 +2734,31 @@ function doPrint(){
   const remise=parseFloat(document.getElementById('invRemise').value)||0;
   const tva=parseFloat(document.getElementById('invTVA').value)||0;
   const html=buildInvoiceHTML(s,color,accent,merci,nom,remise,tva);
-  const fullPage=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Facture ${s.invNum||''}</title><style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:#fff;font-family:'Segoe UI',Arial,sans-serif}
-    @media print{
-      .no-print{display:none!important}
-      body{padding:0}
-      @page{size:A5;margin:8mm}
-      *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    }
-    .no-print{text-align:center;padding:16px;background:#f5f5f5;border-bottom:1px solid #ddd}
-    .no-print button{padding:10px 28px;background:#ff7a00;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer}
-  </style></head><body>
-    <div class="no-print"><button onclick="window.print()">🖨️ Imprimer / Enregistrer PDF</button></div>
-    ${html}
-  </body></html>`;
-  const blob=new Blob([fullPage],{type:'text/html'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.target='_blank';
-  a.rel='noopener';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
+
+  // Render in hidden div
+  const area=document.getElementById('invoicePrintArea');
+  area.innerHTML=html;
+  area.style.cssText='display:block;position:fixed;left:-9999px;top:0;width:400px;background:#fff;padding:0;z-index:-1';
+
   closeInvoicePreview();
+  showToast('⏳ Génération PDF...');
+
+  try{
+    const canvas=await html2canvas(area,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
+    const imgData=canvas.toDataURL('image/jpeg',0.95);
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a5'});
+    const pdfW=pdf.internal.pageSize.getWidth();
+    const pdfH=(canvas.height*pdfW)/canvas.width;
+    pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH);
+    const fname=`${s.invNum||'facture'}-${s.client||'client'}.pdf`.replace(/\s+/g,'-');
+    pdf.save(fname);
+    showToast('✅ PDF téléchargé!');
+  } catch(e){
+    showToast('❌ Erreur PDF: '+e.message);
+  } finally {
+    area.style.cssText='display:none';
+  }
 }
 
 function buildInvoiceHTML(s,color,accent,merci,nom,remise=0,tva=0){
