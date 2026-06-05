@@ -3303,6 +3303,21 @@ function filterByMarque(marque){
   showToast('🏷️ '+marque+' — ventes filtrées');
 }
 
+// Auto-sync on visibility change (quand l'app revient au premier plan)
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible'){
+    const pending = localStorage.getItem('ff_pending_sync');
+    if(pending){
+      const elapsed = Date.now() - parseInt(pending);
+      if(elapsed >= 5 * 60 * 1000){
+        // 5 min passées → sync maintenant
+        autoSyncGist().then(()=> localStorage.removeItem('ff_pending_sync'));
+      }
+    }
+    updateAutoSyncLabel();
+  }
+});
+
 // Responsive marques chart on orientation change
 window.addEventListener('resize',()=>{
   if(document.getElementById('tab-marques').style.display!=='none') renderMarques();
@@ -4203,6 +4218,7 @@ async function autoSyncGist(){
     const now = Date.now();
     localStorage.setItem(GIST_LAST_PUSH, now.toString());
     localStorage.setItem(GIST_AUTO_PUSH, now.toString());
+    localStorage.removeItem('ff_pending_sync');
     updateAutoSyncLabel();
     showToast('☁️ Sync automatique effectué!');
   } catch(e){ /* silencieux */ }
@@ -4210,7 +4226,8 @@ async function autoSyncGist(){
 
 function scheduleAutoSync(){
   clearTimeout(_autoSyncTimer);
-  _autoSyncTimer = setTimeout(()=> autoSyncGist(), 60 * 60 * 1000); // 1 heure
+  localStorage.setItem('ff_pending_sync', Date.now().toString());
+  _autoSyncTimer = setTimeout(()=> autoSyncGist(), 5 * 60 * 1000); // 5 minutes
 }
 
 function updateAutoSyncLabel(){
