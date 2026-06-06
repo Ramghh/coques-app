@@ -446,6 +446,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <button class="drawer-btn" id="dbtn-top" onclick="drawerNav('top')"><span class="d-icon">🏆</span><span class="d-label">Top</span></button>
     <button class="drawer-btn" id="dbtn-marques" onclick="drawerNav('marques')"><span class="d-icon">🏷️</span><span class="d-label">Marques</span></button>
     <button class="drawer-btn" id="dbtn-fournisseurs" onclick="drawerNav('fournisseurs')"><span class="d-icon">🧑‍💼</span><span class="d-label">Fournisseurs</span></button>
+    <button class="drawer-btn" id="dbtn-partage" onclick="drawerNav('partage')"><span class="d-icon">🤝</span><span class="d-label">Partage</span></button>
     <button class="drawer-btn" id="dbtn-rapport" onclick="drawerNav('rapport')"><span class="d-icon">📊</span><span class="d-label">Rapport</span></button>
     <button class="drawer-btn" id="dbtn-annuel" onclick="drawerNav('annuel')"><span class="d-icon">📅</span><span class="d-label">Annuel</span></button>
     <button class="drawer-btn" id="dbtn-dashboard" onclick="drawerNav('dashboard')"><span class="d-icon">🗺️</span><span class="d-label">Dashboard</span></button>
@@ -672,16 +673,27 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Téléphone</label><input type="tel" id="fPhone" placeholder="2X XXX XXX"></div>
       <div><label>Quantité</label><input type="number" id="fQty" placeholder="1" min="1"></div>
       <div><label>Fournisseur</label>
-        <select id="fFourn" onchange="filterCartesByFourn(this.value,'fCarte')">
+        <select id="fFourn" onchange="filterCartesByFourn(this.value,'fCarte');togglePartageSection(this.value,'fPartageF','fPartageWrapper')">
           <option value="">— Fournisseur —</option>
         </select>
       </div>
       <div class="form-full"><label>Carte utilisée</label>
         <select id="fCarte"><option value="">— Carte —</option></select>
       </div>
-      <div><label>Prix Vente (DT/u)</label><input type="number" id="fPrix" placeholder="42.500" step="0.001"></div>
-      <div><label>Coût Achat (DT/u)</label><input type="number" id="fCout" placeholder="11.450" step="0.001"></div>
-      <div class="form-full"><label>Frais Envoi (DT)</label><input type="number" id="fEnvoi" placeholder="9.150" step="0.001"></div>
+      <div><label>Prix Vente (DT/u)</label><input type="number" id="fPrix" placeholder="42.500" step="0.001" oninput="updatePartagePreview()"></div>
+      <div><label>Coût Achat (DT/u)</label><input type="number" id="fCout" placeholder="11.450" step="0.001" oninput="updatePartagePreview()"></div>
+      <div class="form-full"><label>Frais Envoi (DT)</label><input type="number" id="fEnvoi" placeholder="9.150" step="0.001" oninput="updatePartagePreview()"></div>
+      <div id="fPartageWrapper" style="display:none" class="form-full">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><label>Partage Fournisseur</label>
+            <select id="fPartageF">
+              <option value="">— Fournisseur —</option>
+            </select>
+          </div>
+          <div><label>% du bénéfice</label><input type="number" id="fPartageP" placeholder="30" min="0" max="100" step="1" oninput="updatePartagePreview()"></div>
+        </div>
+        <div id="fPartagePreview" style="margin-top:6px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;min-height:18px"></div>
+      </div>
     </div>
     <button class="btn-add" onclick="addSale()">✅ Enregistrer la vente</button>
     <button onclick="openFournModal()" style="width:100%;margin-top:12px;padding:13px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:12px;font-size:15px;cursor:pointer;font-family:'Outfit',sans-serif;">⚙️ Gérer les fournisseurs</button>
@@ -963,6 +975,14 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   </div>
 </div>
 
+<!-- PARTAGE -->
+<div class="section" id="tab-partage">
+  <div class="form-card">
+    <div class="form-title">🤝 Partage des Bénéfices</div>
+    <div id="partageTabContent"></div>
+  </div>
+</div>
+
 <!-- BACKUP -->
 <div class="section" id="tab-backup">
   <div class="backup-card">
@@ -1042,7 +1062,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Téléphone</label><input type="tel" id="ePhone" style="margin-top:5px" placeholder="2X XXX XXX"></div>
       <div><label>Quantité</label><input type="number" id="eQty" min="1" style="margin-top:5px"></div>
       <div><label>Fournisseur</label>
-        <select id="eFourn" style="margin-top:5px" onchange="filterCartesByFourn(this.value,'eCarte')">
+        <select id="eFourn" style="margin-top:5px" onchange="filterCartesByFourn(this.value,'eCarte');togglePartageSection(this.value,'ePartageF','ePartageWrapper')">
           <option value="">— Fournisseur —</option>
         </select>
       </div>
@@ -1052,6 +1072,16 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Prix Vente (DT/u)</label><input type="number" id="ePrix" step="0.001" style="margin-top:5px"></div>
       <div><label>Coût Achat (DT/u)</label><input type="number" id="eCout" step="0.001" style="margin-top:5px"></div>
       <div class="edit-full"><label>Frais Envoi (DT)</label><input type="number" id="eEnvoi" step="0.001" style="margin-top:5px"></div>
+      <div id="ePartageWrapper" style="display:none" class="edit-full">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:5px">
+          <div><label>Partage Fournisseur</label>
+            <select id="ePartageF" style="margin-top:5px">
+              <option value="">— Fournisseur —</option>
+            </select>
+          </div>
+          <div><label>% du bénéfice</label><input type="number" id="ePartageP" placeholder="30" min="0" max="100" step="1" style="margin-top:5px"></div>
+        </div>
+      </div>
     </div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeEditModal()">Annuler</button>
@@ -1116,7 +1146,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 <script>
 const DRAWER_LABELS = {
   ajouter:'➕ Ajouter', ventes:'📋 Ventes', clients:'👤 Clients', stock:'📦 Stock',
-  top:'🏆 Top', marques:'🏷️ Marques', fournisseurs:'🧑‍💼 Fournisseurs',
+  top:'🏆 Top', marques:'🏷️ Marques', fournisseurs:'🧑‍💼 Fournisseurs', partage:'🤝 Partage',
   rapport:'📊 Rapport', annuel:'📅 Annuel', dashboard:'🗺️ Dashboard', backup:'💾 Backup'
 };
 
@@ -1129,7 +1159,7 @@ function drawMiniChart7d(){
   for(let i=6;i>=0;i--){
     const d=new Date(today); d.setDate(today.getDate()-i);
     const str=typeof localDateStr==='function'?localDateStr(d):d.toISOString().slice(0,10);
-    const benef=(typeof sales!=='undefined'?sales:[]).filter(s=>s.date===str).reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+    const benef=(typeof sales!=='undefined'?sales:[]).filter(s=>s.date===str).reduce((a,s)=>a+benefNet(s),0);
     const label=i===0?'Auj.':(i===1?'Hier':d.toLocaleDateString('fr-TN',{weekday:'short'}));
     days.push({label,benef});
   }
@@ -1180,7 +1210,7 @@ function renderHeatmap(){
     if(!s.date) return;
     const dow=new Date(s.date+'T12:00:00').getDay();
     dayStats[dow].count++;
-    dayStats[dow].benef+=(s.benefBrut||s.benef||0);
+    dayStats[dow].benef+=benefNet(s);
   });
   const maxCount=Math.max(...dayStats.map(d=>d.count),1);
   const bestDayIdx=dayStats.indexOf(dayStats.reduce((a,b)=>b.count>a.count?b:a));
@@ -1244,6 +1274,7 @@ function showTab(id,btn,pushHistory=true){
   if(id==='dashboard') { renderDash(); renderHeatmap(); setTimeout(()=>{ buildYearSelectorForComp(); updateGroupedChart(); initTunisiaMap(); },400); }
   if(id==='marques') renderMarques();
   if(id==='fournisseurs') renderFournTab();
+  if(id==='partage') renderPartageTab();
   if(id==='backup') loadDriveUrl();
 }
 
@@ -1347,6 +1378,12 @@ function save(){
 function calc(qty,prix,cout,envoi){
   const r=qty*prix, c=qty*cout+envoi, b=r-c;
   return {revenu:r, coutTotal:c, benefBrut:b, marge:r>0?b/r:0};
+}
+// Bénéfice net = benefBrut - part du fournisseur (partage)
+function benefNet(s){
+  const brut=s.benefBrut||s.benef||0;
+  if(!s.partageF||!s.partageP) return brut;
+  return brut - (brut * s.partageP / 100);
 }
 function allCartes(){
   const res=[];
@@ -1660,7 +1697,7 @@ function renderClients(){
   el.innerHTML=filtered.map((client,idx)=>{
     const cSales=getClientSales(client);
     const totalRevenu=cSales.reduce((a,s)=>a+s.revenu,0);
-    const totalBenef=cSales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
+    const totalBenef=cSales.reduce((a,s)=>a+benefNet(s),0);
     const points=calcPoints(cSales);
     const niveau=points>=500?'🥇 VIP':points>=200?'🥈 Fidèle':points>=50?'🥉 Régulier':'🆕 Nouveau';
     const niveauColor=points>=500?'var(--yellow)':points>=200?'var(--accent)':points>=50?'var(--green)':'var(--muted)';
@@ -1868,11 +1905,13 @@ function addSale(){
   const prix=parseFloat(document.getElementById('fPrix').value)||0;
   const cout=parseFloat(document.getElementById('fCout').value)||0;
   const envoi=parseFloat(document.getElementById('fEnvoi').value)||0;
+  const partageF=document.getElementById('fPartageF')?.value||'';
+  const partageP=parseFloat(document.getElementById('fPartageP')?.value)||0;
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
   const invYear=date.slice(0,4);
   const invCount=sales.filter(s=>s.invNum&&s.invNum.startsWith('INV-'+invYear)).length+1;
   const invNum=`INV-${invYear}-${String(invCount).padStart(3,'0')}`;
-  sales.push({id:Date.now(),invNum,date,model,color,ville,client,phone,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)});
+  sales.push({id:Date.now(),invNum,date,model,color,ville,client,phone,fourn,carteId,qty,prix,cout,envoi,partageF,partageP,...calc(qty,prix,cout,envoi)});
   // Mettre à jour stock si ce modèle existe
   const stockItem=stockItems.find(s=>s.model.toLowerCase()===model.toLowerCase());
   if(stockItem){
@@ -1886,6 +1925,10 @@ function addSale(){
   ['fModel','fColor','fVille','fClient','fPhone','fEnvoi','fQty','fPrix','fCout'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('fFourn').value='';
   document.getElementById('fCarte').value='';
+  if(document.getElementById('fPartageF')) document.getElementById('fPartageF').value='';
+  if(document.getElementById('fPartageP')) document.getElementById('fPartageP').value='';
+  if(document.getElementById('fPartageWrapper')) document.getElementById('fPartageWrapper').style.display='none';
+  if(document.getElementById('fPartagePreview')) document.getElementById('fPartagePreview').textContent='';
   document.getElementById('fDate').value=new Date().toISOString().split('T')[0];
   const btn=document.querySelector('.btn-add');
   btn.textContent='✅ Enregistrée!'; btn.style.background='linear-gradient(135deg,#059669,#10b981)';
@@ -1967,8 +2010,8 @@ function updateTodayCard(){
   const yesterday=localDateStr(yestD);
   const todaySales=sales.filter(s=>s.date===today);
   const yestSales=sales.filter(s=>s.date===yesterday);
-  const todayB=todaySales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
-  const yestB=yestSales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+  const todayB=todaySales.reduce((a,s)=>a+benefNet(s),0);
+  const yestB=yestSales.reduce((a,s)=>a+benefNet(s),0);
   const n=todaySales.length;
   const el=id=>document.getElementById(id);
   if(el('todayVentes')) el('todayVentes').textContent=n+' vente'+(n>1?'s':'');
@@ -2001,8 +2044,8 @@ function updateTodayCard(){
     const d=new Date(s.date); d.setHours(12,0,0,0);
     return d>=startOfLastWeek && d<startOfWeek;
   });
-  const weekB=weekSales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
-  const lastWeekB=lastWeekSales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+  const weekB=weekSales.reduce((a,s)=>a+benefNet(s),0);
+  const lastWeekB=lastWeekSales.reduce((a,s)=>a+benefNet(s),0);
   const nw=weekSales.length;
   if(el('weekVentes')) el('weekVentes').textContent=nw+' vente'+(nw>1?'s':'');
   if(el('weekBenef')) el('weekBenef').textContent=(weekB>=0?'+':'')+fmt(weekB);
@@ -2022,8 +2065,8 @@ function updateTodayCard(){
   const lastMonth=localDateStr(lastMonthDate).slice(0,7);
   const monthSales=sales.filter(s=>s.date&&s.date.slice(0,7)===thisMonth);
   const lastMonthSales=sales.filter(s=>s.date&&s.date.slice(0,7)===lastMonth);
-  const monthB=monthSales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
-  const lastMonthB=lastMonthSales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+  const monthB=monthSales.reduce((a,s)=>a+benefNet(s),0);
+  const lastMonthB=lastMonthSales.reduce((a,s)=>a+benefNet(s),0);
   const nm=monthSales.length;
   if(el('monthVentes')) el('monthVentes').textContent=nm+' vente'+(nm>1?'s':'');
   if(el('monthBenef')) el('monthBenef').textContent=(monthB>=0?'+':'')+fmt(monthB);
@@ -2041,7 +2084,7 @@ function updateTodayCard(){
 
 function updateKPIs(){
   const tv=sales.reduce((a,s)=>a+s.revenu,0);
-  const benef=sales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
+  const benef=sales.reduce((a,s)=>a+benefNet(s),0);
   const cout=sales.reduce((a,s)=>a+s.coutTotal,0);
   const mg=tv>0?benef/tv:0;
   document.getElementById('kpiVentes').textContent=fmt(tv);
@@ -2140,7 +2183,7 @@ function gsearchRun(){
   if(matchedSales.length){
     results.push({type:'label',label:'🧾 Ventes'});
     matchedSales.forEach(s=>{
-      const bv=s.benefBrut||s.benef||0;
+      const bv=benefNet(s);
       const bColor=bv>0?'var(--green)':bv<0?'var(--red)':'var(--muted)';
       const sub=[s.client,s.ville,s.date].filter(Boolean).join(' · ');
       results.push({
@@ -2321,6 +2364,14 @@ function refreshFournSelects(){
     fourns.forEach(f=>{const o=document.createElement('option');o.value=f.id;o.textContent=f.nom;sel.appendChild(o);});
     sel.value=cur;
   });
+  // Partage selects
+  ['fPartageF','ePartageF'].forEach(id=>{
+    const sel=document.getElementById(id); if(!sel) return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">— Fournisseur —</option>';
+    fourns.forEach(f=>{const o=document.createElement('option');o.value=f.id;o.textContent=f.nom;sel.appendChild(o);});
+    sel.value=cur;
+  });
   // Filtre fournisseur dans ventes
   const ff=document.getElementById('filterFourn'); if(!ff) return;
   const curF=ff.value;
@@ -2404,7 +2455,7 @@ function getFiltered(){
   let result=sales.filter(s=>{
     const fObj=fourns.find(x=>x.id===s.fourn||x.nom===s.fourn);
     const fNom=fObj?fObj.nom:'';
-    const benef=s.benef||s.benefBrut||0;
+    const benef=benefNet(s);
     const matchQ=!q||(s.model||'').toLowerCase().includes(q)||(s.ville||'').toLowerCase().includes(q)||(s.client||'').toLowerCase().includes(q)||(s.color||'').toLowerCase().includes(q)||fNom.toLowerCase().includes(q);
     const matchCarte=!filterCarteId||(()=>{
       // Compatibilité: certaines ventes ont carteId=id, d'autres ont carteId=label (anciennes données)
@@ -2429,7 +2480,7 @@ function getFiltered(){
   if(infoEl){
     if(hasFilter){
       const tv=result.reduce((a,s)=>a+s.revenu,0);
-      const tb=result.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
+      const tb=result.reduce((a,s)=>a+benefNet(s),0);
       infoEl.style.display='block';
       infoEl.innerHTML=`🔍 <strong>${result.length}</strong> résultat${result.length>1?'s':''} · Revenu: <strong>${fmt(tv)}</strong> · Bénéfice: <strong style="color:var(--green)">${fmt(tb)}</strong>`;
     } else {
@@ -2457,8 +2508,9 @@ function cardHTML(s,q='',delay=0){
   const fObj=fourns.find(x=>x.id===s.fourn||x.nom===s.fourn);
   const fNom=fObj?fObj.nom:(s.fourn||'');
   const carteObj=allCartes().find(x=>x.id===s.carteId);
-  const bv=s.benefBrut||s.benef||0; // compatibilité
+  const bv=benefNet(s);
   const bClass=bv>0?'pos':bv<0?'neg':'neu';
+  const partageTag=s.partageF&&s.partageP?`<span class="tag" style="color:#f472b6;border-color:rgba(244,114,182,.3);background:rgba(244,114,182,.08)">🤝 ${s.partageP}%</span>`:'';
   return `<div class="sale-card sale-card-anim" data-id="${s.id}" style="animation-delay:${delay}s">
     <div class="sale-top">
       <div class="sale-model">${hl(s.model,q)}</div>
@@ -2475,6 +2527,7 @@ function cardHTML(s,q='',delay=0){
       ${s.phone?`<span class="tag" style="color:var(--green)">📞 ${s.phone}</span>`:''}
       ${fNom?`<span class="tag fourn">🧑‍💼 ${hl(fNom,q)}</span>`:''}
       ${carteObj?`<span class="tag carte">💳 ${carteObj.label}</span>`:''}
+      ${partageTag}
       <span class="tag">x${s.qty}</span>
     </div>
     <div class="sale-nums">
@@ -2797,7 +2850,7 @@ function renderTop(){
     if(!map[m]) map[m]={count:0,revenu:0,benef:0,marge:[]};
     map[m].count++;
     map[m].revenu+=s.revenu;
-    map[m].benef+=(s.benef||s.benefBrut||0);
+    map[m].benef+=benefNet(s);
     map[m].marge.push(s.marge||0);
   });
 
@@ -2943,7 +2996,7 @@ function renderAnnuel(){
   const year2=(document.getElementById('yearSelect2')||{}).value||'';
   const ySales=sales.filter(s=>s.date&&s.date.startsWith(year));
   const tv=ySales.reduce((a,s)=>a+s.revenu,0);
-  const tb=ySales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
+  const tb=ySales.reduce((a,s)=>a+benefNet(s),0);
   const tc=ySales.reduce((a,s)=>a+s.coutTotal,0);
 
   document.getElementById('annuelKpis').innerHTML=`
@@ -2957,7 +3010,7 @@ function renderAnnuel(){
 
   const monthlyBenef=monthLabels.map((_,i)=>{
     const ms=`${year}-${String(i+1).padStart(2,'0')}`;
-    return ySales.filter(s=>s.date&&s.date.startsWith(ms)).reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
+    return ySales.filter(s=>s.date&&s.date.startsWith(ms)).reduce((a,s)=>a+benefNet(s),0);
   });
 
   // Legend
@@ -2972,7 +3025,7 @@ function renderAnnuel(){
     const y2Sales=sales.filter(s=>s.date&&s.date.startsWith(year2));
     const monthlyBenef2=monthLabels.map((_,i)=>{
       const ms=`${year2}-${String(i+1).padStart(2,'0')}`;
-      return y2Sales.filter(s=>s.date&&s.date.startsWith(ms)).reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
+      return y2Sales.filter(s=>s.date&&s.date.startsWith(ms)).reduce((a,s)=>a+benefNet(s),0);
     });
     drawLineChartDouble('annuelChart', monthLabels, monthlyBenef, monthlyBenef2, year, year2);
   } else {
@@ -2986,7 +3039,7 @@ function renderAnnuel(){
     const mSales=ySales.filter(s=>s.date&&s.date.startsWith(ms));
     if(!mSales.length) return;
     const mv=mSales.reduce((a,s)=>a+s.revenu,0);
-    const mb=mSales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
+    const mb=mSales.reduce((a,s)=>a+benefNet(s),0);
     const pct=Math.max(4,(mb/maxBenef)*100);
     html+=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:13px 15px;box-shadow:var(--shadow)">
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -3080,7 +3133,7 @@ function renderRapport(){
   const val=document.getElementById('monthSelect').value;
   const ms=sales.filter(s=>s.date&&s.date.startsWith(val));
   const tv=ms.reduce((a,s)=>a+s.revenu,0);
-  const tb=ms.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+  const tb=ms.reduce((a,s)=>a+benefNet(s),0);
   const tc=ms.reduce((a,s)=>a+s.coutTotal,0);
   document.getElementById('monthKpis').innerHTML=`
     <div class="month-kpi"><div class="month-kpi-label">💰 Total Ventes</div><div class="month-kpi-val" style="color:var(--yellow)">${fmt(tv)}</div></div>
@@ -3097,7 +3150,7 @@ function renderRapport(){
   ms.forEach(s=>{
     if(s.date){
       const day=parseInt(s.date.split('-')[2])-1;
-      if(day>=0&&day<daysInMonth) dailyBenef[day]+=(s.benef||s.benefBrut||0);
+      if(day>=0&&day<daysInMonth) dailyBenef[day]+=benefNet(s);
     }
   });
   // Only show days with data or compress to active days
@@ -3226,7 +3279,7 @@ function renderMarques(){
     if(!mq[q]) mq[q]={count:0,revenu:0,benef:0,first:d,last:d};
     mq[q].count++;
     mq[q].revenu+=(s.revenu||0);
-    mq[q].benef+=(s.benefBrut||s.benef||0);
+    mq[q].benef+=benefNet(s);
     if(d&&(!mq[q].first||d<mq[q].first)) mq[q].first=d;
     if(d&&(!mq[q].last ||d>mq[q].last))  mq[q].last=d;
   });
@@ -3421,11 +3474,11 @@ function renderDash(){
     const m=s.model||'Autre';
     const q=getMarque(s.model);
     if(!cm[v]) cm[v]={count:0,revenu:0,benef:0};
-    cm[v].count++;cm[v].revenu+=s.revenu;cm[v].benef+=(s.benefBrut||s.benef||0);
+    cm[v].count++;cm[v].revenu+=s.revenu;cm[v].benef+=benefNet(s);
     if(!mm[m]) mm[m]={count:0,revenu:0,benef:0};
-    mm[m].count++;mm[m].revenu+=s.revenu;mm[m].benef+=(s.benefBrut||s.benef||0);
+    mm[m].count++;mm[m].revenu+=s.revenu;mm[m].benef+=benefNet(s);
     if(!mq[q]) mq[q]={count:0,revenu:0,benef:0};
-    mq[q].count++;mq[q].revenu+=s.revenu;mq[q].benef+=(s.benefBrut||s.benef||0);
+    mq[q].count++;mq[q].revenu+=s.revenu;mq[q].benef+=benefNet(s);
   });
   const rg=map=>{
     const mx=Math.max(...Object.values(map).map(c=>c.benef),1);
@@ -3481,6 +3534,95 @@ function renderDash(){
   // Charts and map are called from showTab with setTimeout
 }
 
+function togglePartageSection(fournVal, partageSelectId, wrapperId){
+  const wrapper=document.getElementById(wrapperId);
+  const sel=document.getElementById(partageSelectId);
+  if(!wrapper||!sel) return;
+  if(!fournVal){wrapper.style.display='none';return;}
+  wrapper.style.display='';
+  // populate partage fourn select with all fourns
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Fournisseur —</option>'+fourns.map(f=>`<option value="${f.id}"${f.id===cur?' selected':''}>${f.nom}</option>`).join('');
+}
+
+function updatePartagePreview(){
+  const pct=parseFloat(document.getElementById('fPartageP')?.value)||0;
+  const qty=parseFloat(document.getElementById('fQty')?.value)||1;
+  const prix=parseFloat(document.getElementById('fPrix')?.value)||0;
+  const cout=parseFloat(document.getElementById('fCout')?.value)||0;
+  const envoi=parseFloat(document.getElementById('fEnvoi')?.value)||0;
+  const preview=document.getElementById('fPartagePreview');
+  if(!preview) return;
+  if(!pct){preview.textContent='';return;}
+  const c=calc(qty,prix,cout,envoi);
+  const share=(c.benefBrut*pct/100);
+  preview.textContent=`→ ${pct}% de ${fmt(c.benefBrut)} = ${fmt(share)} DT pour le fournisseur`;
+}
+
+let partagePayments=JSON.parse(localStorage.getItem('flousFlowPartagePayments')||'[]');
+function savePartagePayments(){localStorage.setItem('flousFlowPartagePayments',JSON.stringify(partagePayments));}
+
+function renderPartageTab(){
+  const el=document.getElementById('partageTabContent');
+  if(!el) return;
+  // Gather all sales with partage
+  const partageSales=sales.filter(s=>s.partageF&&s.partageP>0);
+  if(!partageSales.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🤝</div><div class="empty-text">Aucune vente avec partage.</div></div>';
+    return;
+  }
+  // Group by fournisseur
+  const byFourn={};
+  partageSales.forEach(s=>{
+    const fObj=fourns.find(f=>f.id===s.partageF);
+    const fNom=fObj?fObj.nom:s.partageF||'?';
+    if(!byFourn[s.partageF]) byFourn[s.partageF]={nom:fNom,sales:[],totalDue:0,totalPaid:0};
+    byFourn[s.partageF].sales.push(s);
+    const share=(s.benefBrut||0)*s.partageP/100;
+    const paid=partagePayments.filter(p=>p.saleId===s.id).reduce((a,p)=>a+p.amount,0);
+    byFourn[s.partageF].totalDue+=share;
+    byFourn[s.partageF].totalPaid+=paid;
+  });
+  el.innerHTML=Object.entries(byFourn).map(([fId,data])=>{
+    const remaining=data.totalDue-data.totalPaid;
+    const isPaid=remaining<=0.001;
+    const salesHTML=data.sales.map(s=>{
+      const share=(s.benefBrut||0)*s.partageP/100;
+      const paid=partagePayments.filter(p=>p.saleId===s.id).reduce((a,p)=>a+p.amount,0);
+      const rem=share-paid;
+      const salePaid=rem<=0.001;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--bg);border-radius:8px;margin-top:5px;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.model}</div>
+          <div style="font-size:11px;color:var(--muted)">${s.date} · ${s.partageP}% · Bén: ${fmt(s.benefBrut||0)}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:13px;font-weight:700;color:${salePaid?'var(--green)':'var(--accent)'}">${salePaid?'✅ Payé':fmt(rem)+' DT'}</div>
+          ${!salePaid?`<button onclick="markPartagePaid('${s.id}',${rem})" style="margin-top:3px;font-size:10px;padding:3px 8px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:var(--green);border-radius:6px;cursor:pointer">Marquer payé</button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:16px;font-weight:700">🧑‍💼 ${data.nom}</div>
+        <div style="text-align:right">
+          <div style="font-size:14px;font-weight:700;color:${isPaid?'var(--green)':'var(--red)'}">${isPaid?'✅ Tout payé':'−'+fmt(remaining)+' DT'}</div>
+          <div style="font-size:10px;color:var(--muted)">Total dû: ${fmt(data.totalDue)}</div>
+        </div>
+      </div>
+      ${salesHTML}
+    </div>`;
+  }).join('');
+}
+
+function markPartagePaid(saleId,amount){
+  partagePayments.push({saleId,amount,date:new Date().toISOString().split('T')[0]});
+  savePartagePayments();
+  renderPartageTab();
+  showToast('✅ Paiement enregistré!');
+}
+
+
 function renderFournTab(){
   const cf=document.getElementById('fournTabList');
   if(!cf) return;
@@ -3491,7 +3633,7 @@ function renderFournTab(){
       // Revenu = total des ventes liées à cette carte
       const revenu=ventes.reduce((a,s)=>a+s.revenu,0);
       const envoi=ventes.reduce((a,s)=>a+(s.envoi||0),0);
-      const benef=ventes.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
+      const benef=ventes.reduce((a,s)=>a+benefNet(s),0);
       // Récupéré = (revenu - envoi) - montant
       const netRevenu=revenu-envoi;
       const aRecuperer=c.montant-netRevenu;
@@ -3539,7 +3681,7 @@ function renderFournTab(){
     }).join('');
     const totalRev=f.cartes.reduce((a,c)=>{const v=sales.filter(s=>s.carteId===c.id);return a+v.reduce((b,s)=>b+s.revenu,0);},0);
     const totalEnvoi=f.cartes.reduce((a,c)=>{const v=sales.filter(s=>s.carteId===c.id);return a+v.reduce((b,s)=>b+(s.envoi||0),0);},0);
-    const totalBen=f.cartes.reduce((a,c)=>{const v=sales.filter(s=>s.carteId===c.id);return a+v.reduce((b,s)=>b+(s.benef||s.benefBrut||0),0);},0);
+    const totalBen=f.cartes.reduce((a,c)=>{const v=sales.filter(s=>s.carteId===c.id);return a+v.reduce((b,s)=>b+benefNet(s),0);},0);
     const totalMont=f.cartes.reduce((a,c)=>a+c.montant,0);
     const totalRec=totalMont-(totalRev-totalEnvoi);
     return `<div class="city-row" style="flex-direction:column;align-items:stretch">
@@ -3638,6 +3780,17 @@ function openEditModal(id){
   document.getElementById('ePrix').value=s.prix||'';
   document.getElementById('eCout').value=s.cout||'';
   document.getElementById('eEnvoi').value=s.envoi||'';
+  // Partage
+  if(s.fourn){
+    togglePartageSection(s.fourn,'ePartageF','ePartageWrapper');
+    setTimeout(()=>{
+      if(document.getElementById('ePartageF')) document.getElementById('ePartageF').value=s.partageF||'';
+      if(document.getElementById('ePartageP')) document.getElementById('ePartageP').value=s.partageP||'';
+    },60);
+  } else {
+    const ew=document.getElementById('ePartageWrapper');
+    if(ew) ew.style.display='none';
+  }
   document.getElementById('editModal').classList.add('open');
 }
 function closeEditModal(){document.getElementById('editModal').classList.remove('open');editingId=null;}
@@ -3656,8 +3809,10 @@ function saveEdit(){
   const prix=parseFloat(document.getElementById('ePrix').value)||0;
   const cout=parseFloat(document.getElementById('eCout').value)||0;
   const envoi=parseFloat(document.getElementById('eEnvoi').value)||0;
+  const partageF=document.getElementById('ePartageF')?.value||'';
+  const partageP=parseFloat(document.getElementById('ePartageP')?.value)||0;
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
-  sales[idx]={...sales[idx],date,model,color,ville,client,phone,fourn,carteId,qty,prix,cout,envoi,...calc(qty,prix,cout,envoi)};
+  sales[idx]={...sales[idx],date,model,color,ville,client,phone,fourn,carteId,qty,prix,cout,envoi,partageF,partageP,...calc(qty,prix,cout,envoi)};
   save(); updateKPIs(); renderSales(); closeEditModal();
   showToast('✅ Vente modifiée!');
 }
@@ -3983,7 +4138,7 @@ function updateGroupedChart(){
   sales.forEach(s=>{
     if(s.date&&s.date.startsWith(year)){
       const m=parseInt(s.date.split('-')[1])-1;
-      if(m>=0&&m<12){ md[m].revenu+=s.revenu; md[m].coutTotal+=s.coutTotal; md[m].benef+=(s.benef||s.benefBrut||0); }
+      if(m>=0&&m<12){ md[m].revenu+=s.revenu; md[m].coutTotal+=s.coutTotal; md[m].benef+=benefNet(s); }
     }
   });
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
@@ -4050,12 +4205,12 @@ function exportExcel(){
       'Prix Vente (DT)':+(s.prix||0).toFixed(3),'Coût Achat (DT)':+(s.cout||0).toFixed(3),
       'Frais Envoi (DT)':+(s.envoi||0).toFixed(3),'Revenu Brut (DT)':+(s.revenu||0).toFixed(3),
       'Coût Total (DT)':+(s.coutTotal||0).toFixed(3),
-      'Bénéfice Brut (DT)':+((s.benefBrut||s.benef||0)).toFixed(3),
+      'Bénéfice Brut (DT)':+(benefNet(s)).toFixed(3),
       'Marge (%)':+((s.marge||0)*100).toFixed(1)
     };
   });
   const tv=sales.reduce((a,s)=>a+s.revenu,0);
-  const tb=sales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+  const tb=sales.reduce((a,s)=>a+benefNet(s),0);
   const summary=[
     {'Indicateur':'Total Ventes (DT)','Valeur':+tv.toFixed(3)},
     {'Indicateur':'Bénéfice Brut (DT)','Valeur':+tb.toFixed(3)},
@@ -4285,7 +4440,7 @@ function drawMiniChart7d(){
   for(let i=6;i>=0;i--){
     const d=new Date(today); d.setDate(today.getDate()-i);
     const str=localDateStr(d);
-    const benef=sales.filter(s=>s.date===str).reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+    const benef=sales.filter(s=>s.date===str).reduce((a,s)=>a+benefNet(s),0);
     const label=i===0?'Auj.':(i===1?'Hier':d.toLocaleDateString('fr-TN',{weekday:'short'}));
     days.push({label,benef});
   }
@@ -4336,7 +4491,7 @@ function renderHeatmap(){
     if(!s.date) return;
     const dow=new Date(s.date+'T12:00:00').getDay();
     dayStats[dow].count++;
-    dayStats[dow].benef+=(s.benefBrut||s.benef||0);
+    dayStats[dow].benef+=benefNet(s);
   });
   const maxCount=Math.max(...dayStats.map(d=>d.count),1);
   const bestDayIdx=dayStats.indexOf(dayStats.reduce((a,b)=>b.count>a.count?b:a));
