@@ -6,8 +6,6 @@
 <title>🏪 MegaStore</title>
 <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -279,23 +277,8 @@ input:focus,select:focus{outline:none;border-color:var(--accent)!important;box-s
 
 @media print{
   body > *{display:none!important}
-  #invoicePrintArea{
-    display:block!important;
-    position:fixed!important;
-    top:0!important;left:0!important;right:0!important;bottom:0!important;
-    background:#fff!important;
-    z-index:99999!important;
-    padding:0!important;
-    margin:0!important;
-    width:100%!important;
-    height:auto!important;
-    overflow:visible!important;
-    color:#111!important;
-    -webkit-print-color-adjust:exact!important;
-    print-color-adjust:exact!important;
-  }
-  #invoicePrintArea *{visibility:visible!important;display:revert!important}
-  @page{size:A5;margin:8mm}
+  #invoicePrintArea{display:block!important;position:fixed;inset:0;background:#fff;z-index:9999;padding:0}
+  @page{size:A5 landscape;margin:6mm}
 }
 .fab{position:fixed;bottom:28px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;font-size:28px;border:none;cursor:pointer;box-shadow:0 4px 18px rgba(255,122,0,.5);z-index:150;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s;line-height:1}
 .fab:active{transform:scale(.93);box-shadow:0 2px 10px rgba(255,122,0,.4)}
@@ -372,22 +355,21 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .bell-popup-btn{width:100%;padding:9px;background:var(--accent);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Cabinet Grotesk',sans-serif}
 
 /* MINI CHART 7 JOURS */
-.mini-chart-wrap{margin:10px 18px 0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;position:relative;overflow:hidden}
+.mini-chart-wrap{margin:10px 18px 0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px}
 .mini-chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .mini-chart-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:700}
 .mini-chart-total{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--accent)}
 #miniChart7d{display:block;width:100%}
-
-/* HEATMAP HEBDO */
+/* HEATMAP */
 .heatmap-wrap{margin:14px 0 0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
 .heatmap-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:700;margin-bottom:10px}
 .heatmap-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
 .heatmap-cell{border-radius:8px;padding:8px 4px;text-align:center;cursor:default;transition:transform .15s}
-.heatmap-cell:active{transform:scale(.95)}
 .heatmap-day{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;opacity:.7;margin-bottom:3px}
 .heatmap-count{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800}
 .heatmap-benef{font-size:9px;font-weight:600;margin-top:1px;opacity:.8}
-
+/* DRAWER FOOTER BUTTONS */
+.drawer-footer-btns button:hover{background:var(--surface)!important;border-color:var(--accent)!important;color:var(--accent)!important}
 /* MAP FULLSCREEN BUTTON */
 .map-container{position:relative;}
 .map-fullscreen-btn{position:absolute;top:10px;right:10px;z-index:1000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);border:none;border-radius:8px;width:36px;height:36px;font-size:20px;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
@@ -417,8 +399,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 /* active tab label in header */
 .active-tab-pill{background:rgba(255,122,0,.12);border:1px solid rgba(255,122,0,.3);color:var(--accent);font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;font-family:'JetBrains Mono',monospace;letter-spacing:.3px;margin-top:6px;display:inline-block}
 .drawer-footer{padding:14px 18px;border-top:1px solid var(--border);background:var(--surface2)}
-.drawer-footer-btns button:hover{background:var(--surface)!important;border-color:var(--accent)!important;color:var(--accent)!important}
-.drawer-footer-btns button:active{transform:scale(.95)}
 .drawer-user{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
 .drawer-user-sub{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:.5px}
 
@@ -476,8 +456,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">👤 Gharbi Ramzi</div>
     <div id="lastSaveLabel" style="font-size:11px;color:var(--muted);margin-bottom:10px;min-height:16px"></div>
     <div style="display:flex;gap:8px">
-      <button id="themeBtn" onclick="toggleTheme()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s"></button>
-      <button onclick="openGistModal();closeDrawer()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s" title="Sync GitHub Gist">☁️ <span>Sync</span></button>
+      <button id="drawerThemeBtn" onclick="toggleTheme()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s"></button>
+      <button onclick="openGistModal();closeDrawer()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s">☁️ <span>Sync</span></button>
     </div>
   </div>
 </div>
@@ -508,6 +488,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
           <button onclick="diagSync()" style="width:100%;padding:8px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:9px;font-size:11px;cursor:pointer;margin-top:6px;font-family:'JetBrains Mono',sans-serif">🔍 Diagnostic</button>
         </div>
       </div>
+      <button class="theme-btn" id="gistBtn" onclick="openGistModal()" title="Sync Gist" style="display:none">☁️</button>
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" style="display:none"></button>
     </div>
   </div>
   
@@ -1138,11 +1120,94 @@ const DRAWER_LABELS = {
   rapport:'📊 Rapport', annuel:'📅 Annuel', dashboard:'🗺️ Dashboard', backup:'💾 Backup'
 };
 
+// ── MINI CHART 7 JOURS ────────────────────────────────────────────────────
+function drawMiniChart7d(){
+  const canvas=document.getElementById('miniChart7d');
+  if(!canvas) return;
+  const today=new Date();
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(today); d.setDate(today.getDate()-i);
+    const str=typeof localDateStr==='function'?localDateStr(d):d.toISOString().slice(0,10);
+    const benef=(typeof sales!=='undefined'?sales:[]).filter(s=>s.date===str).reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+    const label=i===0?'Auj.':(i===1?'Hier':d.toLocaleDateString('fr-TN',{weekday:'short'}));
+    days.push({label,benef});
+  }
+  const total7d=days.reduce((a,d)=>a+d.benef,0);
+  const totalEl=document.getElementById('miniChart7dTotal');
+  if(totalEl) totalEl.textContent=(total7d>=0?'+':'')+((typeof fmt==='function')?fmt(total7d):total7d.toFixed(3));
+  const maxVal=Math.max(...days.map(d=>d.benef),1);
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth||320; const H=52;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const barW=Math.floor((W-28)/7)-4;
+  const gap=(W-28-(barW*7))/6;
+  const chartH=H-18;
+  days.forEach((d,i)=>{
+    const x=14+i*(barW+gap);
+    const isToday=i===6;
+    const bH=Math.max(2,(d.benef/maxVal)*chartH);
+    const y=chartH-bH;
+    const grad=ctx.createLinearGradient(0,y,0,chartH);
+    if(isToday){grad.addColorStop(0,'#ff7a00');grad.addColorStop(1,'rgba(255,122,0,0.3)');}
+    else{grad.addColorStop(0,isDark?'rgba(255,122,0,0.6)':'rgba(255,122,0,0.5)');grad.addColorStop(1,'rgba(255,122,0,0.1)');}
+    ctx.fillStyle=grad;
+    ctx.beginPath();
+    if(bH<6){ctx.rect(x,y,barW,bH);}
+    else{const r=3;ctx.moveTo(x+r,y);ctx.lineTo(x+barW-r,y);ctx.arcTo(x+barW,y,x+barW,y+r,r);ctx.lineTo(x+barW,y+bH);ctx.lineTo(x,y+bH);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+    ctx.fill();
+    ctx.fillStyle=isToday?'#ff7a00':(isDark?'rgba(255,255,255,0.4)':'rgba(0,0,0,0.4)');
+    ctx.font=`${isToday?'700':'500'} 9px sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(d.label, x+barW/2, chartH+3);
+  });
+}
+
+// ── HEATMAP ───────────────────────────────────────────────────────────────
+function renderHeatmap(){
+  const grid=document.getElementById('heatmapGrid');
+  const legend=document.getElementById('heatmapLegend');
+  if(!grid) return;
+  const _sales=typeof sales!=='undefined'?sales:[];
+  if(!_sales.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px;font-size:13px">Aucune vente.</div>';return;}
+  const dayNames=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const dayStats=Array(7).fill(null).map(()=>({count:0,benef:0}));
+  _sales.forEach(s=>{
+    if(!s.date) return;
+    const dow=new Date(s.date+'T12:00:00').getDay();
+    dayStats[dow].count++;
+    dayStats[dow].benef+=(s.benefBrut||s.benef||0);
+  });
+  const maxCount=Math.max(...dayStats.map(d=>d.count),1);
+  const bestDayIdx=dayStats.indexOf(dayStats.reduce((a,b)=>b.count>a.count?b:a));
+  const _fmt=typeof fmt==='function'?fmt:(v=>v.toFixed(3));
+  grid.innerHTML=dayStats.map((d,i)=>{
+    const intensity=d.count/maxCount;
+    const alpha=0.08+intensity*0.82;
+    const isToday=new Date().getDay()===i;
+    const isBest=i===bestDayIdx&&d.count>0;
+    const bg=d.count===0?'var(--surface2)':`rgba(255,122,0,${alpha.toFixed(2)})`;
+    const textColor=intensity>0.5?'#fff':'var(--text)';
+    const border=isToday?'2px solid var(--accent)':isBest?'2px solid #10b981':'1px solid var(--border)';
+    const avgBenef=d.count>0?(d.benef/d.count):0;
+    return `<div class="heatmap-cell" style="background:${bg};border:${border}">
+      <div class="heatmap-day" style="color:${d.count>0?textColor:'var(--muted)'}">${dayNames[i]}</div>
+      <div class="heatmap-count" style="color:${d.count>0?textColor:'var(--muted)'}">${d.count}</div>
+      <div class="heatmap-benef" style="color:${d.count>0?(intensity>0.5?'rgba(255,255,255,0.8)':'var(--green)'):'var(--muted)'}">${d.count>0?_fmt(avgBenef):''}</div>
+    </div>`;
+  }).join('');
+  if(legend&&dayStats[bestDayIdx].count>0) legend.innerHTML=`🏆 Meilleur jour: <strong style="color:var(--accent)">${dayNames[bestDayIdx]}</strong> (${dayStats[bestDayIdx].count} ventes)`;
+}
+
 function openDrawer(){
   document.getElementById('sideDrawer').classList.add('open');
   document.getElementById('drawerOverlay').classList.add('open');
   checkBackupReminder();
-  checkPendingSync();
+  if(typeof checkPendingSync==='function') checkPendingSync();
 }
 function closeDrawer(){
   document.getElementById('sideDrawer').classList.remove('open');
@@ -1150,7 +1215,7 @@ function closeDrawer(){
 }
 function drawerNav(id){
   closeDrawer();
-  checkPendingSync();
+  if(typeof checkPendingSync==='function') checkPendingSync();
   showTab(id, null);
 }
 function syncDrawerActive(id){
@@ -1162,7 +1227,7 @@ function syncDrawerActive(id){
 }
 
 function showTab(id,btn,pushHistory=true){
-  checkPendingSync();
+  if(typeof checkPendingSync==='function') checkPendingSync();
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
@@ -1240,8 +1305,6 @@ if(lastTab){
 }
 // Force refresh today/week/month cards after full init
 setTimeout(()=>updateTodayCard(), 100);
-setTimeout(()=>drawMiniChart7d(), 200);
-setTimeout(()=>updateAutoSyncLabel(), 300);
 // Re-build year select after data is loaded
 setTimeout(()=>{
   const ysel=document.getElementById('yearSelect');
@@ -1273,20 +1336,10 @@ setTimeout(()=>{
 function fmt(n){return (n||0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' DT';}
 function fmtI(n){return (n||0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g,' ');}
 function fmtP(n){return ((n||0)*100).toFixed(1)+'%';}
-function saveLocal(){
-  localStorage.setItem('flousFlowSales',JSON.stringify(sales));
-  localStorage.setItem('flousFlowFourns',JSON.stringify(fourns));
-  localStorage.setItem('flousFlowTheme',theme);
-  localStorage.setItem('flousFlowLastSave', Date.now());
-  updateAutoSyncLabel();
-}
 function save(){
   localStorage.setItem('flousFlowSales',JSON.stringify(sales));
   localStorage.setItem('flousFlowFourns',JSON.stringify(fourns));
   localStorage.setItem('flousFlowTheme',theme);
-  localStorage.setItem('flousFlowLastSave', Date.now());
-  scheduleAutoSync();
-  updateAutoSyncLabel();
 }
 function calc(qty,prix,cout,envoi){
   const r=qty*prix, c=qty*cout+envoi, b=r-c;
@@ -1301,19 +1354,18 @@ function allCartes(){
 function totalInvesti(){
   return fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>b+c.montant,0),0);
 }
-// Récupéré = (revenu - envoi) des ventes liées aux cartes - total investi
+// À récupérer = total investi - revenu des ventes liées aux cartes
+// (on récupère l'investissement via le revenu généré par chaque carte, pas le bénéfice global)
 function calcARecuperer(){
-  const netRevCartes=sales.filter(s=>s.carteId).reduce((a,s)=>a+s.revenu-(s.envoi||0),0);
-  return netRevCartes-totalInvesti();
+  const revCartes=sales.filter(s=>s.carteId).reduce((a,s)=>a+s.revenu,0);
+  return totalInvesti()-revCartes;
 }
 
 // ── THEME ──────────────────────────────────────────────────────────────────
 function updateThemeBtn(){
-  const btn=document.getElementById('themeBtn');
+  const btn=document.getElementById('drawerThemeBtn');
   if(!btn) return;
-  btn.innerHTML=theme==='dark'
-    ? '🌙 <span>Sombre</span>'
-    : '☀️ <span>Clair</span>';
+  btn.innerHTML=theme==='dark'?'🌙 <span>Sombre</span>':'☀️ <span>Clair</span>';
 }
 function toggleTheme(){
   theme=theme==='dark'?'light':'dark';
@@ -1852,7 +1904,7 @@ function drawCounter(val, total){
   // Background circle
   ctx.beginPath();
   ctx.arc(cx,cy,R,0,Math.PI*2);
-  ctx.fillStyle=isDarkC?'rgba(96,165,250,.12)':'rgba(59,130,246,.1)';
+  ctx.fillStyle=isDarkC?'rgba(57,255,20,.12)':'rgba(0,150,0,.1)';
   ctx.fill();
   // Track
   ctx.beginPath();
@@ -1864,25 +1916,25 @@ function drawCounter(val, total){
   // Arc progress
   const pct=Math.min(val/Math.max(total,1),1);
   const grad=ctx.createLinearGradient(cx-R,cy,cx+R,cy);
-  grad.addColorStop(0,isDarkC?'#60a5fa':'#3b82f6');
-  grad.addColorStop(1,isDarkC?'#93c5fd':'#60a5fa');
+  grad.addColorStop(0,isDarkC?'#39ff14':'#16a34a');
+  grad.addColorStop(1,isDarkC?'#00ffaa':'#22c55e');
   ctx.beginPath();
   ctx.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+pct*Math.PI*2);
   ctx.strokeStyle=grad;
   ctx.lineWidth=lw;
   ctx.lineCap='round';
-  ctx.shadowColor=isDarkC?'#60a5fa':'#3b82f6';
+  ctx.shadowColor=isDarkC?'#39ff14':'#16a34a';
   ctx.shadowBlur=isDarkC?8:4;
   ctx.stroke();
   ctx.shadowBlur=0;
   // Number
-  ctx.fillStyle=isDarkC?'#93c5fd':'#1d4ed8';
+  ctx.fillStyle=isDarkC?'#39ff14':'#14532d';
   ctx.font=`bold ${val>999?13:val>99?15:17}px 'DM Mono',monospace`;
   ctx.textAlign='center';
   ctx.textBaseline='middle';
   ctx.fillText(val, cx, cy-4);
   // Label
-  ctx.fillStyle=isDarkC?'rgba(147,197,253,.7)':'rgba(29,78,216,.7)';
+  ctx.fillStyle=isDarkC?'rgba(57,255,20,.7)':'rgba(20,83,45,.7)';
   ctx.font=`700 8px 'DM Sans',sans-serif`;
   ctx.fillText('ventes', cx, cy+9);
 }
@@ -1988,19 +2040,18 @@ function updateKPIs(){
   const tv=sales.reduce((a,s)=>a+s.revenu,0);
   const benef=sales.reduce((a,s)=>a+(s.benef||s.benefBrut||0),0);
   const cout=sales.reduce((a,s)=>a+s.coutTotal,0);
-  const envoi=sales.reduce((a,s)=>a+(s.envoi||0),0);
   const mg=tv>0?benef/tv:0;
   document.getElementById('kpiVentes').textContent=fmt(tv);
   document.getElementById('kpiBenef').textContent=fmt(benef);
   const uniqueClients=new Set(sales.map(s=>s.client).filter(Boolean)).size;
   document.getElementById('kpiClients').textContent=uniqueClients;
   document.getElementById('kpiCout').textContent=fmt(cout);
-  const envoiEl=document.getElementById('kpiEnvoi'); if(envoiEl) envoiEl.textContent=fmt(envoi);
+  const envoiEl=document.getElementById('kpiEnvoi'); if(envoiEl) envoiEl.textContent=fmt(sales.reduce((a,s)=>a+(s.envoi||0),0));
   const nbEl=document.getElementById('kpiNbVentes'); if(nbEl) nbEl.textContent=sales.length;
   const badge=document.getElementById('totalCount');
   animateCounter(sales.length);
   updateTodayCard();
-  drawMiniChart7d();
+  if(typeof drawMiniChart7d==='function') drawMiniChart7d();
 
   // Cartes banner
   const totalMont=fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>b+c.montant,0),0);
@@ -2008,14 +2059,11 @@ function updateKPIs(){
     const v=sales.filter(s=>s.carteId===c.id);
     return b+v.reduce((x,s)=>x+s.revenu,0);
   },0),0);
-  const totalBenefCartes=fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>{
+  const totalEnvoiCartes=fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>{
     const v=sales.filter(s=>s.carteId===c.id);
-    return b+v.reduce((x,s)=>x+(s.benef||s.benefBrut||0),0);
+    return b+v.reduce((x,s)=>x+(s.envoi||0),0);
   },0),0);
-  const totalNetRevCartes=fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>{
-    const v=sales.filter(s=>s.carteId===c.id);
-    return b+v.reduce((x,s)=>x+s.revenu-(s.envoi||0),0);
-  },0),0);
+  const totalNetRevCartes=totalRevCartes-totalEnvoiCartes;
   const aRec=totalMont-totalNetRevCartes;
   const pct=totalMont>0?Math.min(100,(totalNetRevCartes/totalMont)*100):0;
 
@@ -2214,58 +2262,6 @@ document.addEventListener('click',e=>{
 
 // ── THEME ──────────────────────────────────────────────────────────────────
 
-// ── CHECK PENDING SYNC on any interaction ─────────────────────────────────
-function checkPendingSync(){
-  const pending = localStorage.getItem('ff_pending_sync');
-  if(!pending) return;
-  const elapsed = Date.now() - parseInt(pending);
-  if(elapsed >= 5 * 60 * 1000){
-    localStorage.removeItem('ff_pending_sync');
-    autoSyncGist();
-  }
-}
-function updateBellSync(success, errMsg){
-  const dot = document.getElementById('bellDot');
-  const section = document.getElementById('bellSyncSection');
-  const title = document.getElementById('bellSyncTitle');
-  const msg = document.getElementById('bellSyncMsg');
-  if(!section) return;
-
-  const tsSync = localStorage.getItem(GIST_AUTO_PUSH);
-  const pending = localStorage.getItem('ff_pending_sync');
-
-  section.style.display = 'block';
-
-  if(success === true){
-    // sync réussi → dot vert momentané puis disparaît
-    dot.style.display = 'block';
-    dot.style.background = 'var(--green)';
-    title.textContent = '✅ Sync réussi';
-    const t = new Date();
-    msg.textContent = `Dernière sync: ${t.toLocaleTimeString('fr-TN',{hour:'2-digit',minute:'2-digit'})}`;
-    setTimeout(()=>{ dot.style.display='none'; }, 5000);
-  } else if(success === false){
-    dot.style.display = 'block';
-    dot.style.background = 'var(--red)';
-    title.textContent = '❌ Sync échoué';
-    msg.textContent = errMsg || 'Vérifie ta connexion ou ton token.';
-  } else if(tsSync){
-    // état normal
-    const diff = Math.floor((Date.now() - parseInt(tsSync)) / 1000);
-    let txt;
-    if(diff < 60) txt = 'il y a quelques secondes';
-    else if(diff < 3600) txt = `il y a ${Math.floor(diff/60)} min`;
-    else txt = `il y a ${Math.floor(diff/3600)}h`;
-    title.textContent = '☁️ Sync GitHub';
-    msg.textContent = `Dernière sync: ${txt}`;
-  } else if(pending){
-    title.textContent = '⏳ Sync en attente';
-    msg.textContent = 'Sync automatique dans moins de 5 min.';
-  } else {
-    section.style.display = 'none';
-  }
-}
-
 // ── BELL / BACKUP REMINDER ─────────────────────────────────────────────────
 function checkBackupReminder(){
   const lastBackup=localStorage.getItem('flousFlowLastBackup');
@@ -2293,48 +2289,11 @@ function checkBackupReminder(){
     title.textContent='✅ Sauvegarde OK';
     msg.textContent=`Dernière sauvegarde il y a ${days} jour${days>1?'s':''}.`;
   }
-  updateBellSync(null);
-}
-
-function diagSync(){
-  const token = localStorage.getItem('ff_gist_token');
-  const id    = localStorage.getItem('ff_gist_id');
-  const pending = localStorage.getItem('ff_pending_sync');
-  const lastPush = localStorage.getItem('ff_gist_auto_push');
-  const lastSave = localStorage.getItem('flousFlowLastSave');
-
-  const elapsed = pending ? Math.floor((Date.now()-parseInt(pending))/1000) : null;
-  const sinceLastPush = lastPush ? Math.floor((Date.now()-parseInt(lastPush))/60000) : null;
-  const sinceLastSave = lastSave ? Math.floor((Date.now()-parseInt(lastSave))/1000) : null;
-
-  const msg = [
-    '── TOKEN ──',
-    token ? `✅ Présent (${token.length} chars)` : '❌ Absent',
-    '',
-    '── GIST ID ──',
-    id ? `✅ ${id.substring(0,8)}...` : '❌ Absent',
-    '',
-    '── PENDING SYNC ──',
-    pending ? `⏳ Oui — il y a ${elapsed}s (${elapsed>=300?'✅ doit se déclencher':'⏳ pas encore 5min'})` : '✅ Aucun pending',
-    '',
-    '── DERNIER AUTO-PUSH ──',
-    lastPush ? `${sinceLastPush} min` : '❌ Jamais',
-    '',
-    '── DERNIER SAVE ──',
-    lastSave ? `il y a ${sinceLastSave}s` : '❌ Jamais',
-  ].join('\n');
-
-  alert(msg);
-}
-
-function dismissBell(){
-  localStorage.setItem('flousFlowLastBackup', Date.now().toString());
-  document.getElementById('bellDot').style.display='none';
-  document.getElementById('bellPopup').classList.remove('open');
 }
 
 function toggleBell(){
-  checkPendingSync();
+  if(typeof checkPendingSync==='function') checkPendingSync();
+  if(typeof updateBellSync==='function') updateBellSync(null);
   const popup=document.getElementById('bellPopup');
   popup.classList.toggle('open');
   // Fermer si on clique ailleurs
@@ -2715,8 +2674,8 @@ function updateInvoicePreview(){
   const accent=document.getElementById('invAccent').value||'#ff7a00';
   const merci=document.getElementById('invMerci').value||'Merci pour votre confiance 🙏';
   const nom=(document.getElementById('invNomEntreprise').value.trim())||localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
-  const remise=parseFloat(document.getElementById('invRemise').value)||0;
-  const tva=parseFloat(document.getElementById('invTVA').value)||0;
+  const remise=parseFloat(document.getElementById('invRemise')?.value)||0;
+  const tva=parseFloat(document.getElementById('invTVA')?.value)||0;
   document.getElementById('invoicePreviewContent').innerHTML=buildInvoiceHTML(s,color,accent,merci,nom,remise,tva);
 }
 
@@ -2725,40 +2684,28 @@ function closeInvoicePreview(){
   _printSaleId=null;
 }
 
-async function doPrint(){
+function doPrint(){
   const s=sales.find(x=>x.id===_printSaleId); if(!s) return;
   const color=document.getElementById('invColor').value||'#111111';
   const accent=document.getElementById('invAccent').value||'#ff7a00';
   const merci=document.getElementById('invMerci').value||'Merci pour votre confiance 🙏';
   const nom=(document.getElementById('invNomEntreprise').value.trim())||localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
-  const remise=parseFloat(document.getElementById('invRemise').value)||0;
-  const tva=parseFloat(document.getElementById('invTVA').value)||0;
+  const remise=parseFloat(document.getElementById('invRemise')?.value)||0;
+  const tva=parseFloat(document.getElementById('invTVA')?.value)||0;
   const html=buildInvoiceHTML(s,color,accent,merci,nom,remise,tva);
-
-  // Render in hidden div
-  const area=document.getElementById('invoicePrintArea');
-  area.innerHTML=html;
-  area.style.cssText='display:block;position:fixed;left:-9999px;top:0;width:400px;background:#fff;padding:0;z-index:-1';
-
+  const fullPage=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${s.invNum||'Facture'}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{background:#fff;font-family:'Segoe UI',Arial,sans-serif}
+  .no-print{text-align:center;padding:12px;background:#f5f5f5}
+  .no-print button{padding:10px 24px;background:${accent};color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer}
+  @media print{.no-print{display:none}@page{size:A5;margin:8mm}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}
+  </style></head><body>
+  <div class="no-print"><button onclick="window.print()">🖨️ Imprimer / PDF</button></div>
+  ${html}</body></html>`;
+  const encoded='data:text/html;charset=utf-8,'+encodeURIComponent(fullPage);
+  const a=document.createElement('a');
+  a.href=encoded; a.target='_blank';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
   closeInvoicePreview();
-  showToast('⏳ Génération PDF...');
-
-  try{
-    const canvas=await html2canvas(area,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
-    const imgData=canvas.toDataURL('image/jpeg',0.95);
-    const {jsPDF}=window.jspdf;
-    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a5'});
-    const pdfW=pdf.internal.pageSize.getWidth();
-    const pdfH=(canvas.height*pdfW)/canvas.width;
-    pdf.addImage(imgData,'JPEG',0,0,pdfW,pdfH);
-    const fname=`${s.invNum||'facture'}-${s.client||'client'}.pdf`.replace(/\s+/g,'-');
-    pdf.save(fname);
-    showToast('✅ PDF téléchargé!');
-  } catch(e){
-    showToast('❌ Erreur PDF: '+e.message);
-  } finally {
-    area.style.cssText='display:none';
-  }
 }
 
 function buildInvoiceHTML(s,color,accent,merci,nom,remise=0,tva=0){
@@ -3451,150 +3398,10 @@ function filterByMarque(marque){
   showToast('🏷️ '+marque+' — ventes filtrées');
 }
 
-// Auto-sync on visibility change (quand l'app revient au premier plan)
-document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState === 'visible'){
-    updateAutoSyncLabel();
-    const pending = localStorage.getItem('ff_pending_sync');
-    if(pending){
-      const elapsed = Date.now() - parseInt(pending);
-      if(elapsed >= 5 * 60 * 1000){
-        localStorage.removeItem('ff_pending_sync');
-        autoSyncGist();
-      }
-    }
-  }
-});
-
 // Responsive marques chart on orientation change
 window.addEventListener('resize',()=>{
   if(document.getElementById('tab-marques').style.display!=='none') renderMarques();
-  drawMiniChart7d();
 });
-
-// ── MINI CHART 7 JOURS ─────────────────────────────────────────────────────
-function drawMiniChart7d(){
-  const canvas=document.getElementById('miniChart7d');
-  if(!canvas) return;
-
-  // Build last 7 days data
-  const days=[];
-  const today=new Date();
-  for(let i=6;i>=0;i--){
-    const d=new Date(today);
-    d.setDate(today.getDate()-i);
-    const str=localDateStr(d);
-    const daySales=sales.filter(s=>s.date===str);
-    const benef=daySales.reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
-    const label=i===0?'Auj.':(i===1?'Hier':d.toLocaleDateString('fr-TN',{weekday:'short'}));
-    days.push({label,benef,str});
-  }
-
-  // Total 7j
-  const total7d=days.reduce((a,d)=>a+d.benef,0);
-  const totalEl=document.getElementById('miniChart7dTotal');
-  if(totalEl) totalEl.textContent=(total7d>=0?'+':'')+fmt(total7d);
-
-  const maxVal=Math.max(...days.map(d=>d.benef),1);
-  const dpr=window.devicePixelRatio||1;
-  const W=canvas.offsetWidth||320;
-  const H=52;
-  canvas.width=W*dpr; canvas.height=H*dpr;
-  canvas.style.height=H+'px';
-  const ctx=canvas.getContext('2d');
-  ctx.scale(dpr,dpr);
-  ctx.clearRect(0,0,W,H);
-
-  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
-  const barW=Math.floor((W-28)/7)-4;
-  const gap=(W-28-(barW*7))/6;
-  const chartH=H-18;
-
-  days.forEach((d,i)=>{
-    const x=14+i*(barW+gap);
-    const isToday=i===6;
-    const pct=maxVal>0?d.benef/maxVal:0;
-    const bH=Math.max(2,pct*chartH);
-    const y=chartH-bH;
-
-    // Bar
-    const grad=ctx.createLinearGradient(0,y,0,chartH);
-    if(isToday){
-      grad.addColorStop(0,'#ff7a00');
-      grad.addColorStop(1,'rgba(255,122,0,0.3)');
-    } else {
-      grad.addColorStop(0, isDark?'rgba(255,122,0,0.6)':'rgba(255,122,0,0.5)');
-      grad.addColorStop(1,'rgba(255,122,0,0.1)');
-    }
-    ctx.fillStyle=grad;
-    ctx.beginPath();
-    ctx.roundRect(x,y,barW,bH,3);
-    ctx.fill();
-
-    // Label
-    ctx.fillStyle=isToday?'#ff7a00':(isDark?'rgba(255,255,255,0.4)':'rgba(0,0,0,0.4)');
-    ctx.font=`${isToday?'700':'500'} 9px Outfit,sans-serif`;
-    ctx.textAlign='center';
-    ctx.textBaseline='top';
-    ctx.fillText(d.label, x+barW/2, chartH+3);
-  });
-}
-
-// ── HEATMAP HEBDOMADAIRE ────────────────────────────────────────────────────
-function renderHeatmap(){
-  const grid=document.getElementById('heatmapGrid');
-  const legend=document.getElementById('heatmapLegend');
-  if(!grid) return;
-
-  if(!sales.length){
-    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px;font-size:13px">Aucune vente pour générer le heatmap.</div>';
-    return;
-  }
-
-  const dayNames=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-  // dayOfWeek 0=Sun..6=Sat
-  const dayStats=Array(7).fill(null).map(()=>({count:0,benef:0}));
-
-  sales.forEach(s=>{
-    if(!s.date) return;
-    const d=new Date(s.date+'T12:00:00');
-    const dow=d.getDay();
-    dayStats[dow].count++;
-    dayStats[dow].benef+=(s.benefBrut||s.benef||0);
-  });
-
-  const maxCount=Math.max(...dayStats.map(d=>d.count),1);
-  const maxBenef=Math.max(...dayStats.map(d=>d.benef),1);
-  const bestDayIdx=dayStats.indexOf(dayStats.reduce((a,b)=>b.count>a.count?b:a));
-
-  grid.innerHTML=dayStats.map((d,i)=>{
-    const intensity=maxCount>0?d.count/maxCount:0;
-    // Color from muted to accent
-    const alpha=0.08+intensity*0.82;
-    const isToday=new Date().getDay()===i;
-    const isBest=i===bestDayIdx&&d.count>0;
-    const bg=d.count===0
-      ?'var(--surface2)'
-      :`rgba(255,122,0,${alpha.toFixed(2)})`;
-    const textColor=intensity>0.5?'#fff':'var(--text)';
-    const border=isToday?'2px solid var(--accent)':isBest?'2px solid #10b981':'1px solid var(--border)';
-    const avgBenef=d.count>0?(d.benef/d.count):0;
-    return `<div class="heatmap-cell" style="background:${bg};border:${border}"
-      title="${dayNames[i]}: ${d.count} vente${d.count>1?'s':''} · ${fmt(d.benef)}">
-      <div class="heatmap-day" style="color:${d.count>0?textColor:'var(--muted)'}">${dayNames[i]}</div>
-      <div class="heatmap-count" style="color:${d.count>0?textColor:'var(--muted)'}">${d.count}</div>
-      <div class="heatmap-benef" style="color:${d.count>0?(intensity>0.5?'rgba(255,255,255,0.8)':'var(--green)'):'var(--muted)'}">${d.count>0?fmt(avgBenef):''}</div>
-    </div>`;
-  }).join('');
-
-  if(legend){
-    const totalSales=dayStats.reduce((a,d)=>a+d.count,0);
-    const bestDay=dayNames[bestDayIdx];
-    legend.innerHTML=totalSales>0
-      ?`🏆 Meilleur jour: <strong style="color:var(--accent)">${bestDay}</strong> (${dayStats[bestDayIdx].count} ventes) · Moy: ${fmt(dayStats[bestDayIdx].benef/dayStats[bestDayIdx].count)}/vente`
-      :'Aucune donnée';
-  }
-}
 
 // ── DASHBOARD ──────────────────────────────────────────────────────────────
 function getMarque(model){
@@ -4348,73 +4155,6 @@ function importData(event){
 
 <script>
 // ── GIST SYNC ──────────────────────────────────────────────────────────────
-const GIST_AUTO_PUSH   = 'ff_gist_auto_push'; // timestamp of last auto-push
-let _autoSyncTimer = null;
-
-async function autoSyncGist(){
-  const token = localStorage.getItem(GIST_TOKEN_KEY);
-  const id    = localStorage.getItem(GIST_ID_KEY);
-  if(!token || !id) return;
-  const body  = {files:{[GIST_FILENAME]:{content:gistBuildPayload()}}};
-  try{
-    const res = await fetch(`https://api.github.com/gists/${id}`,{
-      method:'PATCH',
-      headers:{'Authorization':`token ${token}`,'Content-Type':'application/json','Accept':'application/vnd.github+json'},
-      body:JSON.stringify(body)
-    });
-    if(!res.ok){
-      const err = await res.json().catch(()=>({}));
-      console.error('AutoSync failed:', res.status, err.message||'');
-      updateBellSync(false, `Erreur ${res.status}: ${err.message||'token/id invalide'}`);
-      return;
-    }
-    const now = Date.now();
-    localStorage.setItem(GIST_LAST_PUSH, now.toString());
-    localStorage.setItem(GIST_AUTO_PUSH, now.toString());
-    localStorage.removeItem('ff_pending_sync');
-    updateAutoSyncLabel();
-    updateBellSync(true);
-  } catch(e){
-    console.error('AutoSync network error:', e);
-    updateBellSync(false, 'Erreur réseau');
-  }
-}
-
-function scheduleAutoSync(){
-  clearTimeout(_autoSyncTimer);
-  localStorage.setItem('ff_pending_sync', Date.now().toString());
-}
-
-function updateAutoSyncLabel(){
-  const el = document.getElementById('lastSaveLabel');
-  if(!el) return;
-  const tsSave = localStorage.getItem('flousFlowLastSave');
-  const tsSync = localStorage.getItem(GIST_AUTO_PUSH);
-  const parts  = [];
-
-  if(tsSave){
-    const diff = Math.floor((Date.now()-parseInt(tsSave))/1000);
-    let txt;
-    if(diff<60)       txt='💾 Sauvegardé à l\'instant';
-    else if(diff<3600) txt=`💾 Il y a ${Math.floor(diff/60)} min`;
-    else if(diff<86400)txt=`💾 Il y a ${Math.floor(diff/3600)}h`;
-    else               txt=`💾 Il y a ${Math.floor(diff/86400)}j`;
-    parts.push(txt);
-  }
-
-  if(tsSync){
-    const diff = Math.floor((Date.now()-parseInt(tsSync))/1000);
-    let txt;
-    if(diff<60)        txt='☁️ Sync: à l\'instant';
-    else if(diff<3600) txt=`☁️ Sync: il y a ${Math.floor(diff/60)} min`;
-    else if(diff<86400)txt=`☁️ Sync: il y a ${Math.floor(diff/3600)}h`;
-    else               txt=`☁️ Sync: il y a ${Math.floor(diff/86400)}j`;
-    parts.push(txt);
-  }
-
-  el.innerHTML = parts.join('<br>');
-}
-
 const GIST_TOKEN_KEY  = 'ff_gist_token';
 const GIST_ID_KEY     = 'ff_gist_id';
 const GIST_LAST_PUSH  = 'ff_gist_last_push';
@@ -4520,7 +4260,7 @@ async function gistPull(){
     if(data.achats) achats=data.achats;
     if(data.stockItems){stockItems=data.stockItems;saveStock();}
     if(data.clients){clients=data.clients;saveClients();}
-    saveLocal(); updateKPIs(); renderSales(); refreshFournSelects(); refreshStockModelList();
+    save(); updateKPIs(); renderSales(); refreshFournSelects(); refreshStockModelList();
     localStorage.setItem(GIST_LAST_PULL, Date.now().toString());
     const dp=new Date().toLocaleString('fr-TN');
     gistSetStatus(`✅ ${sales.length} ventes importées depuis le Gist!\n📅 ${dp}`,'ok');
@@ -4533,17 +4273,216 @@ document.addEventListener('DOMContentLoaded',function(){
   if(gm) gm.addEventListener('click',function(e){if(e.target===this) closeGistModal();});
 });
 
-// ── AUTO SYNC INTERVAL ─────────────────────────────────────────────────────
-// Vérifie chaque minute si 5 min se sont écoulées depuis le dernier changement
-setInterval(()=>{
-  const pending = localStorage.getItem('ff_pending_sync');
+// ── MINI CHART 7 JOURS ────────────────────────────────────────────────────
+function drawMiniChart7d(){
+  const canvas=document.getElementById('miniChart7d');
+  if(!canvas) return;
+  const days=[];
+  const today=new Date();
+  for(let i=6;i>=0;i--){
+    const d=new Date(today); d.setDate(today.getDate()-i);
+    const str=localDateStr(d);
+    const benef=sales.filter(s=>s.date===str).reduce((a,s)=>a+(s.benefBrut||s.benef||0),0);
+    const label=i===0?'Auj.':(i===1?'Hier':d.toLocaleDateString('fr-TN',{weekday:'short'}));
+    days.push({label,benef});
+  }
+  const total7d=days.reduce((a,d)=>a+d.benef,0);
+  const totalEl=document.getElementById('miniChart7dTotal');
+  if(totalEl) totalEl.textContent=(total7d>=0?'+':'')+fmt(total7d);
+  const maxVal=Math.max(...days.map(d=>d.benef),1);
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth||320; const H=52;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const barW=Math.floor((W-28)/7)-4;
+  const gap=(W-28-(barW*7))/6;
+  const chartH=H-18;
+  days.forEach((d,i)=>{
+    const x=14+i*(barW+gap);
+    const isToday=i===6;
+    const pct=maxVal>0?d.benef/maxVal:0;
+    const bH=Math.max(2,pct*chartH);
+    const y=chartH-bH;
+    const grad=ctx.createLinearGradient(0,y,0,chartH);
+    if(isToday){grad.addColorStop(0,'#ff7a00');grad.addColorStop(1,'rgba(255,122,0,0.3)');}
+    else{grad.addColorStop(0,isDark?'rgba(255,122,0,0.6)':'rgba(255,122,0,0.5)');grad.addColorStop(1,'rgba(255,122,0,0.1)');}
+    ctx.fillStyle=grad;
+    ctx.beginPath();
+    if(bH<6){ctx.rect(x,y,barW,bH);}
+    else{const r=3;ctx.moveTo(x+r,y);ctx.lineTo(x+barW-r,y);ctx.arcTo(x+barW,y,x+barW,y+r,r);ctx.lineTo(x+barW,y+bH);ctx.lineTo(x,y+bH);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+    ctx.fill();
+    ctx.fillStyle=isToday?'#ff7a00':(isDark?'rgba(255,255,255,0.4)':'rgba(0,0,0,0.4)');
+    ctx.font=`${isToday?'700':'500'} 9px Outfit,sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(d.label, x+barW/2, chartH+3);
+  });
+}
+
+// ── HEATMAP ───────────────────────────────────────────────────────────────
+function renderHeatmap(){
+  const grid=document.getElementById('heatmapGrid');
+  const legend=document.getElementById('heatmapLegend');
+  if(!grid) return;
+  if(!sales.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px;font-size:13px">Aucune vente.</div>';return;}
+  const dayNames=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const dayStats=Array(7).fill(null).map(()=>({count:0,benef:0}));
+  sales.forEach(s=>{
+    if(!s.date) return;
+    const dow=new Date(s.date+'T12:00:00').getDay();
+    dayStats[dow].count++;
+    dayStats[dow].benef+=(s.benefBrut||s.benef||0);
+  });
+  const maxCount=Math.max(...dayStats.map(d=>d.count),1);
+  const bestDayIdx=dayStats.indexOf(dayStats.reduce((a,b)=>b.count>a.count?b:a));
+  grid.innerHTML=dayStats.map((d,i)=>{
+    const intensity=d.count/maxCount;
+    const alpha=0.08+intensity*0.82;
+    const isToday=new Date().getDay()===i;
+    const isBest=i===bestDayIdx&&d.count>0;
+    const bg=d.count===0?'var(--surface2)':`rgba(255,122,0,${alpha.toFixed(2)})`;
+    const textColor=intensity>0.5?'#fff':'var(--text)';
+    const border=isToday?'2px solid var(--accent)':isBest?'2px solid #10b981':'1px solid var(--border)';
+    const avgBenef=d.count>0?(d.benef/d.count):0;
+    return `<div class="heatmap-cell" style="background:${bg};border:${border}" title="${dayNames[i]}: ${d.count} vente${d.count>1?'s':''}">
+      <div class="heatmap-day" style="color:${d.count>0?textColor:'var(--muted)'}">${dayNames[i]}</div>
+      <div class="heatmap-count" style="color:${d.count>0?textColor:'var(--muted)'}">${d.count}</div>
+      <div class="heatmap-benef" style="color:${d.count>0?(intensity>0.5?'rgba(255,255,255,0.8)':'var(--green)'):'var(--muted)'}">${d.count>0?fmt(avgBenef):''}</div>
+    </div>`;
+  }).join('');
+  if(legend&&dayStats[bestDayIdx].count>0){
+    legend.innerHTML=`🏆 Meilleur jour: <strong style="color:var(--accent)">${dayNames[bestDayIdx]}</strong> (${dayStats[bestDayIdx].count} ventes)`;
+  }
+}
+
+// ── AUTO SYNC ─────────────────────────────────────────────────────────────
+const GIST_AUTO_PUSH='ff_gist_auto_push';
+let _autoSyncTimer=null;
+
+async function autoSyncGist(){
+  const token=localStorage.getItem('ff_gist_token');
+  const id=localStorage.getItem('ff_gist_id');
+  if(!token||!id) return;
+  const GIST_FILENAME='megastore-data.json';
+  const payload=JSON.stringify({version:2,exportDate:new Date().toISOString(),sales,fourns});
+  try{
+    const res=await fetch(`https://api.github.com/gists/${id}`,{
+      method:'PATCH',
+      headers:{'Authorization':`token ${token}`,'Content-Type':'application/json','Accept':'application/vnd.github+json'},
+      body:JSON.stringify({files:{[GIST_FILENAME]:{content:payload}}})
+    });
+    if(!res.ok){const err=await res.json().catch(()=>({}));updateBellSync(false,`Erreur ${res.status}: ${err.message||'token/id invalide'}`);return;}
+    const now=Date.now();
+    localStorage.setItem('ff_gist_last_push',now.toString());
+    localStorage.setItem(GIST_AUTO_PUSH,now.toString());
+    localStorage.removeItem('ff_pending_sync');
+    updateAutoSyncLabel();
+    updateBellSync(true);
+  }catch(e){updateBellSync(false,'Erreur réseau');}
+}
+
+function scheduleAutoSync(){
+  clearTimeout(_autoSyncTimer);
+  localStorage.setItem('ff_pending_sync',Date.now().toString());
+}
+
+function checkPendingSync(){
+  const pending=localStorage.getItem('ff_pending_sync');
   if(!pending) return;
-  const elapsed = Date.now() - parseInt(pending);
-  if(elapsed >= 5 * 60 * 1000){
+  if(Date.now()-parseInt(pending)>=5*60*1000){
     localStorage.removeItem('ff_pending_sync');
     autoSyncGist();
   }
-}, 60 * 1000);
+}
+
+function updateAutoSyncLabel(){
+  const el=document.getElementById('lastSaveLabel');
+  if(!el) return;
+  const tsSave=localStorage.getItem('flousFlowLastSave');
+  const tsSync=localStorage.getItem(GIST_AUTO_PUSH);
+  const parts=[];
+  if(tsSave){const diff=Math.floor((Date.now()-parseInt(tsSave))/1000);parts.push(diff<60?'💾 À l\'instant':diff<3600?`💾 Il y a ${Math.floor(diff/60)} min`:`💾 Il y a ${Math.floor(diff/3600)}h`);}
+  if(tsSync){const diff=Math.floor((Date.now()-parseInt(tsSync))/1000);parts.push(diff<60?'☁️ Sync: à l\'instant':diff<3600?`☁️ Sync: il y a ${Math.floor(diff/60)} min`:`☁️ Sync: il y a ${Math.floor(diff/3600)}h`);}
+  el.innerHTML=parts.join('<br>');
+}
+
+function updateBellSync(success,errMsg){
+  const dot=document.getElementById('bellDot');
+  const section=document.getElementById('bellSyncSection');
+  const title=document.getElementById('bellSyncTitle');
+  const msg=document.getElementById('bellSyncMsg');
+  if(!section) return;
+  const tsSync=localStorage.getItem(GIST_AUTO_PUSH);
+  const pending=localStorage.getItem('ff_pending_sync');
+  section.style.display='block';
+  if(success===true){
+    dot.style.display='block';dot.style.background='var(--green)';
+    title.textContent='✅ Sync réussi';
+    msg.textContent=`Dernière sync: ${new Date().toLocaleTimeString('fr-TN',{hour:'2-digit',minute:'2-digit'})}`;
+    setTimeout(()=>{dot.style.display='none';},5000);
+  }else if(success===false){
+    dot.style.display='block';dot.style.background='var(--red)';
+    title.textContent='❌ Sync échoué';
+    msg.textContent=errMsg||'Vérifie ta connexion ou ton token.';
+  }else if(tsSync){
+    const diff=Math.floor((Date.now()-parseInt(tsSync))/1000);
+    title.textContent='☁️ Sync GitHub';
+    msg.textContent=`Dernière sync: ${diff<60?'à l\'instant':diff<3600?`il y a ${Math.floor(diff/60)} min`:`il y a ${Math.floor(diff/3600)}h`}`;
+  }else if(pending){
+    title.textContent='⏳ Sync en attente';msg.textContent='Sync dans moins de 5 min.';
+  }else{section.style.display='none';}
+}
+
+function dismissBell(){
+  localStorage.setItem('flousFlowLastBackup',Date.now().toString());
+  document.getElementById('bellDot').style.display='none';
+  document.getElementById('bellPopup').classList.remove('open');
+}
+
+function diagSync(){
+  const token=localStorage.getItem('ff_gist_token');
+  const id=localStorage.getItem('ff_gist_id');
+  const pending=localStorage.getItem('ff_pending_sync');
+  const lastPush=localStorage.getItem(GIST_AUTO_PUSH);
+  const lastSave=localStorage.getItem('flousFlowLastSave');
+  const elapsed=pending?Math.floor((Date.now()-parseInt(pending))/1000):null;
+  alert([
+    '── TOKEN ──',token?`✅ Présent (${token.length} chars)`:'❌ Absent','',
+    '── GIST ID ──',id?`✅ ${id.substring(0,8)}...`:'❌ Absent','',
+    '── PENDING SYNC ──',pending?`⏳ il y a ${elapsed}s (${elapsed>=300?'✅ doit se déclencher':'⏳ pas encore 5min'})`:'✅ Aucun pending','',
+    '── DERNIER AUTO-PUSH ──',lastPush?`${Math.floor((Date.now()-parseInt(lastPush))/60000)} min`:'❌ Jamais','',
+    '── DERNIER SAVE ──',lastSave?`il y a ${Math.floor((Date.now()-parseInt(lastSave))/1000)}s`:'❌ Jamais'
+  ].join('\n'));
+}
+
+// ── SAVE WITH AUTO SYNC ────────────────────────────────────────────────────
+const _origSave=save;
+function save(){
+  _origSave();
+  localStorage.setItem('flousFlowLastSave',Date.now());
+  scheduleAutoSync();
+  updateAutoSyncLabel();
+}
+
+function saveLocal(){
+  _origSave();
+  localStorage.setItem('flousFlowLastSave',Date.now());
+  updateAutoSyncLabel();
+}
+
+// visibilitychange
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){updateAutoSyncLabel();checkPendingSync();}
+});
+
+// setInterval fallback
+setInterval(()=>checkPendingSync(), 60*1000);
+
+// resize redraw
+window.addEventListener('resize',()=>drawMiniChart7d());
+setTimeout(()=>{ updateThemeBtn(); updateAutoSyncLabel(); drawMiniChart7d(); updateBellSync(null); },300);
 </script>
 
 <!-- INVOICE PRINT AREA -->
@@ -4567,19 +4506,19 @@ setInterval(()=>{
         <input type="color" id="invAccent" value="#ff7a00" style="width:100%;height:38px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);margin-top:4px;cursor:pointer">
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      <div>
-        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">🏷️ Remise (DT) — optionnel</label>
-        <input type="number" id="invRemise" value="0" min="0" step="0.001" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;margin-top:4px;box-sizing:border-box">
-      </div>
-      <div>
-        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">📊 TVA (%) — optionnel</label>
-        <input type="number" id="invTVA" value="0" min="0" max="100" step="0.1" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;margin-top:4px;box-sizing:border-box">
-      </div>
-    </div>
     <div style="margin-bottom:14px">
       <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Message de remerciement</label>
       <input type="text" id="invMerci" value="Merci pour votre confiance 🙏" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;margin-top:4px;box-sizing:border-box">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div>
+        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">🏷️ Remise (DT)</label>
+        <input type="number" id="invRemise" value="0" min="0" step="0.001" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;margin-top:4px;box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">📊 TVA (%)</label>
+        <input type="number" id="invTVA" value="0" min="0" max="100" step="0.1" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;margin-top:4px;box-sizing:border-box">
+      </div>
     </div>
     <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:14px;max-height:300px;overflow-y:auto" id="invoicePreviewContent"></div>
     <div class="modal-btns">
