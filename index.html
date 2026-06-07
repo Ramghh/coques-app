@@ -2741,14 +2741,13 @@ function doPrint(){
   <style>*{box-sizing:border-box;margin:0;padding:0}body{background:#fff;font-family:'Segoe UI',Arial,sans-serif}
   .no-print{text-align:center;padding:12px;background:#f5f5f5}
   .no-print button{padding:10px 24px;background:${accent};color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer}
-  @media print{.no-print{display:none}@page{size:A5;margin:8mm}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}
+  @media print{.no-print{display:none}@page{size:A5;margin:8mm}thead tr{background:transparent!important;color:#000!important;border-bottom:2px solid #444!important}thead th{color:#000!important}table+div[style*='background']{background:transparent!important;color:#000!important;border:2px solid #333!important}}
   </style></head><body>
   <div class="no-print"><button onclick="window.print()">🖨️ Imprimer / PDF</button></div>
   ${html}</body></html>`;
-  const encoded='data:text/html;charset=utf-8,'+encodeURIComponent(fullPage);
-  const a=document.createElement('a');
-  a.href=encoded; a.target='_blank';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  const w=window.open('','_blank');
+  if(w){w.document.open();w.document.write(fullPage);w.document.close();}
+  else{const blob=new Blob([fullPage],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),5000);}
   closeInvoicePreview();
 }
 
