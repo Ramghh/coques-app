@@ -480,13 +480,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
         <div class="bell-popup" id="bellPopup">
           <div class="bell-popup-title" id="bellTitle">🔔 Sauvegarde</div>
           <div class="bell-popup-msg" id="bellMsg">Chargement...</div>
-          <div id="bellSyncSection" style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:none">
-            <div style="font-size:12px;font-weight:700;margin-bottom:4px" id="bellSyncTitle">☁️ Sync GitHub</div>
-            <div style="font-size:12px;color:var(--muted)" id="bellSyncMsg"></div>
-          </div>
           <button class="bell-popup-btn" style="margin-top:10px" onclick="exportJSON();toggleBell()">⬇️ Sauvegarder maintenant</button>
           <button onclick="dismissBell()" style="width:100%;padding:8px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:9px;font-size:12px;cursor:pointer;margin-top:6px;font-family:'Cabinet Grotesk',sans-serif">✕ Ignorer</button>
-          <button onclick="diagSync()" style="width:100%;padding:8px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:9px;font-size:11px;cursor:pointer;margin-top:6px;font-family:'JetBrains Mono',sans-serif">🔍 Diagnostic</button>
         </div>
       </div>
       <button class="theme-btn" id="gistBtn" onclick="openGistModal()" title="Sync Gist" style="display:none">☁️</button>
@@ -1237,7 +1232,6 @@ function openDrawer(){
   document.getElementById('sideDrawer').classList.add('open');
   document.getElementById('drawerOverlay').classList.add('open');
   checkBackupReminder();
-  if(typeof checkPendingSync==='function') checkPendingSync();
 }
 function closeDrawer(){
   document.getElementById('sideDrawer').classList.remove('open');
@@ -1245,7 +1239,6 @@ function closeDrawer(){
 }
 function drawerNav(id){
   closeDrawer();
-  if(typeof checkPendingSync==='function') checkPendingSync();
   showTab(id, null);
 }
 function syncDrawerActive(id){
@@ -1257,7 +1250,6 @@ function syncDrawerActive(id){
 }
 
 function showTab(id,btn,pushHistory=true){
-  if(typeof checkPendingSync==='function') checkPendingSync();
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
@@ -1372,8 +1364,6 @@ function save(){
   localStorage.setItem('flousFlowFourns',JSON.stringify(fourns));
   localStorage.setItem('flousFlowTheme',theme);
   localStorage.setItem('flousFlowLastSave', Date.now());
-  if(typeof scheduleAutoSync==='function') scheduleAutoSync();
-  if(typeof updateAutoSyncLabel==='function') updateAutoSyncLabel();
 }
 function calc(qty,prix,cout,envoi){
   const r=qty*prix, c=qty*cout+envoi, b=r-c;
@@ -2338,8 +2328,6 @@ function checkBackupReminder(){
 }
 
 function toggleBell(){
-  if(typeof checkPendingSync==='function') checkPendingSync();
-  if(typeof updateBellSync==='function') updateBellSync(null);
   const popup=document.getElementById('bellPopup');
   popup.classList.toggle('open');
   // Fermer si on clique ailleurs
@@ -3562,7 +3550,6 @@ function updatePartagePreview(){
 let partagePayments=JSON.parse(localStorage.getItem('flousFlowPartagePayments')||'[]');
 function savePartagePayments(){
   localStorage.setItem('flousFlowPartagePayments',JSON.stringify(partagePayments));
-  if(typeof scheduleAutoSync==='function') scheduleAutoSync();
 }
 
 function renderPartageTab(){
@@ -4520,153 +4507,17 @@ function renderHeatmap(){
 }
 
 // ── AUTO SYNC ─────────────────────────────────────────────────────────────
-const GIST_AUTO_PUSH='ff_gist_auto_push';
-let _autoSyncTimer=null;
-let _autoSyncRetry=0;
+const GIST_LAST_SYNC_KEY='ff_gist_last_push';
 
-function autoSyncGist(){
-  const token=localStorage.getItem('ff_gist_token');
-  const id=localStorage.getItem('ff_gist_id');
-  if(!token||!id) return;
-  const GIST_FILENAME='megastore-data.json';
-  const payload=JSON.stringify({version:2,exportDate:new Date().toISOString(),sales,fourns,partagePayments});
-
-  updateBellSync(null,'⏳ Sync en cours...');
-
-  const xhr=new XMLHttpRequest();
-  xhr.open('PATCH','https://api.github.com/gists/'+id,true);
-  xhr.setRequestHeader('Authorization','token '+token);
-  xhr.setRequestHeader('Content-Type','application/json');
-  xhr.setRequestHeader('Accept','application/vnd.github+json');
-  xhr.timeout=30000; // 30 sec timeout
-
-  xhr.onload=function(){
-    if(xhr.status>=200&&xhr.status<300){
-      _autoSyncRetry=0;
-      const now=Date.now();
-      localStorage.setItem('ff_gist_last_push',now.toString());
-      localStorage.setItem(GIST_AUTO_PUSH,now.toString());
-      localStorage.removeItem('ff_pending_sync');
-      updateAutoSyncLabel();
-      updateBellSync(true);
-    } else {
-      // فشل — نحاول مرة ثانية بعد دقيقة (max 3 محاولات)
-      _autoSyncRetry++;
-      if(_autoSyncRetry<=3){
-        localStorage.setItem('ff_pending_sync',(Date.now()-4*60*1000).toString()); // retry بعد دقيقة
-        updateBellSync(false,'❌ Erreur '+xhr.status+' — Retry '+_autoSyncRetry+'/3');
-      } else {
-        _autoSyncRetry=0;
-        updateBellSync(false,'❌ Sync échoué ('+xhr.status+'). Push manuel requis.');
-      }
-    }
-  };
-  xhr.onerror=function(){
-    _autoSyncRetry++;
-    if(_autoSyncRetry<=3){
-      localStorage.setItem('ff_pending_sync',(Date.now()-4*60*1000).toString());
-      updateBellSync(false,'📵 Réseau — Retry '+_autoSyncRetry+'/3');
-    } else {
-      _autoSyncRetry=0;
-      updateBellSync(false,'📵 Sync impossible. Vérifie connexion.');
-    }
-  };
-  xhr.ontimeout=function(){
-    _autoSyncRetry++;
-    if(_autoSyncRetry<=3){
-      localStorage.setItem('ff_pending_sync',(Date.now()-4*60*1000).toString());
-      updateBellSync(false,'⏱️ Timeout — Retry '+_autoSyncRetry+'/3');
-    } else {
-      _autoSyncRetry=0;
-      updateBellSync(false,'⏱️ Timeout persistant. Push manuel.');
-    }
-  };
-  xhr.send(JSON.stringify({files:{[GIST_FILENAME]:{content:payload}}}));
-}
-
-function scheduleAutoSync(){
-  clearTimeout(_autoSyncTimer);
-  localStorage.setItem('ff_pending_sync',Date.now().toString());
-  // Timer حقيقي داخل الصفحة — يشتغل حتى لو ما صار navigation
-  _autoSyncTimer=setTimeout(()=>{
-    localStorage.removeItem('ff_pending_sync');
-    autoSyncGist();
-  }, 5*60*1000);
-}
-
-function checkPendingSync(){
-  // يُستعمل عند visibilitychange أو navigation — يشيك إذا فات الوقت (تلفون فريز)
-  const pending=localStorage.getItem('ff_pending_sync');
-  if(!pending) return;
-  if(Date.now()-parseInt(pending)>=5*60*1000){
-    clearTimeout(_autoSyncTimer);
-    localStorage.removeItem('ff_pending_sync');
-    autoSyncGist();
-  }
-}
-
-function updateAutoSyncLabel(){
+function updateLastSyncLabel(){
   const el=document.getElementById('lastSaveLabel');
   if(!el) return;
   const tsSave=localStorage.getItem('flousFlowLastSave');
-  const tsSync=localStorage.getItem(GIST_AUTO_PUSH);
+  const tsSync=localStorage.getItem(GIST_LAST_SYNC_KEY);
   const parts=[];
-  if(tsSave){const diff=Math.floor((Date.now()-parseInt(tsSave))/1000);parts.push(diff<60?'💾 À l\'instant':diff<3600?`💾 Il y a ${Math.floor(diff/60)} min`:`💾 Il y a ${Math.floor(diff/3600)}h`);}
-  if(tsSync){const diff=Math.floor((Date.now()-parseInt(tsSync))/1000);parts.push(diff<60?'☁️ Sync: à l\'instant':diff<3600?`☁️ Sync: il y a ${Math.floor(diff/60)} min`:`☁️ Sync: il y a ${Math.floor(diff/3600)}h`);}
+  if(tsSave){const diff=Math.floor((Date.now()-parseInt(tsSave))/1000);parts.push(diff<60?'💾 Enregistré à l\'instant':diff<3600?`💾 Il y a ${Math.floor(diff/60)} min`:`💾 Il y a ${Math.floor(diff/3600)}h`);}
+  if(tsSync){const diff=Math.floor((Date.now()-parseInt(tsSync))/1000);parts.push(diff<60?'☁️ Push: à l\'instant':diff<3600?`☁️ Push: il y a ${Math.floor(diff/60)} min`:`☁️ Push: il y a ${Math.floor(diff/3600)}h`);}
   el.innerHTML=parts.join('<br>');
-}
-
-function updateBellSync(success,errMsg){
-  const dot=document.getElementById('bellDot');
-  const section=document.getElementById('bellSyncSection');
-  const title=document.getElementById('bellSyncTitle');
-  const msg=document.getElementById('bellSyncMsg');
-  if(!section) return;
-  const tsSync=localStorage.getItem(GIST_AUTO_PUSH);
-  const pending=localStorage.getItem('ff_pending_sync');
-  section.style.display='block';
-  if(success===true){
-    dot.style.display='block';dot.style.background='var(--green)';
-    title.textContent='✅ Sync réussi';
-    msg.textContent=`Dernière sync: ${new Date().toLocaleTimeString('fr-TN',{hour:'2-digit',minute:'2-digit'})}`;
-    setTimeout(()=>{dot.style.display='none';},5000);
-  }else if(success===null){
-    dot.style.display='block';dot.style.background='var(--yellow,#f59e0b)';
-    title.textContent='⏳ Sync en cours...';
-    msg.textContent=errMsg||'';
-  }else if(success===false){
-    dot.style.display='block';dot.style.background='var(--red)';
-    title.textContent='❌ Sync échoué';
-    msg.textContent=errMsg||'Vérifie ta connexion ou ton token.';
-  }else if(tsSync){
-    const diff=Math.floor((Date.now()-parseInt(tsSync))/1000);
-    title.textContent='☁️ Sync GitHub';
-    msg.textContent=`Dernière sync: ${diff<60?'à l\'instant':diff<3600?`il y a ${Math.floor(diff/60)} min`:`il y a ${Math.floor(diff/3600)}h`}`;
-  }else if(pending){
-    title.textContent='⏳ Sync en attente';msg.textContent='Sync dans moins de 5 min.';
-  }else{section.style.display='none';}
-}
-
-function dismissBell(){
-  localStorage.setItem('flousFlowLastBackup',Date.now().toString());
-  document.getElementById('bellDot').style.display='none';
-  document.getElementById('bellPopup').classList.remove('open');
-}
-
-function diagSync(){
-  const token=localStorage.getItem('ff_gist_token');
-  const id=localStorage.getItem('ff_gist_id');
-  const pending=localStorage.getItem('ff_pending_sync');
-  const lastPush=localStorage.getItem(GIST_AUTO_PUSH);
-  const lastSave=localStorage.getItem('flousFlowLastSave');
-  const elapsed=pending?Math.floor((Date.now()-parseInt(pending))/1000):null;
-  alert([
-    '── TOKEN ──',token?`✅ Présent (${token.length} chars)`:'❌ Absent','',
-    '── GIST ID ──',id?`✅ ${id.substring(0,8)}...`:'❌ Absent','',
-    '── PENDING SYNC ──',pending?`⏳ il y a ${elapsed}s (${elapsed>=300?'✅ doit se déclencher':'⏳ pas encore 5min'})`:'✅ Aucun pending','',
-    '── DERNIER AUTO-PUSH ──',lastPush?`${Math.floor((Date.now()-parseInt(lastPush))/60000)} min`:'❌ Jamais','',
-    '── DERNIER SAVE ──',lastSave?`il y a ${Math.floor((Date.now()-parseInt(lastSave))/1000)}s`:'❌ Jamais'
-  ].join('\n'));
 }
 
 function saveLocal(){
@@ -4674,20 +4525,18 @@ function saveLocal(){
   localStorage.setItem('flousFlowFourns',JSON.stringify(fourns));
   localStorage.setItem('flousFlowTheme',theme);
   localStorage.setItem('flousFlowLastSave', Date.now());
-  if(typeof updateAutoSyncLabel==='function') updateAutoSyncLabel();
+  if(typeof updateLastSyncLabel==='function') updateLastSyncLabel();
 }
-
-// visibilitychange
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'){updateAutoSyncLabel();checkPendingSync();}
-});
-
-// setInterval fallback
-setInterval(()=>checkPendingSync(), 60*1000);
 
 // resize redraw
 window.addEventListener('resize',()=>drawMiniChart7d());
-setTimeout(()=>{ updateThemeBtn(); updateAutoSyncLabel(); drawMiniChart7d(); updateBellSync(null); },300);
+setTimeout(()=>{ updateThemeBtn(); updateLastSyncLabel(); drawMiniChart7d(); },300);
+function dismissBell(){
+  document.getElementById('bellDot').style.display='none';
+  document.getElementById('bellPopup').classList.remove('open');
+}
+
+
 </script>
 
 <!-- INVOICE PRINT AREA -->
