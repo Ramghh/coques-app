@@ -3560,7 +3560,10 @@ function updatePartagePreview(){
 }
 
 let partagePayments=JSON.parse(localStorage.getItem('flousFlowPartagePayments')||'[]');
-function savePartagePayments(){localStorage.setItem('flousFlowPartagePayments',JSON.stringify(partagePayments));}
+function savePartagePayments(){
+  localStorage.setItem('flousFlowPartagePayments',JSON.stringify(partagePayments));
+  if(typeof scheduleAutoSync==='function') scheduleAutoSync();
+}
 
 function renderPartageTab(){
   const el=document.getElementById('partageTabContent');
@@ -4418,6 +4421,7 @@ async function gistPull(){
     if(data.achats) achats=data.achats;
     if(data.stockItems){stockItems=data.stockItems;saveStock();}
     if(data.clients){clients=data.clients;saveClients();}
+    if(data.partagePayments){partagePayments=data.partagePayments;savePartagePayments();}
     save(); updateKPIs(); renderSales(); refreshFournSelects(); refreshStockModelList();
     localStorage.setItem(GIST_LAST_PULL, Date.now().toString());
     const dp=new Date().toLocaleString('fr-TN');
@@ -4524,7 +4528,7 @@ async function autoSyncGist(){
   const id=localStorage.getItem('ff_gist_id');
   if(!token||!id) return;
   const GIST_FILENAME='megastore-data.json';
-  const payload=JSON.stringify({version:2,exportDate:new Date().toISOString(),sales,fourns});
+  const payload=JSON.stringify({version:2,exportDate:new Date().toISOString(),sales,fourns,partagePayments});
   try{
     const res=await fetch(`https://api.github.com/gists/${id}`,{
       method:'PATCH',
@@ -4544,12 +4548,19 @@ async function autoSyncGist(){
 function scheduleAutoSync(){
   clearTimeout(_autoSyncTimer);
   localStorage.setItem('ff_pending_sync',Date.now().toString());
+  // Timer حقيقي داخل الصفحة — يشتغل حتى لو ما صار navigation
+  _autoSyncTimer=setTimeout(()=>{
+    localStorage.removeItem('ff_pending_sync');
+    autoSyncGist();
+  }, 5*60*1000);
 }
 
 function checkPendingSync(){
+  // يُستعمل عند visibilitychange أو navigation — يشيك إذا فات الوقت (تلفون فريز)
   const pending=localStorage.getItem('ff_pending_sync');
   if(!pending) return;
   if(Date.now()-parseInt(pending)>=5*60*1000){
+    clearTimeout(_autoSyncTimer);
     localStorage.removeItem('ff_pending_sync');
     autoSyncGist();
   }
