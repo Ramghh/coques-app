@@ -4522,27 +4522,66 @@ function renderHeatmap(){
 // ── AUTO SYNC ─────────────────────────────────────────────────────────────
 const GIST_AUTO_PUSH='ff_gist_auto_push';
 let _autoSyncTimer=null;
+let _autoSyncRetry=0;
 
-async function autoSyncGist(){
+function autoSyncGist(){
   const token=localStorage.getItem('ff_gist_token');
   const id=localStorage.getItem('ff_gist_id');
   if(!token||!id) return;
   const GIST_FILENAME='megastore-data.json';
   const payload=JSON.stringify({version:2,exportDate:new Date().toISOString(),sales,fourns,partagePayments});
-  try{
-    const res=await fetch(`https://api.github.com/gists/${id}`,{
-      method:'PATCH',
-      headers:{'Authorization':`token ${token}`,'Content-Type':'application/json','Accept':'application/vnd.github+json'},
-      body:JSON.stringify({files:{[GIST_FILENAME]:{content:payload}}})
-    });
-    if(!res.ok){const err=await res.json().catch(()=>({}));updateBellSync(false,`Erreur ${res.status}: ${err.message||'token/id invalide'}`);return;}
-    const now=Date.now();
-    localStorage.setItem('ff_gist_last_push',now.toString());
-    localStorage.setItem(GIST_AUTO_PUSH,now.toString());
-    localStorage.removeItem('ff_pending_sync');
-    updateAutoSyncLabel();
-    updateBellSync(true);
-  }catch(e){updateBellSync(false,'Erreur réseau');}
+
+  updateBellSync(null,'⏳ Sync en cours...');
+
+  const xhr=new XMLHttpRequest();
+  xhr.open('PATCH','https://api.github.com/gists/'+id,true);
+  xhr.setRequestHeader('Authorization','token '+token);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.setRequestHeader('Accept','application/vnd.github+json');
+  xhr.timeout=30000; // 30 sec timeout
+
+  xhr.onload=function(){
+    if(xhr.status>=200&&xhr.status<300){
+      _autoSyncRetry=0;
+      const now=Date.now();
+      localStorage.setItem('ff_gist_last_push',now.toString());
+      localStorage.setItem(GIST_AUTO_PUSH,now.toString());
+      localStorage.removeItem('ff_pending_sync');
+      updateAutoSyncLabel();
+      updateBellSync(true);
+    } else {
+      // فشل — نحاول مرة ثانية بعد دقيقة (max 3 محاولات)
+      _autoSyncRetry++;
+      if(_autoSyncRetry<=3){
+        localStorage.setItem('ff_pending_sync',(Date.now()-4*60*1000).toString()); // retry بعد دقيقة
+        updateBellSync(false,'❌ Erreur '+xhr.status+' — Retry '+_autoSyncRetry+'/3');
+      } else {
+        _autoSyncRetry=0;
+        updateBellSync(false,'❌ Sync échoué ('+xhr.status+'). Push manuel requis.');
+      }
+    }
+  };
+  xhr.onerror=function(){
+    _autoSyncRetry++;
+    if(_autoSyncRetry<=3){
+      localStorage.setItem('ff_pending_sync',(Date.now()-4*60*1000).toString());
+      updateBellSync(false,'📵 Réseau — Retry '+_autoSyncRetry+'/3');
+    } else {
+      _autoSyncRetry=0;
+      updateBellSync(false,'📵 Sync impossible. Vérifie connexion.');
+    }
+  };
+  xhr.ontimeout=function(){
+    _autoSyncRetry++;
+    if(_autoSyncRetry<=3){
+      localStorage.setItem('ff_pending_sync',(Date.now()-4*60*1000).toString());
+      updateBellSync(false,'⏱️ Timeout — Retry '+_autoSyncRetry+'/3');
+    } else {
+      _autoSyncRetry=0;
+      updateBellSync(false,'⏱️ Timeout persistant. Push manuel.');
+    }
+  };
+  xhr.send(JSON.stringify({files:{[GIST_FILENAME]:{content:payload}}}));
 }
 
 function scheduleAutoSync(){
@@ -4591,6 +4630,10 @@ function updateBellSync(success,errMsg){
     title.textContent='✅ Sync réussi';
     msg.textContent=`Dernière sync: ${new Date().toLocaleTimeString('fr-TN',{hour:'2-digit',minute:'2-digit'})}`;
     setTimeout(()=>{dot.style.display='none';},5000);
+  }else if(success===null){
+    dot.style.display='block';dot.style.background='var(--yellow,#f59e0b)';
+    title.textContent='⏳ Sync en cours...';
+    msg.textContent=errMsg||'';
   }else if(success===false){
     dot.style.display='block';dot.style.background='var(--red)';
     title.textContent='❌ Sync échoué';
