@@ -1070,9 +1070,33 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <div id="pinStatusInfo" style="margin:10px 0;font-size:13px;color:var(--muted)"></div>
     <div class="backup-btns" id="pinActionBtns"></div>
   </div>
+  <div class="backup-card" style="margin-top:10px">
+    <div class="backup-title">🔍 Intégrité des données</div>
+    <div class="backup-desc">Scanne et corrige les erreurs : IDs dupliqués, cartes/fournisseurs supprimés, valeurs invalides.</div>
+    <div id="integrityResult" style="margin-bottom:10px"></div>
+    <div class="backup-btns">
+      <button onclick="runIntegrityCheck()" style="padding:13px;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(99,102,241,.05));border:1px solid rgba(99,102,241,.4);color:#818cf8;border-radius:12px;font-size:15px;font-family:'Outfit',sans-serif;font-weight:700;cursor:pointer">🔍 Lancer le scan</button>
+      <button id="btnFixAll" onclick="fixAllIssues()" style="display:none;padding:13px;background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(16,185,129,.05));border:1px solid rgba(16,185,129,.4);color:var(--green);border-radius:12px;font-size:15px;font-family:'Outfit',sans-serif;font-weight:700;cursor:pointer">✅ Corriger tout automatiquement</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- MODAL REASSIGN FOURNISSEUR -->
+<div class="modal-overlay" id="reassignFournModal">
+  <div class="modal">
+    <div class="modal-title">🔄 Réassigner les ventes</div>
+    <div id="reassignFournInfo" style="font-size:14px;color:var(--muted);margin-bottom:16px;line-height:1.6"></div>
+    <select id="reassignFournSelect" style="width:100%;font-size:15px;padding:12px;margin-bottom:16px">
+      <option value="">— Choisir un fournisseur —</option>
+    </select>
+    <div style="display:flex;gap:10px">
+      <button onclick="confirmReassignFourn()" style="flex:1;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:12px;font-size:15px;font-family:'Cabinet Grotesk',sans-serif;font-weight:700;cursor:pointer">✅ Réassigner</button>
+      <button onclick="skipReassignFourn()" style="flex:1;padding:13px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:12px;font-size:15px;font-family:'Outfit',sans-serif;cursor:pointer">🗑️ Supprimer quand même</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL MODIFIER STOCK -->
 <div class="modal-overlay" id="editStockModal">
@@ -3368,7 +3392,71 @@ function renderCartesRapport(){
   }).join('');
 }
 
-// ── PIN LOCK SYSTEM ──────────────────────────────────────────────────────────
+// ── DATA INTEGRITY CHECK ─────────────────────────────────────────────────────
+let _integrityIssues=[];
+
+function runIntegrityCheck(){
+  _integrityIssues=[];
+  const el=document.getElementById('integrityResult');
+  const fixBtn=document.getElementById('btnFixAll');
+  if(!el) return;
+
+  const allCarteIds=new Set(allCartes().map(c=>c.id));
+  const allFournIds=new Set(fourns.map(f=>f.id));
+
+  // 1. IDs dupliqués dans sales
+  const saleIds=sales.map(s=>s.id);
+  const dupSales=saleIds.filter((id,i)=>saleIds.indexOf(id)!==i);
+  if(dupSales.length) _integrityIssues.push({type:'dup_sale',ids:dupSales,label:`${dupSales.length} vente(s) avec ID dupliqué`,fix:()=>{ const seen=new Set(); sales.forEach((s,i)=>{ if(seen.has(s.id)) sales[i].id=Date.now()+i; else seen.add(s.id); }); saveSales(); }});
+
+  // 2. Cartes supprimées référencées dans sales
+  const orphanCarte=sales.filter(s=>s.carteId&&!allCarteIds.has(s.carteId));
+  if(orphanCarte.length) _integrityIssues.push({type:'orphan_carte',ids:orphanCarte.map(s=>s.id),label:`${orphanCarte.length} vente(s) liée(s) à une carte supprimée`,fix:()=>{ orphanCarte.forEach(s=>{ const idx=sales.findIndex(x=>x.id===s.id); if(idx>=0) sales[idx].carteId=''; }); saveSales(); }});
+
+  // 3. Fournisseurs supprimés référencés dans sales
+  const orphanFourn=sales.filter(s=>s.fourn&&!allFournIds.has(s.fourn)&&!fourns.find(f=>f.nom===s.fourn));
+  if(orphanFourn.length) _integrityIssues.push({type:'orphan_fourn',ids:orphanFourn.map(s=>s.id),label:`${orphanFourn.length} vente(s) avec fournisseur introuvable`,fix:()=>{ orphanFourn.forEach(s=>{ const idx=sales.findIndex(x=>x.id===s.id); if(idx>=0) sales[idx].fourn=''; }); saveSales(); }});
+
+  // 4. Valeurs invalides (prix/revenu négatif ou NaN)
+  const badVals=sales.filter(s=>isNaN(s.revenu)||isNaN(s.cout)||s.revenu<0);
+  if(badVals.length) _integrityIssues.push({type:'bad_vals',ids:badVals.map(s=>s.id),label:`${badVals.length} vente(s) avec valeurs invalides (NaN ou négatif)`,fix:()=>{ badVals.forEach(s=>{ const idx=sales.findIndex(x=>x.id===s.id); if(idx>=0){ if(isNaN(sales[idx].revenu)) sales[idx].revenu=0; if(isNaN(sales[idx].cout)) sales[idx].cout=0; if(sales[idx].revenu<0) sales[idx].revenu=0; } }); saveSales(); }});
+
+  // 5. Dates invalides
+  const badDates=sales.filter(s=>s.date&&isNaN(new Date(s.date).getTime()));
+  if(badDates.length) _integrityIssues.push({type:'bad_dates',ids:badDates.map(s=>s.id),label:`${badDates.length} vente(s) avec date invalide`,fix:()=>{ badDates.forEach(s=>{ const idx=sales.findIndex(x=>x.id===s.id); if(idx>=0) sales[idx].date=localDateStr(new Date()); }); saveSales(); }});
+
+  // 6. IDs dupliqués dans achats
+  const achatIds=achats.map(a=>a.id);
+  const dupAchats=achatIds.filter((id,i)=>achatIds.indexOf(id)!==i);
+  if(dupAchats.length) _integrityIssues.push({type:'dup_achat',ids:dupAchats,label:`${dupAchats.length} achat(s) avec ID dupliqué`,fix:()=>{ const seen=new Set(); achats.forEach((a,i)=>{ if(seen.has(a.id)) achats[i].id=Date.now()+i; else seen.add(a.id); }); saveAchats(); }});
+
+  // Render result
+  if(!_integrityIssues.length){
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:14px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:12px">
+      <span style="font-size:24px">✅</span>
+      <div><div style="font-weight:700;color:var(--green);font-size:15px">Aucune erreur détectée</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${sales.length} ventes · ${achats.length} achats · ${allCartes().length} cartes</div></div>
+    </div>`;
+    if(fixBtn) fixBtn.style.display='none';
+  } else {
+    el.innerHTML=`<div style="margin-bottom:10px;padding:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:12px">
+      <div style="font-weight:700;color:var(--red);font-size:14px;margin-bottom:8px">⚠️ ${_integrityIssues.length} problème(s) détecté(s)</div>
+      ${_integrityIssues.map(issue=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(239,68,68,.1);font-size:13px;color:var(--text)">
+        <span style="color:var(--red)">•</span> ${issue.label}
+      </div>`).join('')}
+    </div>`;
+    if(fixBtn) fixBtn.style.display='block';
+  }
+}
+
+function fixAllIssues(){
+  if(!_integrityIssues.length) return;
+  _integrityIssues.forEach(issue=>issue.fix());
+  _integrityIssues=[];
+  const fixBtn=document.getElementById('btnFixAll');
+  if(fixBtn) fixBtn.style.display='none';
+  showToast('✅ Toutes les erreurs corrigées !');
+  runIntegrityCheck();
+}
 let _pinBuffer='';
 let _pinMode='unlock'; // 'unlock' | 'setup1' | 'setup2'
 let _pinSetupFirst='';
@@ -4182,9 +4270,59 @@ function addFourn(){
   document.getElementById('newFournInput').value='';
   showToast('✅ Fournisseur ajouté!');
 }
+let _deleteFournIdx=-1;
+
 function deleteFourn(i){
-  if(!confirm(`Supprimer "${fourns[i].nom}" et toutes ses cartes?`)) return;
-  fourns.splice(i,1); save(); renderFournList();
+  const fourn=fourns[i];
+  // Check sales linked to this fourn's cartes or by fourn name
+  const carteIds=new Set((fourn.cartes||[]).map(c=>c.id));
+  const linked=sales.filter(s=>carteIds.has(s.carteId)||(s.fourn&&(s.fourn===fourn.id||s.fourn===fourn.nom)));
+  if(linked.length){
+    _deleteFournIdx=i;
+    // Populate reassign select
+    const sel=document.getElementById('reassignFournSelect');
+    sel.innerHTML='<option value="">— Choisir un fournisseur —</option>';
+    fourns.filter((_,fi)=>fi!==i).forEach(f=>{ const o=document.createElement('option');o.value=f.id;o.textContent=f.nom;sel.appendChild(o); });
+    document.getElementById('reassignFournInfo').innerHTML=
+      `<span style="color:var(--red);font-weight:700">⚠️ ${linked.length} vente(s)</span> sont liées au fournisseur <strong style="color:var(--text)">${fourn.nom}</strong>.<br>Veux-tu les réassigner à un autre fournisseur avant de supprimer ?`;
+    document.getElementById('reassignFournModal').classList.add('open');
+  } else {
+    if(!confirm(`Supprimer "${fourn.nom}" et toutes ses cartes ?`)) return;
+    fourns.splice(i,1); save(); renderFournList();
+    showToast('🗑️ Fournisseur supprimé');
+  }
+}
+
+function confirmReassignFourn(){
+  if(_deleteFournIdx<0) return;
+  const newFournId=document.getElementById('reassignFournSelect').value;
+  if(!newFournId){showToast('⚠️ Choisis un fournisseur!',true);return;}
+  const newFourn=fourns.find(f=>f.id===newFournId);
+  if(!newFourn) return;
+  const fourn=fourns[_deleteFournIdx];
+  const carteIds=new Set((fourn.cartes||[]).map(c=>c.id));
+  sales.forEach((s,idx)=>{
+    if(carteIds.has(s.carteId)||(s.fourn&&(s.fourn===fourn.id||s.fourn===fourn.nom))){
+      sales[idx].fourn=newFourn.nom;
+      sales[idx].carteId=''; // carte appartient à l'ancien fourn, on la détache
+    }
+  });
+  saveSales();
+  fourns.splice(_deleteFournIdx,1);
+  save(); renderFournList(); refreshFournSelects();
+  document.getElementById('reassignFournModal').classList.remove('open');
+  _deleteFournIdx=-1;
+  showToast(`✅ Ventes réassignées à ${newFourn.nom}`);
+}
+
+function skipReassignFourn(){
+  if(_deleteFournIdx<0) return;
+  const fourn=fourns[_deleteFournIdx];
+  fourns.splice(_deleteFournIdx,1);
+  save(); renderFournList(); refreshFournSelects();
+  document.getElementById('reassignFournModal').classList.remove('open');
+  _deleteFournIdx=-1;
+  showToast('🗑️ Fournisseur supprimé');
 }
 
 // ── CARTES ─────────────────────────────────────────────────────────────────
