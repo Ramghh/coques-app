@@ -1801,6 +1801,11 @@ function renderClients(){
         </div>
       </div>`:''}
       ${client.notes?`<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic">📝 ${client.notes}</div>`:''}
+      ${client.tel?`
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <a href="tel:${client.tel.replace(/\s/g,'')}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);border-radius:11px;color:var(--green);font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;text-decoration:none">📞 Appeler</a>
+        <a href="https://wa.me/216${client.tel.replace(/\D/g,'').replace(/^216/,'')}&text=${encodeURIComponent('Bonjour '+client.nom+' 👋')}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);border-radius:11px;color:#25d366;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;text-decoration:none">💬 WhatsApp</a>
+      </div>`:''}
       ${!client.auto?`
       <div class="sale-actions" style="margin-top:10px">
         <button class="btn-del-card" onclick="deleteClient('${client.id}')">🗑️ Supprimer</button>
@@ -2600,7 +2605,7 @@ function cardHTML(s,q='',delay=0){
       <button class="btn-edit-card"  onclick="openEditModal(${s.id})">✏️ Modifier</button>
       <button class="btn-dup-card"   onclick="duplicateSale(${s.id})">📋 Copier</button>
       <button class="btn-print-card" onclick="printInvoice(${s.id})">🖨️</button>
-      ${!s.phone&&s.client?`<button class="btn-print-card" style="background:rgba(16,185,129,.15);color:var(--green)" onclick="fetchClientPhone(${s.id})">📞</button>`:''}
+      ${s.phone?`<a href="tel:${s.phone.replace(/\s/g,'')}" class="btn-print-card" style="background:rgba(16,185,129,.15);color:var(--green);display:inline-flex;align-items:center;justify-content:center;text-decoration:none">📞</a><a href="https://wa.me/216${s.phone.replace(/\D/g,'').replace(/^216/,'')}?text=${encodeURIComponent('Bonjour '+(s.client||'')+(s.invNum?' — '+s.invNum:'')+ ' 👋 Votre commande est prête !')}" target="_blank" class="btn-print-card" style="background:rgba(37,211,102,.15);color:#25d366;display:inline-flex;align-items:center;justify-content:center;text-decoration:none">💬</a>`:(!s.phone&&s.client?`<button class="btn-print-card" style="background:rgba(16,185,129,.15);color:var(--green)" onclick="fetchClientPhone(${s.id})">📞</button>`:'')}
       <button class="btn-del-card"   onclick="deleteSale(${s.id})">🗑️</button>
     </div>
   </div>`;
