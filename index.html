@@ -401,6 +401,36 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .drawer-footer{padding:14px 18px;border-top:1px solid var(--border);background:var(--surface2)}
 .drawer-user{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
 .drawer-user-sub{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:.5px}
+/* CARTE RAPPORT */
+.cr-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.cr-card::before{content:'';position:absolute;left:0;top:0;width:4px;height:100%;background:var(--accent);border-radius:4px 0 0 4px}
+.cr-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cr-label{font-family:'Cabinet Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--text)}
+.cr-fourn{font-size:11px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);padding:3px 8px;border-radius:20px}
+.cr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.cr-stat{text-align:center;background:var(--surface2);border-radius:10px;padding:10px 6px}
+.cr-stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.cr-stat-val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700}
+.cr-bar-wrap{margin-top:10px}
+.cr-bar-bg{background:var(--surface2);border-radius:6px;height:8px;overflow:hidden;margin-top:4px}
+.cr-bar-fill{height:100%;border-radius:6px;transition:width .6s ease}
+/* PIN LOCK */
+#pinOverlay{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.pin-logo{font-family:'Cabinet Grotesk',sans-serif;font-size:32px;font-weight:800;color:var(--text);margin-bottom:6px}
+.pin-logo span{color:#fbbf24}
+.pin-subtitle{font-size:14px;color:var(--muted);margin-bottom:32px}
+.pin-dots{display:flex;gap:16px;margin-bottom:32px}
+.pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--accent);background:transparent;transition:background .15s}
+.pin-dot.filled{background:var(--accent)}
+.pin-dot.error{border-color:var(--red);background:var(--red);animation:pinShake .3s ease}
+@keyframes pinShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:240px}
+.pin-key{height:70px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:24px;font-weight:700;font-family:'Cabinet Grotesk',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;-webkit-tap-highlight-color:transparent}
+.pin-key:active{transform:scale(.92);background:var(--accent);color:#fff;border-color:var(--accent)}
+.pin-error-msg{font-size:13px;color:var(--red);margin-top:16px;min-height:18px;font-weight:600;text-align:center}
+.pin-setup-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;text-align:center}
+/* PIN settings button */
+.pin-settings-btn{width:100%;margin-top:10px;padding:13px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:12px;font-size:15px;cursor:pointer;font-family:'Outfit',sans-serif;display:flex;align-items:center;gap:8px;justify-content:center}
 
 /* GIST SYNC MODAL */
 .gist-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
@@ -449,6 +479,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <button class="drawer-btn" id="dbtn-partage" onclick="drawerNav('partage')"><span class="d-icon">🤝</span><span class="d-label">Partage</span></button>
     <button class="drawer-btn" id="dbtn-rapport" onclick="drawerNav('rapport')"><span class="d-icon">📊</span><span class="d-label">Rapport</span></button>
     <button class="drawer-btn" id="dbtn-annuel" onclick="drawerNav('annuel')"><span class="d-icon">📅</span><span class="d-label">Annuel</span></button>
+    <button class="drawer-btn" id="dbtn-cartes-rapport" onclick="drawerNav('cartes-rapport')"><span class="d-icon">💳</span><span class="d-label">Rentabilité Cartes</span></button>
     <button class="drawer-btn" id="dbtn-dashboard" onclick="drawerNav('dashboard')"><span class="d-icon">🗺️</span><span class="d-label">Dashboard</span></button>
     <div class="drawer-divider"></div>
     <button class="drawer-btn" id="dbtn-backup" onclick="drawerNav('backup')"><span class="d-icon">💾</span><span class="d-label">Backup</span></button>
@@ -901,6 +932,33 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   </div>
 </div>
 
+<!-- RENTABILITÉ CARTES -->
+<div class="section" id="tab-cartes-rapport">
+  <div class="form-card">
+    <div class="form-title">💳 Rentabilité par Carte</div>
+    <!-- Filtres -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <select id="crFournFilter" onchange="renderCartesRapport()" style="flex:1;min-width:140px;font-size:14px;padding:10px 12px">
+        <option value="">🧑‍💼 Tous fournisseurs</option>
+      </select>
+      <select id="crPeriodFilter" onchange="renderCartesRapport()" style="flex:1;min-width:120px;font-size:14px;padding:10px 12px">
+        <option value="">📅 Toutes périodes</option>
+        <option value="month">Ce mois</option>
+        <option value="year">Cette année</option>
+      </select>
+    </div>
+    <!-- KPI globaux cartes -->
+    <div id="crGlobalKpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px"></div>
+    <!-- Barre chart canvas -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">📈 Bénéfice net par carte</div>
+      <canvas id="cartesRapportChart" style="width:100%;max-height:200px"></canvas>
+    </div>
+    <!-- Liste des cartes -->
+    <div id="crCartesList"></div>
+  </div>
+</div>
+
 <!-- MARQUES -->
 <div class="section" id="tab-marques">
   <div class="form-card" style="padding:16px 0;overflow:hidden">
@@ -1005,6 +1063,12 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   <div class="backup-info">
     <strong>💡 Conseil :</strong> Exporte régulièrement et enregistre dans <strong>Google Drive</strong>.<br>
     Pour changer de téléphone → Importer → tout revient ✅
+  </div>
+  <div class="backup-card" style="margin-top:10px">
+    <div class="backup-title">🔒 Verrouillage PIN</div>
+    <div class="backup-desc">Protège l'accès à MegaStore avec un code PIN à 4 chiffres.</div>
+    <div id="pinStatusInfo" style="margin:10px 0;font-size:13px;color:var(--muted)"></div>
+    <div class="backup-btns" id="pinActionBtns"></div>
   </div>
 </div>
 
@@ -1142,7 +1206,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 const DRAWER_LABELS = {
   ajouter:'➕ Ajouter', ventes:'📋 Ventes', clients:'👤 Clients', stock:'📦 Stock',
   top:'🏆 Top', marques:'🏷️ Marques', fournisseurs:'🧑‍💼 Fournisseurs', partage:'🤝 Partage',
-  rapport:'📊 Rapport', annuel:'📅 Annuel', dashboard:'🗺️ Dashboard', backup:'💾 Backup'
+  rapport:'📊 Rapport', annuel:'📅 Annuel', 'cartes-rapport':'💳 Rentabilité Cartes', dashboard:'🗺️ Dashboard', backup:'💾 Backup'
 };
 
 // ── MINI CHART 7 JOURS ────────────────────────────────────────────────────
@@ -1267,7 +1331,8 @@ function showTab(id,btn,pushHistory=true){
   if(id==='marques') renderMarques();
   if(id==='fournisseurs') renderFournTab();
   if(id==='partage') renderPartageTab();
-  if(id==='backup') loadDriveUrl();
+  if(id==='cartes-rapport') setTimeout(()=>renderCartesRapport(), 50);
+  if(id==='backup') { loadDriveUrl(); renderPinSettings(); }
 }
 
 function goTabBack(){
@@ -1320,6 +1385,14 @@ refreshStockModelList();
 updateKPIs();
 checkBackupReminder();
 loadDriveUrl();
+
+// roundRect polyfill for older browsers
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+    r=Math.min(r,w/2,h/2);
+    this.beginPath();this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();
+  };
+}
 
 // Restaurer dernier onglet
 const lastTab=localStorage.getItem('flousFlowLastTab');
@@ -3156,6 +3229,245 @@ function renderRapport(){
   listEl.innerHTML=getSorted(ms).map(s=>cardHTML(s)).join('');
 }
 
+// ── RENTABILITÉ PAR CARTE ────────────────────────────────────────────────────
+function renderCartesRapport(){
+  // Populate fournisseur filter
+  const fSel=document.getElementById('crFournFilter');
+  if(fSel){
+    const saved=fSel.value;
+    fSel.innerHTML='<option value="">🧑‍💼 Tous fournisseurs</option>';
+    fourns.forEach(f=>{ const o=document.createElement('option');o.value=f.id;o.textContent=f.nom;fSel.appendChild(o); });
+    fSel.value=saved;
+  }
+  const fournFilter=document.getElementById('crFournFilter')?.value||'';
+  const periodFilter=document.getElementById('crPeriodFilter')?.value||'';
+
+  // Period filter
+  const now=new Date();
+  const nowStr=localDateStr(now);
+  let filtSales=sales.filter(s=>s.statut!=='Annulé');
+  if(periodFilter==='month'){
+    const prefix=nowStr.slice(0,7);
+    filtSales=filtSales.filter(s=>s.date&&s.date.startsWith(prefix));
+  } else if(periodFilter==='year'){
+    const y=nowStr.slice(0,4);
+    filtSales=filtSales.filter(s=>s.date&&s.date.startsWith(y));
+  }
+
+  // Build per-carte stats
+  const allC=allCartes();
+  const carteStats={};
+  allC.forEach(c=>{
+    if(fournFilter && c.fournId!==fournFilter) return;
+    carteStats[c.id]={
+      id:c.id, label:c.label, fournNom:c.fournNom, fournId:c.fournId,
+      montant:c.montant, revenu:0, benefNet:0, nbVentes:0
+    };
+  });
+  filtSales.forEach(s=>{
+    if(!s.carteId) return;
+    if(!carteStats[s.carteId]) return;
+    carteStats[s.carteId].revenu+=s.revenu;
+    carteStats[s.carteId].benefNet+=benefNet(s);
+    carteStats[s.carteId].nbVentes++;
+  });
+
+  const stats=Object.values(carteStats).sort((a,b)=>b.benefNet-a.benefNet);
+
+  // Global KPIs
+  const totBen=stats.reduce((a,c)=>a+c.benefNet,0);
+  const totInv=stats.reduce((a,c)=>a+c.montant,0);
+  const totVentes=stats.reduce((a,c)=>a+c.nbVentes,0);
+  const gKpi=document.getElementById('crGlobalKpis');
+  if(gKpi) gKpi.innerHTML=`
+    <div class="kpi"><div class="kpi-label">💰 Bénéfice net total</div><div class="kpi-value green">${fmt(totBen)}</div></div>
+    <div class="kpi"><div class="kpi-label">💳 Investi total</div><div class="kpi-value yellow">${fmt(totInv)}</div></div>
+    <div class="kpi"><div class="kpi-label">🧾 Nb ventes</div><div class="kpi-value purple">${totVentes}</div></div>`;
+
+  // Bar chart
+  if(stats.length>0){
+    const canvas=document.getElementById('cartesRapportChart');
+    if(canvas){
+      const dpr=window.devicePixelRatio||1;
+      const W=canvas.offsetWidth||320;
+      const H=Math.min(200, stats.length*36+30);
+      canvas.width=W*dpr; canvas.height=H*dpr;
+      canvas.style.height=H+'px';
+      const ctx=canvas.getContext('2d');
+      ctx.scale(dpr,dpr);
+      ctx.clearRect(0,0,W,H);
+      const maxV=Math.max(...stats.map(c=>Math.abs(c.benefNet)),1);
+      const barH=22; const gap=14; const padL=8; const padR=14; const padT=6;
+      stats.forEach((c,i)=>{
+        const y=padT+i*(barH+gap);
+        const pct=Math.abs(c.benefNet)/maxV;
+        const avail=W-padL-padR-70;
+        const bW=Math.max(4,pct*avail);
+        const isPos=c.benefNet>=0;
+        // bar
+        ctx.fillStyle=isPos?'rgba(16,185,129,.75)':'rgba(239,68,68,.75)';
+        const r=6;
+        ctx.beginPath();
+        ctx.roundRect(padL+70,y,bW,barH,r);
+        ctx.fill();
+        // label
+        ctx.fillStyle='#888';
+        ctx.font=`600 11px Outfit,sans-serif`;
+        ctx.textAlign='right';
+        ctx.textBaseline='middle';
+        ctx.fillText(c.label.length>10?c.label.slice(0,9)+'…':c.label, padL+66, y+barH/2);
+        // value
+        ctx.fillStyle=isPos?'#10b981':'#ef4444';
+        ctx.font=`700 12px JetBrains Mono,monospace`;
+        ctx.textAlign='left';
+        ctx.fillText(fmt(c.benefNet), padL+70+bW+6, y+barH/2);
+      });
+    }
+  }
+
+  // Cards list
+  const listEl=document.getElementById('crCartesList');
+  if(!listEl) return;
+  if(!stats.length){
+    listEl.innerHTML='<div class="empty"><span class="empty-icon">💳</span><div class="empty-text">Aucune carte trouvée.</div></div>';
+    return;
+  }
+  const marge=totInv>0?totBen/totInv*100:0;
+  listEl.innerHTML=stats.map(c=>{
+    const roi=c.montant>0?c.benefNet/c.montant*100:0;
+    const pctRevenu=c.montant>0?Math.min(100,c.revenu/c.montant*100):0;
+    const isPos=c.benefNet>=0;
+    const barColor=isPos?'var(--green)':'var(--red)';
+    const partShare=c.montant>0?((c.revenu-c.benefNet)/Math.max(c.revenu,1)*100).toFixed(0):0;
+    return `<div class="cr-card">
+      <div class="cr-header">
+        <div class="cr-label">💳 ${c.label}</div>
+        <div class="cr-fourn">🧑‍💼 ${c.fournNom}</div>
+      </div>
+      <div class="cr-grid">
+        <div class="cr-stat"><div class="cr-stat-label">💰 Investi</div><div class="cr-stat-val" style="color:var(--yellow)">${fmt(c.montant)}</div></div>
+        <div class="cr-stat"><div class="cr-stat-label">📥 Revenu</div><div class="cr-stat-val" style="color:var(--accent)">${fmt(c.revenu)}</div></div>
+        <div class="cr-stat"><div class="cr-stat-label">✅ Bénéfice net</div><div class="cr-stat-val" style="color:${isPos?'var(--green)':'var(--red)'}">${fmt(c.benefNet)}</div></div>
+        <div class="cr-stat"><div class="cr-stat-label">📦 Nb ventes</div><div class="cr-stat-val" style="color:var(--text)">${c.nbVentes}</div></div>
+      </div>
+      <div class="cr-bar-wrap">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)"><span>ROI</span><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${isPos?'var(--green)':'var(--red)'}">${roi>=0?'+':''}${roi.toFixed(1)}%</span></div>
+        <div class="cr-bar-bg"><div class="cr-bar-fill" style="width:${Math.min(100,Math.abs(roi)/2)}%;background:${barColor}"></div></div>
+      </div>
+      <div style="margin-top:8px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
+        <span>Récupération vs investi</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--accent)">${pctRevenu.toFixed(0)}%</span>
+      </div>
+      <div class="cr-bar-bg" style="margin-top:4px"><div class="cr-bar-fill" style="width:${pctRevenu}%;background:var(--accent)"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── PIN LOCK SYSTEM ──────────────────────────────────────────────────────────
+let _pinBuffer='';
+let _pinMode='unlock'; // 'unlock' | 'setup1' | 'setup2'
+let _pinSetupFirst='';
+
+function pinGetStored(){ return localStorage.getItem('ff_pin')||''; }
+function pinIsEnabled(){ return !!pinGetStored(); }
+
+function pinInit(){
+  if(pinIsEnabled()){
+    showPinOverlay('unlock');
+  }
+}
+
+function showPinOverlay(mode, subtitle){
+  _pinMode=mode; _pinBuffer='';
+  const overlay=document.getElementById('pinOverlay');
+  if(!overlay) return;
+  overlay.style.display='flex';
+  document.getElementById('pinErrorMsg').textContent='';
+  const sub=document.getElementById('pinSubtitle');
+  if(sub) sub.textContent = subtitle || (mode==='unlock'?'Entrez votre code PIN':mode==='setup1'?'Choisissez un code PIN à 4 chiffres':'Confirmez le code PIN');
+  renderPinDots();
+}
+
+function hidePinOverlay(){
+  const overlay=document.getElementById('pinOverlay');
+  if(overlay) overlay.style.display='none';
+}
+
+function pinCancel(){
+  if(_pinMode==='unlock') return; // cannot cancel unlock
+  hidePinOverlay();
+  renderPinSettings();
+}
+
+function renderPinDots(){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('pd'+i);
+    if(d){ d.classList.remove('filled','error'); if(i<_pinBuffer.length) d.classList.add('filled'); }
+  }
+}
+
+function pinError(msg){
+  for(let i=0;i<4;i++){ const d=document.getElementById('pd'+i); if(d){d.classList.add('error');} }
+  document.getElementById('pinErrorMsg').textContent=msg;
+  setTimeout(()=>{ _pinBuffer=''; renderPinDots(); for(let i=0;i<4;i++){const d=document.getElementById('pd'+i);if(d)d.classList.remove('error');} document.getElementById('pinErrorMsg').textContent=''; },700);
+}
+
+function pinKey(k){
+  if(k==='del'){ if(_pinBuffer.length>0){_pinBuffer=_pinBuffer.slice(0,-1); renderPinDots();} return; }
+  if(_pinBuffer.length>=4) return;
+  _pinBuffer+=k;
+  renderPinDots();
+  if(_pinBuffer.length===4){
+    setTimeout(()=>{
+      if(_pinMode==='unlock'){
+        if(_pinBuffer===pinGetStored()){ hidePinOverlay(); }
+        else { pinError('Code incorrect ❌'); }
+      } else if(_pinMode==='setup1'){
+        _pinSetupFirst=_pinBuffer;
+        _pinBuffer='';
+        showPinOverlay('setup2');
+      } else if(_pinMode==='setup2'){
+        if(_pinBuffer===_pinSetupFirst){
+          localStorage.setItem('ff_pin',_pinBuffer);
+          hidePinOverlay();
+          showToast('🔒 Code PIN activé !');
+          renderPinSettings();
+        } else {
+          _pinSetupFirst='';
+          pinError('Codes différents, recommencez');
+          setTimeout(()=>showPinOverlay('setup1'),800);
+        }
+      }
+    },120);
+  }
+}
+
+function pinSetup(){
+  showPinOverlay('setup1');
+}
+
+function pinDisable(){
+  if(!confirm('Désactiver le code PIN ?')) return;
+  localStorage.removeItem('ff_pin');
+  showToast('🔓 PIN désactivé');
+  renderPinSettings();
+}
+
+function renderPinSettings(){
+  const statusEl=document.getElementById('pinStatusInfo');
+  const btnsEl=document.getElementById('pinActionBtns');
+  if(!statusEl||!btnsEl) return;
+  if(pinIsEnabled()){
+    statusEl.innerHTML='<span style="color:var(--green);font-weight:700">🔒 PIN activé</span> — L\'application se verrouille à l\'ouverture.';
+    btnsEl.innerHTML=`<button onclick="pinSetup()" style="flex:1;padding:12px;background:linear-gradient(135deg,rgba(255,122,0,.15),rgba(255,122,0,.05));border:1px solid rgba(255,122,0,.4);color:var(--accent);border-radius:12px;font-size:14px;font-family:'Outfit',sans-serif;cursor:pointer;font-weight:600">🔄 Changer le PIN</button>
+    <button onclick="pinDisable()" style="flex:1;padding:12px;background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);border-radius:12px;font-size:14px;font-family:'Outfit',sans-serif;cursor:pointer;font-weight:600">🔓 Désactiver</button>`;
+    btnsEl.style.display='flex'; btnsEl.style.gap='10px'; btnsEl.style.flexWrap='wrap';
+  } else {
+    statusEl.innerHTML='<span style="color:var(--muted)">🔓 PIN désactivé</span> — Accès libre à l\'application.';
+    btnsEl.innerHTML=`<button onclick="pinSetup()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:12px;font-size:16px;font-family:'Cabinet Grotesk',sans-serif;font-weight:700;cursor:pointer">🔒 Activer le code PIN</button>`;
+  }
+}
+
 function drawLineChart(canvasId, labels, values){
   const canvas=document.getElementById(canvasId);
   if(!canvas) return;
@@ -4419,6 +4731,7 @@ async function gistPull(){
 document.addEventListener('DOMContentLoaded',function(){
   const gm=document.getElementById('gistModal');
   if(gm) gm.addEventListener('click',function(e){if(e.target===this) closeGistModal();});
+  pinInit();
 });
 
 // ── MINI CHART 7 JOURS ────────────────────────────────────────────────────
@@ -4596,6 +4909,33 @@ function dismissBell(){
     </div>
     <a id="gistLink" class="gist-link" href="#" target="_blank" style="display:none">🔗 Voir le Gist sur GitHub</a>
   </div>
+</div>
+
+<!-- PIN LOCK OVERLAY -->
+<div id="pinOverlay" style="display:none">
+  <div class="pin-logo">Mega<span>Store</span></div>
+  <div class="pin-subtitle" id="pinSubtitle">Entrez votre code PIN</div>
+  <div class="pin-dots" id="pinDots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-pad">
+    <button class="pin-key" onclick="pinKey('1')">1</button>
+    <button class="pin-key" onclick="pinKey('2')">2</button>
+    <button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button>
+    <button class="pin-key" onclick="pinKey('5')">5</button>
+    <button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button>
+    <button class="pin-key" onclick="pinKey('8')">8</button>
+    <button class="pin-key" onclick="pinKey('9')">9</button>
+    <button class="pin-key" style="font-size:20px" onclick="pinKey('del')">⌫</button>
+    <button class="pin-key" onclick="pinKey('0')">0</button>
+    <button class="pin-key" style="font-size:18px;color:var(--muted)" onclick="pinCancel()">✕</button>
+  </div>
+  <div class="pin-error-msg" id="pinErrorMsg"></div>
 </div>
 
 <!-- FAB -->
