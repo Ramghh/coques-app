@@ -2590,7 +2590,7 @@ function cardHTML(s,q='',delay=0){
       ${s.color?`<span class="tag">🎨 ${hl(s.color,q)}</span>`:''}
       ${s.ville?`<span class="tag city">📍 ${hl(s.ville,q)}</span>`:''}
       ${s.client?`<span class="tag client">👤 ${hl(s.client,q)}</span>`:''}
-      ${s.phone?`<span class="tag" style="color:var(--green)">📞 ${s.phone}</span>`:''}
+      ${s.phone?`<span class="tag" style="color:var(--green)">📞 ${s.phone}</span><a href="tel:${s.phone.replace(/\s/g,'')}" class="tag" style="color:var(--green);background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);text-decoration:none">📲</a><a href="https://wa.me/216${s.phone.replace(/\D/g,'').replace(/^216/,'')}?text=${encodeURIComponent('Bonjour '+(s.client||'')+(s.invNum?' — '+s.invNum:'')+ ' 👋 Votre commande est prête !')}" target="_blank" class="tag" style="color:#25d366;background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.3);text-decoration:none">💬</a>`:''}
       ${fNom?`<span class="tag fourn">🧑‍💼 ${hl(fNom,q)}</span>`:''}
       ${carteObj?`<span class="tag carte">💳 ${carteObj.label}</span>`:''}
       ${partageTag}
@@ -2605,7 +2605,7 @@ function cardHTML(s,q='',delay=0){
       <button class="btn-edit-card"  onclick="openEditModal(${s.id})">✏️ Modifier</button>
       <button class="btn-dup-card"   onclick="duplicateSale(${s.id})">📋 Copier</button>
       <button class="btn-print-card" onclick="printInvoice(${s.id})">🖨️</button>
-      ${s.phone?`<a href="tel:${s.phone.replace(/\s/g,'')}" class="btn-print-card" style="background:rgba(16,185,129,.15);color:var(--green);display:inline-flex;align-items:center;justify-content:center;text-decoration:none">📞</a><a href="https://wa.me/216${s.phone.replace(/\D/g,'').replace(/^216/,'')}?text=${encodeURIComponent('Bonjour '+(s.client||'')+(s.invNum?' — '+s.invNum:'')+ ' 👋 Votre commande est prête !')}" target="_blank" class="btn-print-card" style="background:rgba(37,211,102,.15);color:#25d366;display:inline-flex;align-items:center;justify-content:center;text-decoration:none">💬</a>`:(!s.phone&&s.client?`<button class="btn-print-card" style="background:rgba(16,185,129,.15);color:var(--green)" onclick="fetchClientPhone(${s.id})">📞</button>`:'')}
+      ${!s.phone&&s.client?`<button class="btn-print-card" style="background:rgba(16,185,129,.15);color:var(--green)" onclick="fetchClientPhone(${s.id})">📞</button>`:''}
       <button class="btn-del-card"   onclick="deleteSale(${s.id})">🗑️</button>
     </div>
   </div>`;
