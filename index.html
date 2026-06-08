@@ -452,11 +452,23 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .gist-btn.pull{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
 .gist-btn.cancel{grid-column:1/-1;background:transparent;border:1px solid var(--border);color:var(--muted);padding:12px}
 .gist-link{font-size:11px;color:var(--accent);text-decoration:none;display:block;margin-top:10px;text-align:center}
+.scan-btn{background:rgba(255,122,0,.12);border:1px solid rgba(255,122,0,.25);color:var(--accent);width:38px;height:38px;border-radius:9px;cursor:pointer;font-size:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.scan-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.scan-overlay video{width:min(90vw,380px);border-radius:14px;border:2px solid var(--accent)}
+.scan-close{background:var(--accent);color:#fff;border:none;padding:12px 32px;border-radius:12px;font-size:16px;font-family:'Outfit',sans-serif;cursor:pointer;font-weight:600}
+.scan-hint{color:#fff;font-size:14px;opacity:.8}
 </style>
+<script src="https://unpkg.com/@zxing/library@0.19.3/umd/index.min.js"></script>
 </head>
 <body>
 
-<!-- SIDE DRAWER OVERLAY -->
+<!-- BARCODE SCANNER OVERLAY -->
+<div class="scan-overlay" id="scanOverlay" style="display:none">
+  <div class="scan-hint">📷 Pointez la caméra sur le code-barres</div>
+  <video id="scanVideo" autoplay playsinline muted></video>
+  <button class="scan-close" onclick="closeScanner()">✕ Fermer</button>
+</div>
+
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 
 <!-- SIDE DRAWER -->
@@ -639,7 +651,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <div class="form-grid">
       <div class="form-full">
         <label>Modèle Téléphone</label>
-        <input type="text" id="stockModel" placeholder="ex: HTC, iPhone 15 Pro..." list="stockModelsList">
+        <div style="display:flex;gap:6px;align-items:center">
+        <input type="text" id="stockModel" placeholder="ex: HTC, iPhone 15 Pro..." list="stockModelsList" style="flex:1">
+        <button type="button" class="scan-btn" onclick="openScanner('stockModel')" title="Scanner">📷</button>
+        </div>
         <datalist id="stockModelsList"></datalist>
       </div>
       <div>
@@ -689,7 +704,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <div class="form-grid">
       <div><label>Date</label><input type="date" id="fDate"></div>
       <div><label>Modèle</label>
-        <input type="text" id="fModel" placeholder="iPhone 15 Pro" list="fModelList" oninput="checkStockForModel()">
+        <div style="display:flex;gap:6px;align-items:center">
+        <input type="text" id="fModel" placeholder="iPhone 15 Pro" list="fModelList" oninput="checkStockForModel()" style="flex:1">
+        <button type="button" class="scan-btn" onclick="openScanner('fModel')" title="Scanner">📷</button>
+        </div>
         <datalist id="fModelList"></datalist>
         <div id="stockIndicator" style="display:none;margin-top:5px;font-size:12px;padding:6px 10px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-weight:600"></div>
       </div>
@@ -733,8 +751,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <div class="form-title">📦 Nouvel Achat</div>
     <div class="form-grid">
       <div><label>Date</label><input type="date" id="aDate"></div>
-      <div><label>Produit</label><input type="text" id="aProduit" placeholder="Coque iPhone 15 Pro"></div>
-      <div><label>Modèle Téléphone</label><input type="text" id="aModel" placeholder="iPhone 15 Pro"></div>
+      <div><label>Produit</label><div style="display:flex;gap:6px;align-items:center"><input type="text" id="aProduit" placeholder="Coque iPhone 15 Pro" style="flex:1"><button type="button" class="scan-btn" onclick="openScanner('aProduit')" title="Scanner">📷</button></div></div>
+      <div><label>Modèle Téléphone</label><div style="display:flex;gap:6px;align-items:center"><input type="text" id="aModel" placeholder="iPhone 15 Pro" style="flex:1"><button type="button" class="scan-btn" onclick="openScanner('aModel')" title="Scanner">📷</button></div></div>
       <div><label>Quantité</label><input type="number" id="aQty" placeholder="10" min="1"></div>
       <div><label>Prix unitaire (DT)</label><input type="number" id="aPrix" placeholder="11.450" step="0.001"></div>
       <div><label>Frais livraison (DT)</label><input type="number" id="aLivraison" placeholder="0" step="0.001"></div>
@@ -1023,7 +1041,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 <div class="section" id="tab-fournisseurs">
   <div class="form-card">
     <div class="form-title">🧑‍💼 Fournisseurs & Cartes</div>
-    <div id="fournTabList"></div>
+    <div id="fournTabList" style="display:flex;flex-direction:column;gap:12px"></div>
     <button onclick="openFournModal()" style="width:100%;margin-top:14px;padding:13px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:12px;font-size:15px;cursor:pointer;font-family:'Outfit',sans-serif;">⚙️ Gérer les fournisseurs</button>
   </div>
 </div>
@@ -4037,40 +4055,40 @@ function renderFournTab(){
       const g=Math.round(68*(1-pct/100)+185*(pct/100));
       const barColor=`rgb(${r},${g},68)`;
       const recColor=aRecuperer>0?'var(--red)':'var(--green)';
-      return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:6px">
+      return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-top:8px">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div>
-            <div style="font-size:14px;font-weight:600">💳 ${c.label}</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.date||'—'} · ${ventes.length} vente${ventes.length>1?'s':''}</div>
+            <div style="font-size:16px;font-weight:600">💳 ${c.label}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px">${c.date||'—'} · ${ventes.length} vente${ventes.length>1?'s':''}</div>
           </div>
-          <div style="display:flex;gap:5px">
-            <button onclick="openEditCarteModal('${f.id}','${c.id}')" style="background:rgba(255,122,0,.12);border:1px solid rgba(255,122,0,.25);color:var(--accent);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:14px">✏️</button>
-            <button onclick="deleteCarte('${f.id}','${c.id}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:14px">✕</button>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
-          <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:7px">
-            <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Montant</div>
-            <div style="font-size:12px;font-weight:700;color:var(--accent)">${fmt(c.montant)}</div>
-          </div>
-          <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:7px">
-            <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Revenu</div>
-            <div style="font-size:12px;font-weight:700;color:var(--green)">${fmt(revenu)}</div>
-          </div>
-          <div style="text-align:center;background:var(--surface2);border-radius:8px;padding:7px">
-            <div style="font-size:9px;color:var(--muted);text-transform:uppercase">${aRecuperer<=0?'Récupéré ✅':'À récupérer'}</div>
-            <div style="font-size:12px;font-weight:700;color:${recColor}">${aRecuperer>0?fmt(aRecuperer):'+'+fmt(Math.abs(aRecuperer))}</div>
+          <div style="display:flex;gap:6px">
+            <button onclick="openEditCarteModal('${f.id}','${c.id}')" style="background:rgba(255,122,0,.12);border:1px solid rgba(255,122,0,.25);color:var(--accent);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:16px">✏️</button>
+            <button onclick="deleteCarte('${f.id}','${c.id}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:16px">✕</button>
           </div>
         </div>
-        <div style="margin-top:8px">
-          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">
+          <div style="text-align:center;background:var(--surface2);border-radius:10px;padding:10px 6px">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Montant</div>
+            <div style="font-size:14px;font-weight:700;color:var(--accent)">${fmt(c.montant)}</div>
+          </div>
+          <div style="text-align:center;background:var(--surface2);border-radius:10px;padding:10px 6px">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Revenu</div>
+            <div style="font-size:14px;font-weight:700;color:var(--green)">${fmt(revenu)}</div>
+          </div>
+          <div style="text-align:center;background:var(--surface2);border-radius:10px;padding:10px 6px">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">${aRecuperer<=0?'Récupéré ✅':'À récupérer'}</div>
+            <div style="font-size:14px;font-weight:700;color:${recColor}">${aRecuperer>0?fmt(aRecuperer):'+'+fmt(Math.abs(aRecuperer))}</div>
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">
             <span>Récupération</span><span>${pct.toFixed(0)}%</span>
           </div>
-          <div style="height:6px;background:var(--border);border-radius:4px;overflow:hidden">
+          <div style="height:7px;background:var(--border);border-radius:4px;overflow:hidden">
             <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px;transition:width .5s"></div>
           </div>
         </div>
-        <div style="margin-top:7px;font-size:12px;text-align:right;color:${benef>0?'var(--green)':'var(--muted)'}">💰 Bénéfice: ${fmt(benef)}</div>
+        <div style="margin-top:8px;font-size:13px;text-align:right;color:${benef>0?'var(--green)':'var(--muted)'}">💰 Bénéfice: ${fmt(benef)}</div>
       </div>`;
     }).join('');
     const totalRev=f.cartes.reduce((a,c)=>{const v=sales.filter(s=>s.carteId===c.id);return a+v.reduce((b,s)=>b+s.revenu,0);},0);
@@ -4081,9 +4099,9 @@ function renderFournTab(){
     return `<div class="city-row" style="flex-direction:column;align-items:stretch">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div class="city-name">🧑‍💼 ${f.nom}</div>
-        <div style="font-size:11px;color:var(--muted)">${f.cartes.length} carte${f.cartes.length>1?'s':''} · ${fmt(totalMont)}</div>
+        <div style="font-size:13px;color:var(--muted)">${f.cartes.length} carte${f.cartes.length>1?'s':''} · ${fmt(totalMont)}</div>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:5px">
+      <div style="display:flex;justify-content:space-between;font-size:14px;margin-top:6px">
         <span style="color:${totalRec>0?'var(--red)':'var(--green)'}">
           ${totalRec>0?'À récupérer: '+fmt(totalRec):'Récupéré ✅ +'+fmt(Math.abs(totalRec))}
         </span>
@@ -4616,6 +4634,39 @@ function updateGroupedChart(){
 }
 
 // ── TOAST ──────────────────────────────────────────────────────────────────
+// ── BARCODE SCANNER ────────────────────────────────────────────────────────
+let _scanTargetId = null;
+let _codeReader = null;
+
+async function openScanner(targetInputId) {
+  _scanTargetId = targetInputId;
+  document.getElementById('scanOverlay').style.display = 'flex';
+  try {
+    if (typeof ZXing === 'undefined') { showToast('⚠️ Scanner non disponible', true); closeScanner(); return; }
+    _codeReader = new ZXing.BrowserMultiFormatReader();
+    const devices = await _codeReader.listVideoInputDevices();
+    const backCam = devices.find(d => /back|rear|environment/i.test(d.label)) || devices[devices.length - 1];
+    const deviceId = backCam ? backCam.deviceId : undefined;
+    await _codeReader.decodeFromVideoDevice(deviceId, 'scanVideo', (result, err) => {
+      if (result) {
+        const el = document.getElementById(_scanTargetId);
+        if (el) { el.value = result.getText(); el.dispatchEvent(new Event('input')); }
+        showToast('✅ Code scanné: ' + result.getText());
+        closeScanner();
+      }
+    });
+  } catch(e) {
+    showToast('⚠️ Caméra inaccessible', true);
+    closeScanner();
+  }
+}
+
+function closeScanner() {
+  if (_codeReader) { try { _codeReader.reset(); } catch(e){} _codeReader = null; }
+  document.getElementById('scanOverlay').style.display = 'none';
+}
+// ──────────────────────────────────────────────────────────────────────────
+
 function showToast(msg,err=false){
   const t=document.getElementById('toast');
   t.textContent=msg; t.className='toast'+(err?' error':'');
