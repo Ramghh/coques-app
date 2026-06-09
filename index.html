@@ -466,6 +466,176 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .scan-overlay video{width:min(90vw,380px);border-radius:14px;border:2px solid var(--accent)}
 .scan-close{background:var(--accent);color:#fff;border:none;padding:12px 32px;border-radius:12px;font-size:16px;font-family:'Outfit',sans-serif;cursor:pointer;font-weight:600}
 .scan-hint{color:#fff;font-size:14px;opacity:.8}
+
+/* ═══════════════════════════════════════════════════════
+   📱 MOBILE OPTIMISATION — max-width: 768px
+   ═══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* HEADER — compact */
+  header { padding: 10px 12px 8px; }
+  .logo { font-size: 20px; }
+  .active-tab-pill { font-size: 10px; padding: 3px 9px; margin-top: 3px; }
+  .menu-btn { width: 34px; height: 34px; font-size: 18px; }
+  .bell-btn { width: 34px; height: 34px; font-size: 17px; }
+  #totalCount { width: 58px !important; height: 58px !important; }
+
+  /* GLOBAL SEARCH — moins de padding */
+  .gsearch-wrap { margin: 8px 10px 0; }
+  .gsearch-input { padding: 9px 14px 9px 38px; font-size: 14px; }
+
+  /* TODAY / WEEK / MONTH CARDS — plus petites */
+  header > div[style*="grid-template-columns:1fr 1fr 1fr"],
+  header + * > div[style*="grid-template-columns:1fr 1fr 1fr"] { gap: 5px !important; }
+
+  /* KPI STRIP */
+  .kpi-strip { padding: 8px 10px; gap: 5px; }
+  .kpi { padding: 10px 5px; border-radius: 10px; }
+  .kpi-label { font-size: 9px; letter-spacing: .4px; margin-bottom: 3px; }
+  .kpi-value { font-size: 12px; }
+
+  /* MINI CHART — moins haut */
+  .mini-chart-wrap { margin: 8px 10px 0; padding: 8px 10px; }
+  #miniChart7d { height: 40px !important; }
+  .mini-chart-title { font-size: 9px; }
+  .mini-chart-total { font-size: 11px; }
+
+  /* CARTES BANNER (Suivi Cartes) — compact */
+  #cartesBanner { padding: 10px 12px !important; margin-bottom: 8px !important; }
+  #cartesBanner > div[style*="grid-template-columns:1fr 1fr 1fr"] > div {
+    padding: 7px 5px !important;
+    border-radius: 9px !important;
+  }
+
+  /* BIG KPI CARDS (Coût / Livraison) */
+  header ~ div[style*="grid-template-columns:1fr 1fr"],
+  .kpi-strip ~ div[style*="grid-template-columns:1fr 1fr"] {
+    gap: 6px !important;
+    margin: 8px 0 !important;
+  }
+
+  /* SECTIONS padding */
+  .section { padding: 0 8px; }
+
+  /* FORM CARDS */
+  .form-card { padding: 14px 12px; margin-bottom: 10px; }
+  .form-title { font-size: 16px; margin-bottom: 12px; }
+  .form-grid { gap: 10px; }
+  input, select { font-size: 15px; padding: 11px 12px; border-radius: 10px; }
+  .btn-add { padding: 13px; font-size: 16px; border-radius: 12px; }
+
+  /* SALE CARDS */
+  .sale-card { padding: 9px 10px 7px; }
+  .sale-model { font-size: 15px; }
+  .sale-benef { font-size: 13px; padding: 2px 8px; }
+  .sale-nums { gap: 4px; }
+  .num-label { font-size: 9px; }
+  .num-val { font-size: 12px; }
+  .sale-actions { gap: 5px; }
+  .btn-edit-card, .btn-del-card, .btn-dup-card, .btn-print-card {
+    padding: 6px 4px; font-size: 12px; border-radius: 8px;
+  }
+
+  /* FOURNISSEUR CARDS — c'est le gros problème visible dans la screenshot */
+  /* Le inner card des cartes investissement */
+  .fourn-carte-inner { padding: 12px !important; }
+
+  /* Les 3 stats MONTANT/REVENU/RÉCUPÉRÉ dans les cartes fournisseur */
+  .fourn-stat-grid {
+    gap: 4px !important;
+  }
+  .fourn-stat-item {
+    padding: 8px 4px !important;
+    border-radius: 8px !important;
+  }
+  .fourn-stat-label { font-size: 8px !important; letter-spacing: .3px !important; }
+  .fourn-stat-val { font-size: 14px !important; }
+
+  /* Barre de récupération fournisseur */
+  .fourn-progress { margin-top: 8px !important; }
+
+  /* MODALS */
+  .modal { padding: 18px 14px; border-radius: 18px; }
+  .modal-title { font-size: 18px; }
+  .edit-grid { gap: 10px; }
+
+  /* TABS */
+  .tab-btn { padding: 8px 14px; font-size: 13px; }
+
+  /* RAPPORT / ANNUEL cards */
+  .month-cards { gap: 7px; }
+  .month-kpi { padding: 10px; border-radius: 10px; }
+  .month-kpi-val { font-size: 16px; }
+
+  /* SORT BAR */
+  .sort-bar { gap: 6px; }
+  .sort-btn { padding: 6px 12px; font-size: 12px; }
+
+  /* FAB — légèrement plus petit */
+  .fab { width: 50px; height: 50px; font-size: 24px; bottom: 22px; right: 16px; }
+
+  /* REC BANNER (récupération globale) */
+  .rec-amount { font-size: 20px; }
+  .rec-sub-val { font-size: 14px; }
+  .rec-banner { padding: 12px 14px; }
+
+  /* CITY ROWS (fournisseur cards outer) */
+  .city-row { padding: 12px 12px; }
+  .city-name { font-size: 15px; }
+
+  /* CARTE RAPPORT */
+  .cr-grid { gap: 6px; }
+  .cr-stat { padding: 8px 4px; }
+  .cr-stat-val { font-size: 12px; }
+
+  /* PIN PAD — bon sur mobile mais on améliore */
+  .pin-pad { gap: 10px; width: 220px; }
+  .pin-key { height: 62px; font-size: 22px; }
+}
+
+/* Extra small phones (< 380px) */
+@media (max-width: 380px) {
+  .logo { font-size: 18px; }
+  .kpi-value { font-size: 11px; }
+  .num-val { font-size: 11px; }
+  .sale-model { font-size: 14px; }
+  input, select { font-size: 14px; padding: 10px 11px; }
+}
+
+/* PERIOD CARDS (Aujourd&#39;hui / Semaine / Mois) */
+.period-cards-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:12px 12px 0}
+.period-card{border-radius:var(--radius);padding:10px 10px}
+.period-card-today{background:linear-gradient(135deg,rgba(255,122,0,.15),rgba(255,154,60,.1));border:1px solid rgba(255,122,0,.3)}
+.period-card-week{background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(245,158,11,.08));border:1px solid rgba(16,185,129,.3)}
+.period-card-month{background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(139,92,246,.08));border:1px solid rgba(59,130,246,.3)}
+.period-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:3px}
+.period-ventes{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:var(--accent);margin-bottom:2px}
+.period-benef{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:900;color:var(--green)}
+.period-vs{font-size:9px;font-weight:600;margin-top:2px}
+@media(max-width:768px){
+  .period-cards-row{gap:5px;margin:8px 8px 0}
+  .period-card{padding:8px 6px}
+  .period-label{font-size:8px}
+  .period-ventes{font-size:10px}
+  .period-benef{font-size:11px}
+}
+/* COST CARDS (Cout Achats / Livraison) */
+.cost-cards-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.cost-card{border-radius:var(--radius);padding:14px 14px}
+.cost-card-cout{background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.3)}
+.cost-card-livr{background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(239,68,68,.05));border:1px solid rgba(239,68,68,.3)}
+.cost-card-label{font-size:10px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:4px}
+.cost-card-val{font-family:'Cabinet Grotesk',sans-serif;font-size:20px;font-weight:800}
+.cost-card-cout .cost-card-label{color:var(--yellow)}
+.cost-card-cout .cost-card-val{color:var(--yellow)}
+.cost-card-livr .cost-card-label{color:var(--red)}
+.cost-card-livr .cost-card-val{color:var(--red)}
+@media(max-width:768px){
+  .cost-cards-row{gap:6px;margin:8px 0}
+  .cost-card{padding:10px 10px}
+  .cost-card-label{font-size:9px}
+  .cost-card-val{font-size:16px}
+}
 </style>
 <script src="https://unpkg.com/@zxing/library@0.19.3/umd/index.min.js"></script>
 </head>
@@ -558,24 +728,24 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <div class="gsearch-dropdown" id="gsearchDropdown"></div>
   </div>
 
-<div style="margin:14px 18px 0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-  <div id="todayCard" style="background:linear-gradient(135deg,rgba(255,122,0,.15),rgba(255,154,60,.1));border:1px solid rgba(255,122,0,.3);border-radius:var(--radius);padding:10px 12px">
-    <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">📅 Aujourd'hui</div>
-    <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:var(--accent);margin-bottom:3px" id="todayVentes">0 vente</div>
-    <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:900;color:var(--green)" id="todayBenef">+0.000 DT</div>
-    <div style="font-size:10px;font-weight:600;margin-top:3px" id="todayVsYesterday"></div>
+<div class="period-cards-row">
+  <div id="todayCard" class="period-card period-card-today">
+    <div class="period-label">&#x1F4C5; Aujourd&#39;hui</div>
+    <div class="period-ventes" id="todayVentes">0 vente</div>
+    <div class="period-benef" id="todayBenef">+0.000 DT</div>
+    <div class="period-vs" id="todayVsYesterday"></div>
   </div>
-  <div style="background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(245,158,11,.08));border:1px solid rgba(16,185,129,.3);border-radius:var(--radius);padding:10px 12px">
-    <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">📆 Semaine</div>
-    <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:var(--yellow);margin-bottom:3px" id="weekVentes">0 vente</div>
-    <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:900;color:var(--green)" id="weekBenef">+0.000 DT</div>
-    <div style="font-size:10px;font-weight:600;margin-top:3px" id="weekVsLast"></div>
+  <div class="period-card period-card-week">
+    <div class="period-label">&#x1F4C6; Semaine</div>
+    <div class="period-ventes" style="color:var(--yellow)" id="weekVentes">0 vente</div>
+    <div class="period-benef" id="weekBenef">+0.000 DT</div>
+    <div class="period-vs" id="weekVsLast"></div>
   </div>
-  <div style="background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(139,92,246,.08));border:1px solid rgba(59,130,246,.3);border-radius:var(--radius);padding:10px 12px">
-    <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">🗓️ Ce mois</div>
-    <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:#60a5fa;margin-bottom:3px" id="monthVentes">0 vente</div>
-    <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:900;color:var(--green)" id="monthBenef">+0.000 DT</div>
-    <div style="font-size:10px;font-weight:600;margin-top:3px" id="monthVsLast"></div>
+  <div class="period-card period-card-month">
+    <div class="period-label">&#x1F5D3;&#xFE0F; Ce mois</div>
+    <div class="period-ventes" style="color:#60a5fa" id="monthVentes">0 vente</div>
+    <div class="period-benef" id="monthBenef">+0.000 DT</div>
+    <div class="period-vs" id="monthVsLast"></div>
   </div>
 </div>
 
@@ -596,14 +766,14 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 
 
 
-<div style="margin:14px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px">
-  <div style="background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.3);border-radius:var(--radius);padding:16px 18px">
-    <div style="font-size:11px;color:var(--yellow);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:4px">🛒 Coût Total Achats</div>
-    <div style="font-family:'Cabinet Grotesk',sans-serif;font-size:22px;font-weight:800;color:var(--yellow)" id="kpiCout">0.000 DT</div>
+<div class="cost-cards-row">
+  <div class="cost-card cost-card-cout">
+    <div class="cost-card-label">🛒 Coût Total Achats</div>
+    <div class="cost-card-val" id="kpiCout">0.000 DT</div>
   </div>
-  <div style="background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(239,68,68,.05));border:1px solid rgba(239,68,68,.3);border-radius:var(--radius);padding:16px 18px">
-    <div style="font-size:11px;color:var(--red);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:4px">🚚 Coût Livraison</div>
-    <div style="font-family:'Cabinet Grotesk',sans-serif;font-size:22px;font-weight:800;color:var(--red)" id="kpiEnvoi">0.000 DT</div>
+  <div class="cost-card cost-card-livr">
+    <div class="cost-card-label">🚚 Coût Livraison</div>
+    <div class="cost-card-val" id="kpiEnvoi">0.000 DT</div>
   </div>
 </div>
 
