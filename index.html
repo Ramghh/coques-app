@@ -455,7 +455,13 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .gist-btn.pull{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
 .gist-btn.cancel{grid-column:1/-1;background:transparent;border:1px solid var(--border);color:var(--muted);padding:12px}
 .gist-link{font-size:11px;color:var(--accent);text-decoration:none;display:block;margin-top:10px;text-align:center}
-.scan-btn{background:rgba(255,122,0,.12);border:1px solid rgba(255,122,0,.25);color:var(--accent);width:38px;height:38px;border-radius:9px;cursor:pointer;font-size:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.wa-sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:8000;display:flex;align-items:flex-end;justify-content:center}
+.wa-sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 18px 32px;width:100%;max-width:480px;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.wa-sheet-title{font-size:16px;font-weight:700;margin-bottom:14px;text-align:center}
+.wa-lang-btn{width:100%;padding:13px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:15px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;margin-bottom:8px;text-align:left}
+.wa-lang-btn:active{background:rgba(255,122,0,.12);border-color:var(--accent)}
+.wa-cancel{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:14px;font-family:'Outfit',sans-serif;cursor:pointer;margin-top:4px}border:1px solid rgba(255,122,0,.25);color:var(--accent);width:38px;height:38px;border-radius:9px;cursor:pointer;font-size:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .scan-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
 .scan-overlay video{width:min(90vw,380px);border-radius:14px;border:2px solid var(--accent)}
 .scan-close{background:var(--accent);color:#fff;border:none;padding:12px 32px;border-radius:12px;font-size:16px;font-family:'Outfit',sans-serif;cursor:pointer;font-weight:600}
@@ -464,6 +470,16 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 <script src="https://unpkg.com/@zxing/library@0.19.3/umd/index.min.js"></script>
 </head>
 <body>
+
+<!-- WHATSAPP MESSAGE SHEET -->
+<div class="wa-sheet-overlay" id="waSheetOverlay" style="display:none" onclick="closeWaSheet(event)">
+  <div class="wa-sheet">
+    <div class="wa-sheet-title">💬 Choisir la langue</div>
+    <button class="wa-lang-btn" onclick="sendWaMsg('fr')">🇫🇷 Français</button>
+    <button class="wa-lang-btn" onclick="sendWaMsg('ar')">🇹🇳 العربية</button>
+    <button class="wa-cancel" onclick="closeWaSheet()">Annuler</button>
+  </div>
+</div>
 
 <!-- BARCODE SCANNER OVERLAY -->
 <div class="scan-overlay" id="scanOverlay" style="display:none">
@@ -2652,7 +2668,7 @@ function cardHTML(s,q='',delay=0){
       ${s.color?`<span class="tag">🎨 ${hl(s.color,q)}</span>`:''}
       ${s.ville?`<span class="tag city">📍 ${hl(s.ville,q)}</span>`:''}
       ${s.client?`<span class="tag client">👤 ${hl(s.client,q)}</span>`:''}
-      ${s.phone?`<span class="tag" style="color:var(--green)">📞 ${s.phone}</span><a href="tel:${s.phone.replace(/\s/g,'')}" class="tag" style="color:var(--green);background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);text-decoration:none">📲</a><a href="https://wa.me/216${s.phone.replace(/\D/g,'').replace(/^216/,'')}?text=${encodeURIComponent('Bonjour '+(s.client||'')+(s.invNum?' — '+s.invNum:'')+ ' 👋 Votre commande est prête !')}" target="_blank" class="tag" style="color:#25d366;background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.3);text-decoration:none">💬</a>`:''}
+      ${s.phone?`<span class="tag" style="color:var(--green)">📞 ${s.phone}</span><a href="tel:${s.phone.replace(/\s/g,'')}" class="tag" style="color:var(--green);background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);text-decoration:none">📲</a><button onclick="openWaSheet('${s.phone}','${(s.client||'').replace(/'/g,"\\'")}','${(s.model||'').replace(/'/g,"\\'")}','${s.prix}')" class="tag" style="color:#25d366;background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.3);cursor:pointer;border:1px solid rgba(37,211,102,.3);border-radius:7px;font-size:12px;padding:3px 8px">💬</button>`:''}
       ${fNom?`<span class="tag fourn">🧑‍💼 ${hl(fNom,q)}</span>`:''}
       ${carteObj?`<span class="tag carte">💳 ${carteObj.label}</span>`:''}
       ${partageTag}
@@ -2810,6 +2826,30 @@ function _doRenderSales(){
   });
   el.innerHTML=html;
 }
+
+// ── WHATSAPP MESSAGE SHEET ─────────────────────────────────────────────────
+let _waPhone='', _waClient='', _waModel='', _waPrix='';
+
+function openWaSheet(phone, client, model, prix){
+  _waPhone=phone; _waClient=client||''; _waModel=model||''; _waPrix=prix||'';
+  document.getElementById('waSheetOverlay').style.display='flex';
+}
+function closeWaSheet(e){
+  if(e&&e.target!==document.getElementById('waSheetOverlay')) return;
+  document.getElementById('waSheetOverlay').style.display='none';
+}
+function sendWaMsg(lang){
+  const num='216'+_waPhone.replace(/\D/g,'').replace(/^216/,'');
+  let msg='';
+  if(lang==='fr'){
+    msg=`Bonjour ${_waClient} 👋\n\nNous vous informons que votre colis est prévu pour être livré aujourd'hui 📦\n\nLe montant à régler est de *${_waPrix} DT*.\n\nMerci de rester joignable pour faciliter la livraison 🙏`;
+  } else {
+    msg=`السلام عليكم ${_waClient} 👋\n\nنعلمكم أن طرودكم متوقع يوصلكم اليوم 📦\n\nالمبلغ الواجب خلاصه هو *${_waPrix} دت*.\n\nيرجى التواجد على الخط لتسهيل عملية التسليم 🙏`;
+  }
+  document.getElementById('waSheetOverlay').style.display='none';
+  window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`,'_blank');
+}
+// ──────────────────────────────────────────────────────────────────────────
 
 function toggleFraisRetour(wrapId, val){
   const w=document.getElementById(wrapId);
