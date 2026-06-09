@@ -264,6 +264,8 @@ input:focus,select:focus{outline:none;border-color:var(--accent)!important;box-s
 .tag.client{color:var(--accent);border-color:rgba(255,122,0,.3);background:rgba(255,122,0,.08)}
 .tag.fourn{color:#f472b6;border-color:rgba(244,114,182,.3);background:rgba(244,114,182,.08)}
 .tag.carte{color:#38bdf8;border-color:rgba(56,189,248,.3);background:rgba(56,189,248,.08)}
+.tag.status-attente{color:#f59e0b;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.12);cursor:pointer;font-weight:600}
+.tag.status-livre{color:#10b981;border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.12);cursor:pointer;font-weight:600}
 .sale-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:7px}
 .num-item{text-align:center;background:var(--surface2);border-radius:8px;padding:5px 4px}
 .num-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
@@ -727,6 +729,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Prix Vente (DT/u)</label><input type="number" id="fPrix" placeholder="42.500" step="0.001" oninput="updatePartagePreview()"></div>
       <div><label>Coût Achat (DT/u)</label><input type="number" id="fCout" placeholder="11.450" step="0.001" oninput="updatePartagePreview()"></div>
       <div class="form-full"><label>Frais Envoi (DT)</label><input type="number" id="fEnvoi" placeholder="9.150" step="0.001" oninput="updatePartagePreview()"></div>
+      <div class="form-full"><label>Statut</label><select id="fStatus" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'Outfit',sans-serif"><option value="">— Aucun —</option><option value="attente">🟡 En attente</option><option value="livre">✅ Livré</option></select></div>
       <div id="fPartageWrapper" style="display:none" class="form-full">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div><label>Partage Fournisseur</label>
@@ -1173,6 +1176,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Prix Vente (DT/u)</label><input type="number" id="ePrix" step="0.001" style="margin-top:5px"></div>
       <div><label>Coût Achat (DT/u)</label><input type="number" id="eCout" step="0.001" style="margin-top:5px"></div>
       <div class="edit-full"><label>Frais Envoi (DT)</label><input type="number" id="eEnvoi" step="0.001" style="margin-top:5px"></div>
+      <div class="edit-full"><label>Statut</label><select id="eStatus" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;margin-top:5px"><option value="">— Aucun —</option><option value="attente">🟡 En attente</option><option value="livre">✅ Livré</option></select></div>
       <div id="ePartageWrapper" style="display:none" class="edit-full">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:5px">
           <div><label>Partage Fournisseur</label>
@@ -2017,11 +2021,12 @@ function addSale(){
   const envoi=parseFloat(document.getElementById('fEnvoi').value)||0;
   const partageF=document.getElementById('fPartageF')?.value||'';
   const partageP=parseFloat(document.getElementById('fPartageP')?.value)||0;
+  const status=document.getElementById('fStatus')?.value||'';
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
   const invYear=date.slice(0,4);
   const invCount=sales.filter(s=>s.invNum&&s.invNum.startsWith('INV-'+invYear)).length+1;
   const invNum=`INV-${invYear}-${String(invCount).padStart(3,'0')}`;
-  sales.push({id:Date.now(),invNum,date,model,color,ville,client,phone,fourn,carteId,qty,prix,cout,envoi,partageF,partageP,...calc(qty,prix,cout,envoi)});
+  sales.push({id:Date.now(),invNum,date,model,color,ville,client,phone,fourn,carteId,qty,prix,cout,envoi,partageF,partageP,status,...calc(qty,prix,cout,envoi)});
   // Mettre à jour stock si ce modèle existe
   const stockItem=stockItems.find(s=>s.model.toLowerCase()===model.toLowerCase());
   if(stockItem){
@@ -2033,6 +2038,7 @@ function addSale(){
   }
   save(); updateKPIs(); refreshFilterSelects(); refreshStockModelList();
   ['fModel','fColor','fVille','fClient','fPhone','fEnvoi','fQty','fPrix','fCout'].forEach(i=>document.getElementById(i).value='');
+  if(document.getElementById('fStatus')) document.getElementById('fStatus').value='';
   document.getElementById('fFourn').value='';
   document.getElementById('fCarte').value='';
   if(document.getElementById('fPartageF')) document.getElementById('fPartageF').value='';
@@ -2636,6 +2642,7 @@ function cardHTML(s,q='',delay=0){
       ${fNom?`<span class="tag fourn">🧑‍💼 ${hl(fNom,q)}</span>`:''}
       ${carteObj?`<span class="tag carte">💳 ${carteObj.label}</span>`:''}
       ${partageTag}
+      ${s.status==='attente'?`<span class="tag status-attente" onclick="toggleStatus(${s.id})">🟡 En attente</span>`:s.status==='livre'?`<span class="tag status-livre" onclick="toggleStatus(${s.id})">✅ Livré</span>`:''}
       <span class="tag">x${s.qty}</span>
     </div>
     <div class="sale-nums">
@@ -2781,6 +2788,13 @@ function _doRenderSales(){
     cardIdx++;
   });
   el.innerHTML=html;
+}
+
+function toggleStatus(id){
+  const s=sales.find(x=>x.id===id); if(!s) return;
+  if(!s.status||s.status==='livre') s.status='attente';
+  else if(s.status==='attente') s.status='livre';
+  save(); renderSales();
 }
 
 function deleteSale(id){
@@ -4192,7 +4206,7 @@ function openEditModal(id){
   document.getElementById('ePrix').value=s.prix||'';
   document.getElementById('eCout').value=s.cout||'';
   document.getElementById('eEnvoi').value=s.envoi||'';
-  // Partage
+  if(document.getElementById('eStatus')) document.getElementById('eStatus').value=s.status||'';
   if(s.fourn){
     togglePartageSection(s.fourn,'ePartageF','ePartageWrapper');
     setTimeout(()=>{
@@ -4223,8 +4237,9 @@ function saveEdit(){
   const envoi=parseFloat(document.getElementById('eEnvoi').value)||0;
   const partageF=document.getElementById('ePartageF')?.value||'';
   const partageP=parseFloat(document.getElementById('ePartageP')?.value)||0;
+  const status=document.getElementById('eStatus')?.value||'';
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
-  sales[idx]={...sales[idx],date,model,color,ville,client,phone,fourn,carteId,qty,prix,cout,envoi,partageF,partageP,...calc(qty,prix,cout,envoi)};
+  sales[idx]={...sales[idx],date,model,color,ville,client,phone,fourn,carteId,qty,prix,cout,envoi,partageF,partageP,status,...calc(qty,prix,cout,envoi)};
   save(); updateKPIs(); renderSales(); closeEditModal();
   showToast('✅ Vente modifiée!');
 }
