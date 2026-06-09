@@ -867,6 +867,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <button class="sort-btn active" onclick="setSort('newest',this)">📅 Récent</button>
       <button class="sort-btn" onclick="setSort('oldest',this)">📅 Ancien</button>
       <button class="sort-btn" onclick="setSort('benef',this)">💰 Bénéfice</button>
+      <button class="sort-btn" id="btnFilterAttente" onclick="toggleAttenteFilter(this)">🟡 En attente <span id="attenteCount" style="background:rgba(245,158,11,.25);border-radius:10px;padding:1px 6px;font-size:11px;margin-left:2px">0</span></button>
     </div>
   </div>
 
@@ -1418,7 +1419,7 @@ if(fourns.length && typeof fourns[0]==='string'){
   fourns=fourns.map(f=>({id:uid(),nom:f,cartes:[]}));
 }
 
-let currentSort='newest', editingId=null, currentPage=1;
+let currentSort='newest', editingId=null, currentPage=1, filterAttente=false;
 const DRIVE_URL_KEY='flousFlowDriveUrl';
 const PREFILLED_URL='https://script.google.com/macros/s/AKfycbyDGTL7k2TP8-966BxgN1M-jBfe6rr9DGo7I2xdL5av-VEdlIUBT0gJ_06vJgTztWWrjA/exec';
 
@@ -2593,8 +2594,13 @@ function getFiltered(){
     const matchTo=!filterTo||s.date<=filterTo;
     const matchBenefMin=filterBenefMin===null||benef>=filterBenefMin;
     const matchBenefMax=filterBenefMax===null||benef<=filterBenefMax;
-    return matchQ&&matchCarte&&matchFourn&&matchVille&&matchModel&&matchFrom&&matchTo&&matchBenefMin&&matchBenefMax;
+    return matchQ&&matchCarte&&matchFourn&&matchVille&&matchModel&&matchFrom&&matchTo&&matchBenefMin&&matchBenefMax&&(!filterAttente||s.status==='attente');
   });
+
+  // Mettre à jour le compteur En attente
+  const attenteCount=sales.filter(s=>s.status==='attente').length;
+  const countEl=document.getElementById('attenteCount');
+  if(countEl) countEl.textContent=attenteCount;
 
   // Afficher résumé
   const infoEl=document.getElementById('filterInfo');
@@ -2669,6 +2675,13 @@ function cardHTML(s,q='',delay=0){
 }
 
 // ── SORT ───────────────────────────────────────────────────────────────────
+function toggleAttenteFilter(btn){
+  filterAttente=!filterAttente;
+  btn.classList.toggle('active', filterAttente);
+  currentPage=1;
+  renderSales();
+}
+
 function setSort(mode,btn){
   currentSort=mode; currentPage=1;
   document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
