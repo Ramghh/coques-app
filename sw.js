@@ -3,8 +3,9 @@
 // ║   Network-first for index.html, cache-first for CDN  ║
 // ╚══════════════════════════════════════════════════════╝
 
+// ⚠️ IMPORTANT: Change this version each time you deploy a new index.html
+// Just increment the number: v3 → v4 → v5 ...
 const CACHE_NAME = 'flousflow-v2';
-const CACHE_VERSION = 2;
 
 // App shell + external CDN resources to cache on install
 const PRECACHE_URLS = [
@@ -21,10 +22,9 @@ const PRECACHE_URLS = [
 
 // ── Install: pre-cache all resources ─────────────────────────────────────
 self.addEventListener('install', event => {
-  console.log('[SW] Installing FlousFlow PWA...');
+  console.log('[SW] Installing FlousFlow PWA – cache:', CACHE_NAME);
   event.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
-      // Cache each URL individually so one failure doesn't block the rest
       const results = await Promise.allSettled(
         PRECACHE_URLS.map(url =>
           cache.add(url).catch(err => {
@@ -40,7 +40,7 @@ self.addEventListener('install', event => {
 
 // ── Activate: clean old caches ────────────────────────────────────────────
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating...');
+  console.log('[SW] Activating – removing old caches...');
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
@@ -67,7 +67,7 @@ self.addEventListener('fetch', event => {
   const isHTML = url.pathname.endsWith('.html') || url.pathname.endsWith('/') || event.request.mode === 'navigate';
 
   if (isHTML) {
-    // ── Network-first pour index.html ──────────────────────────────────────
+    // Network-first pour index.html → fallback cache si offline
     event.respondWith(
       fetch(event.request)
         .then(response => {
@@ -76,10 +76,10 @@ self.addEventListener('fetch', event => {
           }
           return response;
         })
-        .catch(() => caches.match(event.request)) // fallback cache si offline
+        .catch(() => caches.match(event.request))
     );
   } else {
-    // ── Cache-first pour CDN, fonts, libs ─────────────────────────────────
+    // Cache-first pour CDN, fonts, libs
     event.respondWith(
       caches.match(event.request).then(cached => {
         if (cached) return cached;
