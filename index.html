@@ -88,10 +88,12 @@ button{-webkit-tap-highlight-color:transparent}
 .theme-btn{transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s}
 .theme-btn:active{transform:scale(.82) rotate(-15deg)}
 /* Sale cards hover/press */
-.sale-card{transition:transform .15s ease,box-shadow .15s ease}
+.sale-card{transition:transform .18s ease,box-shadow .18s ease}
+.sale-card:hover{transform:scale(1.02);box-shadow:0 6px 20px rgba(0,0,0,.18)}
 .sale-card:active{transform:scale(.985);box-shadow:none}
 /* KPI cards pulse on load */
-.kpi{transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.kpi{transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s ease}
+.kpi:hover{transform:scale(1.03);box-shadow:0 6px 20px rgba(0,0,0,.18)}
 .kpi:active{transform:scale(.95)}
 /* FAB bounce */
 .fab{transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s}
@@ -636,6 +638,21 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   .cost-card-label{font-size:9px}
   .cost-card-val{font-size:16px}
 }
+/* KANBAN */
+.kb-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.kb-col-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-size:13px;font-weight:700;font-family:'Cabinet Grotesk',sans-serif;border-bottom:1px solid var(--border)}
+.kb-col-header .kb-count{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;font-family:'JetBrains Mono',monospace}
+.kb-col-body{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:50px}
+.kb-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.kb-card:active{transform:scale(.97)}
+.kb-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.kb-card-model{font-size:14px;font-weight:700;font-family:'Cabinet Grotesk',sans-serif;color:var(--text)}
+.kb-card-price{font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--green)}
+.kb-card-info{font-size:11px;color:var(--muted);line-height:1.6}
+.kb-card-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.kb-move-btn{flex:1;min-width:0;padding:5px 4px;font-size:11px;font-weight:600;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .15s}
+.kb-move-btn:hover{border-color:var(--accent);color:var(--accent)}
+.kb-empty{font-size:12px;color:var(--muted);text-align:center;padding:18px 0;font-style:italic}
 </style>
 <script src="https://unpkg.com/@zxing/library@0.19.3/umd/index.min.js"></script>
 </head>
@@ -670,6 +687,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <div class="drawer-section-label">📆 Quotidien</div>
     <button class="drawer-btn active" id="dbtn-ajouter" onclick="drawerNav('ajouter')"><span class="d-icon">➕</span><span class="d-label">Ajouter</span></button>
     <button class="drawer-btn" id="dbtn-ventes" onclick="drawerNav('ventes')"><span class="d-icon">📋</span><span class="d-label">Ventes</span></button>
+    <button class="drawer-btn" id="dbtn-kanban" onclick="drawerNav('kanban')"><span class="d-icon">🗂️</span><span class="d-label">Suivi Ventes</span></button>
     <button class="drawer-btn" id="dbtn-clients" onclick="drawerNav('clients')"><span class="d-icon">👤</span><span class="d-label">Clients</span></button>
     <button class="drawer-btn" id="dbtn-stock" onclick="drawerNav('stock')"><span class="d-icon">📦</span><span class="d-label">Stock</span></button>
     <div class="drawer-divider"></div>
@@ -916,7 +934,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Prix Vente (DT/u)</label><input type="number" id="fPrix" placeholder="42.500" step="0.001" oninput="updatePartagePreview()"></div>
       <div><label>Coût Achat (DT/u)</label><input type="number" id="fCout" placeholder="11.450" step="0.001" oninput="updatePartagePreview()"></div>
       <div class="form-full"><label>Frais Envoi (DT)</label><input type="number" id="fEnvoi" placeholder="9.150" step="0.001" oninput="updatePartagePreview()"></div>
-      <div class="form-full"><label>Statut</label><select id="fStatus" onchange="toggleFraisRetour('fFraisRetourWrap',this.value)" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'Outfit',sans-serif"><option value="">— Aucun —</option><option value="attente">🟡 En attente</option><option value="livre">✅ Livré</option><option value="retourne">↩️ Retourné</option></select></div>
+      <div class="form-full"><label>Statut</label><select id="fStatus" onchange="toggleFraisRetour('fFraisRetourWrap',this.value)" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'Outfit',sans-serif"><option value="">— Aucun —</option><option value="attente">🟡 En attente</option><option value="cours">🔵 En cours</option><option value="livre">✅ Livré</option><option value="retourne">↩️ Retourné</option><option value="annule">❌ Annulé</option></select></div>
       <div id="fFraisRetourWrap" style="display:none" class="form-full"><label>Frais Retour (DT)</label><input type="number" id="fFraisRetour" placeholder="0.000" step="0.001"></div>
       <div id="fPartageWrapper" style="display:none" class="form-full">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -1247,6 +1265,14 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 </div>
 
 <!-- BACKUP -->
+<div class="section" id="tab-kanban">
+  <div style="padding:4px 0 14px">
+    <div style="font-size:18px;font-weight:800;font-family:'Cabinet Grotesk',sans-serif;margin-bottom:4px">🗂️ Suivi Ventes</div>
+    <div style="font-size:12px;color:var(--muted)">Glisse ou change le statut directement sur la carte</div>
+  </div>
+  <div id="kanbanBoard" style="display:flex;flex-direction:column;gap:14px"></div>
+</div>
+
 <div class="section" id="tab-backup">
   <div class="backup-card">
     <div class="backup-title">📤 Exporter</div>
@@ -1365,7 +1391,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Prix Vente (DT/u)</label><input type="number" id="ePrix" step="0.001" style="margin-top:5px"></div>
       <div><label>Coût Achat (DT/u)</label><input type="number" id="eCout" step="0.001" style="margin-top:5px"></div>
       <div class="edit-full"><label>Frais Envoi (DT)</label><input type="number" id="eEnvoi" step="0.001" style="margin-top:5px"></div>
-      <div class="edit-full"><label>Statut</label><select id="eStatus" onchange="toggleFraisRetour('eFraisRetourWrap',this.value)" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;margin-top:5px"><option value="">— Aucun —</option><option value="attente">🟡 En attente</option><option value="livre">✅ Livré</option><option value="retourne">↩️ Retourné</option></select></div>
+      <div class="edit-full"><label>Statut</label><select id="eStatus" onchange="toggleFraisRetour('eFraisRetourWrap',this.value)" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;margin-top:5px"><option value="">— Aucun —</option><option value="attente">🟡 En attente</option><option value="cours">🔵 En cours</option><option value="livre">✅ Livré</option><option value="retourne">↩️ Retourné</option><option value="annule">❌ Annulé</option></select></div>
       <div id="eFraisRetourWrap" style="display:none" class="edit-full"><label>Frais Retour (DT)</label><input type="number" id="eFraisRetour" placeholder="0.000" step="0.001" style="margin-top:5px"></div>
       <div id="ePartageWrapper" style="display:none" class="edit-full">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:5px">
@@ -1440,7 +1466,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 
 <script>
 const DRAWER_LABELS = {
-  ajouter:'➕ Ajouter', ventes:'📋 Ventes', clients:'👤 Clients', stock:'📦 Stock',
+  ajouter:'➕ Ajouter', ventes:'📋 Ventes', kanban:'🗂️ Suivi Ventes', clients:'👤 Clients', stock:'📦 Stock',
   top:'🏆 Top', marques:'🏷️ Marques', fournisseurs:'🧑‍💼 Fournisseurs', partage:'🤝 Partage',
   rapport:'📊 Rapport', annuel:'📅 Annuel', 'cartes-rapport':'💳 Rentabilité Cartes', dashboard:'🗺️ Dashboard', backup:'💾 Backup'
 };
@@ -1557,6 +1583,7 @@ function showTab(id,btn,pushHistory=true){
   syncDrawerActive(id);
   localStorage.setItem('flousFlowLastTab', id);
   if(pushHistory){ if(typeof _tabHistory!=='undefined') _tabHistory.push(id); }
+  if(id==='kanban') renderKanban();
   if(id==='clients') renderClients();
   if(id==='ventes') { refreshFilterSelects(); renderSales(); }
   if(id==='achats') { refreshAchatFournSelect(); renderAchats(); }
@@ -4225,6 +4252,78 @@ function savePartagePayments(){
   localStorage.setItem('flousFlowPartagePayments',JSON.stringify(partagePayments));
 }
 
+// ── KANBAN SUIVI VENTES ──────────────────────────────────────────────────────
+const KB_COLS = [
+  {id:'attente', label:'🟡 En attente', color:'#f59e0b', bg:'rgba(245,158,11,.12)'},
+  {id:'cours',   label:'🔵 En cours',   color:'#3b82f6', bg:'rgba(59,130,246,.12)'},
+  {id:'livre',   label:'✅ Livré',       color:'#10b981', bg:'rgba(16,185,129,.12)'},
+  {id:'retourne',label:'↩️ Retourné',    color:'#8b5cf6', bg:'rgba(139,92,246,.12)'},
+  {id:'annule',  label:'❌ Annulé',      color:'#ef4444', bg:'rgba(239,68,68,.12)'},
+];
+
+function kbMoveStatus(saleId, newStatus){
+  const s = sales.find(x=>x.id===saleId);
+  if(!s) return;
+  s.status = newStatus;
+  saveSales();
+  renderKanban();
+}
+
+function renderKanban(){
+  const board = document.getElementById('kanbanBoard');
+  if(!board) return;
+  // Group sales by status
+  const groups = {};
+  KB_COLS.forEach(c=>{ groups[c.id]=[]; });
+  // Also collect sales with no status
+  const noStatus = [];
+  sales.forEach(s=>{
+    if(groups[s.status||'']) groups[s.status].push(s);
+    else if(!s.status || s.status==='') noStatus.push(s);
+    else groups['attente'] && groups['attente'].push(s); // fallback unknown
+  });
+  // Add noStatus to attente
+  noStatus.forEach(s=>groups['attente'].push(s));
+
+  board.innerHTML = KB_COLS.map(col=>{
+    const items = groups[col.id] || [];
+    // Sort by date desc
+    items.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    const otherCols = KB_COLS.filter(c=>c.id!==col.id);
+    const cards = items.length===0
+      ? `<div class="kb-empty">Aucune vente</div>`
+      : items.map(s=>{
+          const benef = typeof benefNet==='function' ? benefNet(s) : (s.prix-(s.cout||0));
+          const benefStr = (benef>=0?'+':'')+benef.toFixed(3)+' DT';
+          const benefColor = benef>=0?'var(--green)':'var(--red)';
+          const clientStr = s.client ? `👤 ${s.client}` : '';
+          const villeStr  = s.ville  ? `📍 ${s.ville}`  : '';
+          const dateStr   = s.date   ? `📅 ${s.date}`   : '';
+          const infoLine  = [clientStr,villeStr,dateStr].filter(Boolean).join('  ·  ');
+          const movebtns = otherCols.map(c=>
+            `<button class="kb-move-btn" onclick="kbMoveStatus('${s.id}','${c.id}')" title="${c.label}">${c.label}</button>`
+          ).join('');
+          return `<div class="kb-card">
+            <div class="kb-card-top">
+              <div class="kb-card-model">${s.modele||'—'}</div>
+              <div class="kb-card-price" style="color:${benefColor}">${benefStr}</div>
+            </div>
+            <div class="kb-card-info">${infoLine||'&nbsp;'}</div>
+            <div class="kb-card-info" style="margin-top:2px">💰 ${(s.prix||0).toFixed(3)} DT${s.facture?`  ·  🧾 #${s.facture}`:''}</div>
+            <div class="kb-card-actions">${movebtns}</div>
+          </div>`;
+        }).join('');
+    return `<div class="kb-col">
+      <div class="kb-col-header" style="background:${col.bg};border-left:3px solid ${col.color}">
+        <span style="color:${col.color}">${col.label}</span>
+        <span class="kb-count" style="background:${col.bg};color:${col.color}">${items.length}</span>
+      </div>
+      <div class="kb-col-body">${cards}</div>
+    </div>`;
+  }).join('');
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function renderPartageTab(){
   const el=document.getElementById('partageTabContent');
   if(!el) return;
@@ -4347,6 +4446,10 @@ function renderFournTab(){
     const totalBen=f.cartes.reduce((a,c)=>{const v=sales.filter(s=>s.carteId===c.id);return a+v.reduce((b,s)=>b+benefNet(s),0);},0);
     const totalMont=f.cartes.reduce((a,c)=>a+c.montant,0);
     const totalRec=totalMont-(totalRev-totalEnvoi);
+    const roi=totalMont>0?totalBen/totalMont*100:0;
+    const roiColor=roi>0?'var(--green)':roi<0?'var(--red)':'var(--muted)';
+    const roiBarW=Math.min(100,Math.abs(roi)/2);
+    const roiBarColor=roi>=0?'var(--green)':'var(--red)';
     return `<div class="city-row" style="flex-direction:column;align-items:stretch">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div class="city-name">🧑‍💼 ${f.nom}</div>
@@ -4357,6 +4460,16 @@ function renderFournTab(){
           ${totalRec>0?'À récupérer: '+fmt(totalRec):'Récupéré ✅ +'+fmt(Math.abs(totalRec))}
         </span>
         <span style="color:var(--green)">Bénéfice: ${fmt(totalBen)}</span>
+      </div>
+      <div style="margin-top:8px;background:var(--surface2);border-radius:10px;padding:8px 12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+          <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">ROI</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:${roiColor}">${roi>=0?'+':''}${roi.toFixed(1)}%</span>
+        </div>
+        <div style="height:6px;background:var(--border);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${roiBarW}%;background:${roiBarColor};border-radius:4px;transition:width .5s"></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Bénéf net ${fmt(totalBen)} / Investi ${fmt(totalMont)}</div>
       </div>
       ${cartesHTML||'<div style="font-size:13px;color:var(--muted);text-align:center;padding:10px">Aucune carte — appuie sur "+ Carte" dans Gérer</div>'}
     </div>`;
