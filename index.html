@@ -29,6 +29,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 /* HEADER */
 header{background:var(--surface);padding:18px 18px 14px;position:sticky;top:0;z-index:100;width:100%;box-sizing:border-box;left:0;border-bottom:2px solid var(--accent)}
 .header-top{display:flex;align-items:center;justify-content:space-between}
+:root{--fs-scale:1}
+body{font-size:calc(var(--fs-scale)*14px)}
 .logo{font-family:'Cabinet Grotesk',sans-serif;font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.5px}
 .logo span{color:#fbbf24}
 .header-right{display:flex;align-items:center;gap:10px}
@@ -1299,6 +1301,15 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   <div class="backup-info">
     <strong>💡 Conseil :</strong> Exporte régulièrement et enregistre dans <strong>Google Drive</strong>.<br>
     Pour changer de téléphone → Importer → tout revient ✅
+  </div>
+  <div class="backup-card" style="margin-top:10px">
+    <div class="backup-title">🔤 Taille du texte</div>
+    <div class="backup-desc">Ajuste la taille de l'affichage selon ta préférence.</div>
+    <div style="display:flex;gap:10px;margin-top:12px" id="fsSwitcher">
+      <button onclick="setFontSize('S')" id="fsBtn-S" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:13px;font-family:'Outfit',sans-serif;font-weight:700;cursor:pointer;transition:all .2s">A<br><span style="font-size:10px;font-weight:400">Petit</span></button>
+      <button onclick="setFontSize('M')" id="fsBtn-M" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:16px;font-family:'Outfit',sans-serif;font-weight:700;cursor:pointer;transition:all .2s">A<br><span style="font-size:10px;font-weight:400">Moyen</span></button>
+      <button onclick="setFontSize('L')" id="fsBtn-L" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:20px;font-family:'Outfit',sans-serif;font-weight:700;cursor:pointer;transition:all .2s">A<br><span style="font-size:10px;font-weight:400">Grand</span></button>
+    </div>
   </div>
   <div class="backup-card" style="margin-top:10px">
     <div class="backup-title">🔒 Verrouillage PIN</div>
@@ -5294,7 +5305,33 @@ document.addEventListener('DOMContentLoaded',function(){
   const gm=document.getElementById('gistModal');
   if(gm) gm.addEventListener('click',function(e){if(e.target===this) closeGistModal();});
   pinInit();
+  fontSizeInit();
 });
+
+// ── TAILLE DU TEXTE ───────────────────────────────────────────────────────
+const FS_KEY='megastore-fontSize';
+const FS_MAP={S:.88,M:1,L:1.14};
+function setFontSize(size){
+  localStorage.setItem(FS_KEY,size);
+  document.documentElement.style.setProperty('--fs-scale',FS_MAP[size]||1);
+  ['S','M','L'].forEach(s=>{
+    const b=document.getElementById('fsBtn-'+s);
+    if(!b) return;
+    if(s===size){
+      b.style.background='linear-gradient(135deg,var(--accent),var(--accent2))';
+      b.style.color='#fff';
+      b.style.borderColor='var(--accent)';
+    } else {
+      b.style.background='var(--surface2)';
+      b.style.color='var(--muted)';
+      b.style.borderColor='var(--border)';
+    }
+  });
+}
+function fontSizeInit(){
+  const saved=localStorage.getItem(FS_KEY)||'M';
+  setFontSize(saved);
+}
 
 // ── MINI CHART 7 JOURS ────────────────────────────────────────────────────
 function drawMiniChart7d(){
