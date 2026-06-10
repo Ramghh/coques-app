@@ -1,65 +1,65 @@
 // ╔══════════════════════════════════════════════════════╗
 // ║   FlousFlow Service Worker  – Gharbi Ramzi           ║
-// ║   Network-first for index.html, cache-first for CDN  ║
+// ║   Auto-versioning via Last-Modified header           ║
 // ╚══════════════════════════════════════════════════════╝
 
-// ⚠️ IMPORTANT: Change this version each time you deploy a new index.html
-// Just increment the number: v3 → v4 → v5 ...
-const CACHE_NAME = 'flousflow-v2';
-
-// App shell + external CDN resources to cache on install
 const PRECACHE_URLS = [
   './index.html',
   './manifest.json',
-  // Fonts
   'https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap',
-  // Libraries
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
 ];
 
-// ── Install: pre-cache all resources ─────────────────────────────────────
+const CACHE_BASE = 'flousflow';
+
+// ── Récupérer la version depuis Last-Modified de index.html ──────────────
+async function getVersion() {
+  try {
+    const res = await fetch('./index.html', { method: 'HEAD', cache: 'no-store' });
+    const lastMod = res.headers.get('last-modified');
+    if (lastMod) return CACHE_BASE + '-' + new Date(lastMod).getTime();
+  } catch(e) {}
+  return CACHE_BASE + '-fallback';
+}
+
+// ── Install ───────────────────────────────────────────────────────────────
 self.addEventListener('install', event => {
-  console.log('[SW] Installing FlousFlow PWA – cache:', CACHE_NAME);
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async cache => {
-      const results = await Promise.allSettled(
+    getVersion().then(async version => {
+      console.log('[SW] Installing – cache:', version);
+      const cache = await caches.open(version);
+      await Promise.allSettled(
         PRECACHE_URLS.map(url =>
-          cache.add(url).catch(err => {
-            console.warn('[SW] Failed to cache:', url, err.message);
-          })
+          cache.add(url).catch(err => console.warn('[SW] Skip:', url, err.message))
         )
       );
-      console.log('[SW] Pre-cache complete');
-      return results;
-    }).then(() => self.skipWaiting())
+      await self.skipWaiting();
+    })
   );
 });
 
-// ── Activate: clean old caches ────────────────────────────────────────────
+// ── Activate: supprimer anciens caches ───────────────────────────────────
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating – removing old caches...');
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
+    getVersion().then(async version => {
+      console.log('[SW] Activating – keeping:', version);
+      const keys = await caches.keys();
+      await Promise.all(
         keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => {
-            console.log('[SW] Deleting old cache:', key);
-            return caches.delete(key);
-          })
-      )
-    ).then(() => self.clients.claim())
+          .filter(k => k.startsWith(CACHE_BASE) && k !== version)
+          .map(k => { console.log('[SW] Deleting:', k); return caches.delete(k); })
+      );
+      return self.clients.claim();
+    })
   );
 });
 
-// ── Fetch: network-first for index.html, cache-first for CDN ─────────────
+// ── Fetch ─────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-
-  // Skip Gist API calls (always need network)
   if (event.request.url.includes('api.github.com')) return;
   if (event.request.url.includes('gist.github.com')) return;
 
@@ -67,35 +67,39 @@ self.addEventListener('fetch', event => {
   const isHTML = url.pathname.endsWith('.html') || url.pathname.endsWith('/') || event.request.mode === 'navigate';
 
   if (isHTML) {
-    // Network-first pour index.html → fallback cache si offline
+    // Network-first → fallback cache offline
     event.respondWith(
       fetch(event.request)
-        .then(response => {
+        .then(async response => {
           if (response && response.status === 200) {
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
+            const version = await getVersion();
+            const cache = await caches.open(version);
+            cache.put(event.request, response.clone());
           }
           return response;
         })
         .catch(() => caches.match(event.request))
     );
   } else {
-    // Cache-first pour CDN, fonts, libs
+    // Cache-first pour CDN/fonts/libs
     event.respondWith(
-      caches.match(event.request).then(cached => {
+      caches.match(event.request).then(async cached => {
         if (cached) return cached;
-        return fetch(event.request).then(response => {
-          if (!response || response.status !== 200 || response.type === 'opaque') return response;
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
+        try {
+          const response = await fetch(event.request);
+          if (response && response.status === 200 && response.type !== 'opaque') {
+            const version = await getVersion();
+            const cache = await caches.open(version);
+            cache.put(event.request, response.clone());
+          }
           return response;
-        }).catch(() => {});
+        } catch(e) { return new Response('', {status: 503}); }
       })
     );
   }
 });
 
-// ── Message handler: force update ─────────────────────────────────────────
+// ── Message handler ───────────────────────────────────────────────────────
 self.addEventListener('message', event => {
-  if (event.data === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
