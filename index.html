@@ -468,6 +468,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   /* HEADER — compact */
   header { padding: 10px 12px 8px; }
   .logo { font-size: 20px; }
+  body { line-height: 1.45; }
   .active-tab-pill { font-size: 10px; padding: 3px 9px; margin-top: 3px; }
   .menu-btn { width: 34px; height: 34px; font-size: 18px; }
   #totalCount { width: 58px !important; height: 58px !important; }
@@ -483,14 +484,14 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   /* KPI STRIP */
   .kpi-strip { padding: 8px 10px; gap: 5px; }
   .kpi { padding: 10px 5px; border-radius: 10px; }
-  .kpi-label { font-size: 9px; letter-spacing: .4px; margin-bottom: 3px; }
-  .kpi-value { font-size: 12px; }
+  .kpi-label { font-size: 11px; letter-spacing: .3px; margin-bottom: 3px; }
+  .kpi-value { font-size: 14px; }
 
   /* MINI CHART — moins haut */
   .mini-chart-wrap { margin: 8px 10px 0; padding: 8px 10px; }
   #miniChart7d { height: 40px !important; }
-  .mini-chart-title { font-size: 9px; }
-  .mini-chart-total { font-size: 11px; }
+  .mini-chart-title { font-size: 11px; }
+  .mini-chart-total { font-size: 13px; }
 
   /* CARTES BANNER (Suivi Cartes) — compact */
   #cartesBanner { padding: 10px 12px !important; margin-bottom: 8px !important; }
@@ -518,14 +519,14 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 
   /* SALE CARDS */
   .sale-card { padding: 9px 10px 7px; }
-  .sale-model { font-size: 15px; }
-  .sale-benef { font-size: 13px; padding: 2px 8px; }
+  .sale-model { font-size: 16px; }
+  .sale-benef { font-size: 14px; padding: 2px 8px; }
   .sale-nums { gap: 4px; }
-  .num-label { font-size: 9px; }
-  .num-val { font-size: 12px; }
+  .num-label { font-size: 11px; }
+  .num-val { font-size: 14px; }
   .sale-actions { gap: 5px; }
   .btn-edit-card, .btn-del-card, .btn-dup-card, .btn-print-card {
-    padding: 6px 4px; font-size: 12px; border-radius: 8px;
+    padding: 7px 4px; font-size: 13px; border-radius: 8px;
   }
 
   /* FOURNISSEUR CARDS — c'est le gros problème visible dans la screenshot */
@@ -540,8 +541,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     padding: 8px 4px !important;
     border-radius: 8px !important;
   }
-  .fourn-stat-label { font-size: 8px !important; letter-spacing: .3px !important; }
-  .fourn-stat-val { font-size: 14px !important; }
+  .fourn-stat-label { font-size: 10px !important; letter-spacing: .3px !important; }
+  .fourn-stat-val { font-size: 15px !important; }
 
   /* Barre de récupération fournisseur */
   .fourn-progress { margin-top: 8px !important; }
@@ -561,19 +562,20 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 
   /* SORT BAR */
   .sort-bar { gap: 6px; }
-  .sort-btn { padding: 6px 12px; font-size: 12px; }
+  .sort-btn { padding: 7px 14px; font-size: 13px; }
 
   /* FAB — légèrement plus petit */
   .fab { width: 50px; height: 50px; font-size: 24px; bottom: 22px; right: 16px; }
 
   /* REC BANNER (récupération globale) */
-  .rec-amount { font-size: 20px; }
-  .rec-sub-val { font-size: 14px; }
+  .rec-amount { font-size: 22px; }
+  .rec-sub-val { font-size: 15px; }
   .rec-banner { padding: 12px 14px; }
+  .rec-title { font-size: 13px; }
 
   /* CITY ROWS (fournisseur cards outer) */
   .city-row { padding: 12px 12px; }
-  .city-name { font-size: 15px; }
+  .city-name { font-size: 16px; }
 
   /* CARTE RAPPORT */
   .cr-grid { gap: 6px; }
@@ -588,10 +590,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 /* Extra small phones (< 380px) */
 @media (max-width: 380px) {
   .logo { font-size: 18px; }
-  .kpi-value { font-size: 11px; }
-  .num-val { font-size: 11px; }
-  .sale-model { font-size: 14px; }
-  input, select { font-size: 14px; padding: 10px 11px; }
+  .kpi-value { font-size: 12px; }
+  .num-val { font-size: 12px; }
+  .sale-model { font-size: 15px; }
+  input, select { font-size: 15px; padding: 10px 11px; }
 }
 
 /* PERIOD CARDS (Aujourd&#39;hui / Semaine / Mois) */
@@ -606,10 +608,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .period-vs{font-size:9px;font-weight:600;margin-top:2px}
 @media(max-width:768px){
   .period-cards-row{gap:5px;margin:8px 8px 0}
-  .period-card{padding:8px 6px}
-  .period-label{font-size:8px}
-  .period-ventes{font-size:10px}
-  .period-benef{font-size:11px}
+  .period-card{padding:10px 7px}
+  .period-label{font-size:10px}
+  .period-ventes{font-size:12px}
+  .period-benef{font-size:14px}
 }
 /* COST CARDS (Cout Achats / Livraison) */
 .cost-cards-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
@@ -624,9 +626,9 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .cost-card-livr .cost-card-val{color:var(--red)}
 @media(max-width:768px){
   .cost-cards-row{gap:6px;margin:8px 0}
-  .cost-card{padding:10px 10px}
-  .cost-card-label{font-size:9px}
-  .cost-card-val{font-size:16px}
+  .cost-card{padding:12px 10px}
+  .cost-card-label{font-size:11px}
+  .cost-card-val{font-size:19px}
 }
 /* KANBAN */
 .kb-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
@@ -3944,10 +3946,10 @@ function renderMarques(){
   const ctx=canvas.getContext('2d');
   ctx.scale(dpr,dpr);
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
-  const bgColor=isDark?'#141414':'#f5f0ea';
-  const textColor=isDark?'#f0f0f0':'#1a1410';
+  const bgColor='#141414';
+  const textColor='#f0f0f0';
   const mutedColor='rgba(255,122,0,.4)';
-  const trackColor=isDark?'rgba(255,255,255,.07)':'rgba(0,0,0,.07)';
+  const trackColor='rgba(255,255,255,.07)';
 
   ctx.fillStyle=bgColor;
   ctx.roundRect(0,0,W,H,12);
