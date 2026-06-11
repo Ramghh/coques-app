@@ -17,9 +17,9 @@
   --shadow:0 2px 12px rgba(0,0,0,.6);
 }
 [data-theme="light"]{
-  --bg:#f2ede8;--surface:#fffdf9;--surface2:#f7f2ec;
-  --border:#e4ddd5;--text:#1a1410;--muted:#8a7f76;
-  --header-bg:linear-gradient(180deg,#fffdf9,#f7f2ec);
+  --bg:#f0ebe4;--surface:#fdfaf6;--surface2:#f5f0ea;
+  --border:#ddd6cc;--text:#1a1410;--muted:#7a706a;
+  --header-bg:linear-gradient(180deg,#fdfaf6,#f5f0ea);
   --shadow:0 2px 12px rgba(0,0,0,.08);
 }
 :root{--accent:#ff7a00;--accent2:#ff9a3c;--green:#10b981;--yellow:#f59e0b;--red:#ef4444;--radius:14px;}
@@ -111,9 +111,6 @@ input:focus,select:focus{transform:translateY(-1px);box-shadow:0 4px 12px rgba(2
 .gist-btn{transition:transform .15s cubic-bezier(.34,1.56,.64,1),opacity .2s,box-shadow .15s}
 .gist-btn:active{transform:scale(.93)}
 .gist-btn.push:active{box-shadow:0 2px 8px rgba(255,122,0,.4)}
-/* Bell btn */
-.bell-btn{transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
-.bell-btn:active{transform:scale(.85) rotate(20deg)}
 
 
 /* SEARCH */
@@ -142,17 +139,18 @@ input:focus,select:focus{transform:translateY(-1px);box-shadow:0 4px 12px rgba(2
 .gsearch-input{
   width:100%;padding:11px 16px 11px 42px;
   background:var(--surface2);border:1.5px solid var(--border);
-  color:#fff;border-radius:30px;font-size:14px;font-family:'Outfit',sans-serif;
+  color:var(--text);border-radius:30px;font-size:14px;font-family:'Outfit',sans-serif;
   transition:background .2s,border-color .2s,box-shadow .2s;
   -webkit-appearance:none;
 }
-.gsearch-input::placeholder{color:rgba(255,255,255,.55);font-weight:400}
+.gsearch-input::placeholder{color:var(--muted);font-weight:400}
 .gsearch-input:focus{
   outline:none;
-  background:rgba(255,255,255,.2);
-  border-color:rgba(255,255,255,.65);
-  box-shadow:0 0 0 3px rgba(255,255,255,.1);
+  background:var(--surface);
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(255,122,0,.12);
 }
+.gsearch-clear{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;display:none}
 .gsearch-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none;opacity:.8;line-height:1}
 .gsearch-clear{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.7);font-size:18px;cursor:pointer;line-height:1;display:none}
 .gsearch-dropdown{
@@ -349,15 +347,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent)!important;box-s
 .toast.error{background:var(--red)}
 mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 
-/* BELL */
-.bell-wrap{position:relative;cursor:pointer}
-.bell-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;position:relative}
-.bell-dot{position:absolute;top:6px;right:6px;width:9px;height:9px;background:var(--red);border-radius:50%;border:2px solid #111;display:none}
-.bell-popup{position:absolute;top:46px;right:0;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;width:240px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:200;display:none}
-.bell-popup.open{display:block}
-.bell-popup-title{font-family:'Cabinet Grotesk',sans-serif;font-size:14px;font-weight:700;margin-bottom:6px}
-.bell-popup-msg{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px}
-.bell-popup-btn{width:100%;padding:9px;background:var(--accent);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Cabinet Grotesk',sans-serif}
+
 
 /* MINI CHART 7 JOURS */
 .mini-chart-wrap{margin:10px 18px 0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px}
@@ -480,7 +470,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   .logo { font-size: 20px; }
   .active-tab-pill { font-size: 10px; padding: 3px 9px; margin-top: 3px; }
   .menu-btn { width: 34px; height: 34px; font-size: 18px; }
-  .bell-btn { width: 34px; height: 34px; font-size: 17px; }
   #totalCount { width: 58px !important; height: 58px !important; }
 
   /* GLOBAL SEARCH — moins de padding */
@@ -732,13 +721,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     </div>
     <div class="header-right">
       <canvas id="totalCount" width="72" height="72" style="cursor:pointer" onclick="showTab('ventes',null)"></canvas>
-      <div class="bell-wrap" onclick="toggleBell()">
-        <button class="bell-btn" id="bellBtn">🔔<span class="bell-dot" id="bellDot"></span></button>
-        <div class="bell-popup" id="bellPopup">
-          <div class="bell-popup-title" id="bellTitle">🔔 Sauvegarde</div>
-          <div class="bell-popup-msg" id="bellMsg">Chargement...</div>
-          <button class="bell-popup-btn" style="margin-top:10px" onclick="exportJSON();toggleBell()">⬇️ Sauvegarder maintenant</button>
-          <button onclick="dismissBell()" style="width:100%;padding:8px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:9px;font-size:12px;cursor:pointer;margin-top:6px;font-family:'Cabinet Grotesk',sans-serif">✕ Ignorer</button>
         </div>
       </div>
       <button class="theme-btn" id="gistBtn" onclick="openGistModal()" title="Sync Gist" style="display:none">☁️</button>
@@ -1558,7 +1540,6 @@ function renderHeatmap(){
 function openDrawer(){
   document.getElementById('sideDrawer').classList.add('open');
   document.getElementById('drawerOverlay').classList.add('open');
-  checkBackupReminder();
 }
 function closeDrawer(){
   document.getElementById('sideDrawer').classList.remove('open');
@@ -1647,7 +1628,6 @@ refreshFournSelects();
 refreshAchatFournSelect();
 refreshStockModelList();
 updateKPIs();
-checkBackupReminder();
 loadDriveUrl();
 
 // roundRect polyfill for older browsers
@@ -2647,50 +2627,6 @@ document.addEventListener('click',e=>{
 
 // ── THEME ──────────────────────────────────────────────────────────────────
 
-// ── BELL / BACKUP REMINDER ─────────────────────────────────────────────────
-function checkBackupReminder(){
-  const lastBackup=localStorage.getItem('flousFlowLastBackup');
-  const dot=document.getElementById('bellDot');
-  const title=document.getElementById('bellTitle');
-  const msg=document.getElementById('bellMsg');
-  if(!lastBackup){
-    dot.style.display='block';
-    title.textContent='⚠️ Aucune sauvegarde';
-    msg.textContent='Tu n\'as jamais fait de sauvegarde. Exporte tes données maintenant pour ne rien perdre!';
-    return;
-  }
-  const days=Math.floor((Date.now()-parseInt(lastBackup))/(1000*60*60*24));
-  if(days>=7){
-    dot.style.display='block';
-    title.textContent='⚠️ Sauvegarde requise';
-    msg.textContent=`Dernière sauvegarde il y a ${days} jours. Pense à exporter tes données!`;
-  } else if(days>=3){
-    dot.style.display='block';
-    dot.style.background='var(--yellow)';
-    title.textContent='🟡 Sauvegarde bientôt';
-    msg.textContent=`Dernière sauvegarde il y a ${days} jours.`;
-  } else {
-    dot.style.display='none';
-    title.textContent='✅ Sauvegarde OK';
-    msg.textContent=`Dernière sauvegarde il y a ${days} jour${days>1?'s':''}.`;
-  }
-}
-
-function toggleBell(){
-  const popup=document.getElementById('bellPopup');
-  popup.classList.toggle('open');
-  // Fermer si on clique ailleurs
-  if(popup.classList.contains('open')){
-    setTimeout(()=>{
-      document.addEventListener('click', function closeBell(e){
-        if(!e.target.closest('.bell-wrap')){
-          popup.classList.remove('open');
-          document.removeEventListener('click',closeBell);
-        }
-      });
-    },100);
-  }
-}
 
 // ── TABS ───────────────────────────────────────────────────────────────────
 function refreshFournSelects(){
@@ -5060,7 +4996,6 @@ function exportJSON(){
   a.download=`megastore-${new Date().toISOString().split('T')[0]}.json`;
   a.click(); URL.revokeObjectURL(a.href);
   localStorage.setItem('flousFlowLastBackup', Date.now().toString());
-  checkBackupReminder();
   showToast('✅ JSON téléchargé!');
 }
 
@@ -5416,10 +5351,7 @@ function saveLocal(){
 // resize redraw
 window.addEventListener('resize',()=>drawMiniChart7d());
 setTimeout(()=>{ updateThemeBtn(); updateLastSyncLabel(); drawMiniChart7d(); },300);
-function dismissBell(){
-  document.getElementById('bellDot').style.display='none';
-  document.getElementById('bellPopup').classList.remove('open');
-}
+
 
 
 </script>
@@ -5514,5 +5446,48 @@ function dismissBell(){
 <!-- FAB -->
 <button class="fab" onclick="goAddSale()" title="Nouvelle vente">＋</button>
 
+<!-- PWA Update Banner -->
+<div id="swUpdateBanner" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;background:linear-gradient(135deg,#ff7a00,#ff9500);color:#fff;padding:12px 20px;border-radius:14px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;box-shadow:0 4px 20px rgba(255,122,0,.4);display:none;align-items:center;gap:10px;cursor:pointer;max-width:320px;width:90%" onclick="applySwUpdate()">
+  <span>🔄</span>
+  <span>نسخة جديدة متاحة — اضغط للتحديث</span>
+</div>
+
+<script>
+// ── Service Worker Registration + Update Detection ─────────────────────
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    // Check for updates every 60 seconds
+    setInterval(() => reg.update(), 60000);
+
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      newWorker.addEventListener('statechange', () => {
+        if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
+          // New version available — show banner
+          const banner = document.getElementById('swUpdateBanner');
+          if(banner){
+            banner.style.display = 'flex';
+            // Auto-hide after 30s if user ignores
+            setTimeout(() => { banner.style.display = 'none'; }, 30000);
+          }
+        }
+      });
+    });
+  }).catch(err => console.warn('[SW] Registration failed:', err));
+
+  // After SW takes control, reload to apply new version
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if(!refreshing){ refreshing = true; window.location.reload(); }
+  });
+}
+
+function applySwUpdate(){
+  document.getElementById('swUpdateBanner').style.display = 'none';
+  if(navigator.serviceWorker.controller){
+    navigator.serviceWorker.controller.postMessage('SKIP_WAITING');
+  }
+}
+</script>
 </body>
 </html>
