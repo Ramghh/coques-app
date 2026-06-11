@@ -666,6 +666,22 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   </div>
 </div>
 
+<!-- SMS SHEET -->
+<div class="wa-sheet-overlay" id="smsSheetOverlay" style="display:none" onclick="closeSmsSheet(event)">
+  <div class="wa-sheet">
+    <div class="wa-sheet-title">💬 Envoyer SMS</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:2px">📦 Livraison aujourd&#39;hui</div>
+      <button class="wa-lang-btn" onclick="sendSmsMsg('livraison','fr')">🇫🇷 Français</button>
+      <button class="wa-lang-btn" onclick="sendSmsMsg('livraison','ar')">🇹🇳 العربية</button>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:6px 0 2px">✅ Confirmation réception</div>
+      <button class="wa-lang-btn" onclick="sendSmsMsg('confirmation','fr')">🇫🇷 Français</button>
+      <button class="wa-lang-btn" onclick="sendSmsMsg('confirmation','ar')">🇹🇳 العربية</button>
+    </div>
+    <button class="wa-cancel" onclick="document.getElementById('smsSheetOverlay').style.display='none'">Annuler</button>
+  </div>
+</div>
+
 <!-- BARCODE SCANNER OVERLAY -->
 <div class="scan-overlay" id="scanOverlay" style="display:none">
   <div class="scan-hint">📷 Pointez la caméra sur le code-barres</div>
@@ -2821,6 +2837,7 @@ function cardHTML(s,q='',delay=0){
       <button class="btn-dup-card"   onclick="duplicateSale(${s.id})">📋 Copier</button>
       <button class="btn-print-card" onclick="printInvoice(${s.id})">🖨️</button>
       ${!s.phone&&s.client?`<button class="btn-print-card" style="background:rgba(16,185,129,.15);color:var(--green)" onclick="fetchClientPhone(${s.id})">📞</button>`:''}
+      ${s.phone?`<button class="btn-sms-card" onclick="openSmsSheet(this,'${s.phone}',${s.id})">💬 SMS</button>`:''}
       <button class="btn-del-card"   onclick="deleteSale(${s.id})">🗑️</button>
     </div>
   </div>`;
@@ -2992,6 +3009,43 @@ function sendWaMsg(type, lang){
   }
   document.getElementById('waSheetOverlay').style.display='none';
   window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`,'_blank');
+}
+// ──────────────────────────────────────────────────────────────────────────
+
+// ── SMS MESSAGE SHEET ──────────────────────────────────────────────────────
+let _smsSaleId=null;
+
+function openSmsSheet(btn, phone, saleId){
+  _smsSaleId=saleId;
+  document.getElementById('smsSheetOverlay').style.display='flex';
+}
+function closeSmsSheet(e){
+  if(e&&e.target!==document.getElementById('smsSheetOverlay')) return;
+  document.getElementById('smsSheetOverlay').style.display='none';
+}
+function sendSmsMsg(type, lang){
+  const s=sales.find(x=>x.id==_smsSaleId); if(!s) return;
+  const num=(s.phone||'').replace(/\D/g,'').replace(/^216/,'');
+  if(!num){alert('Pas de numéro'); return;}
+  let msg='';
+  const nom=s.client||'';
+  const mod=s.model||'';
+  const prix=s.prix||'';
+  if(type==='livraison'){
+    if(lang==='fr'){
+      msg='Bonjour '+nom+', votre commande ('+mod+') est prevue pour etre livree aujourd\'hui. Montant a regler : '+prix+' DT. Merci de rester joignable.';
+    } else {
+      msg='السلام عليكم '+nom+'، طلبيتكم ('+mod+') متوقع توصلكم اليوم. المبلغ: '+prix+' دت. يرجى التواجد على الخط.';
+    }
+  } else {
+    if(lang==='fr'){
+      msg='Bonjour '+nom+', nous esperons que vous avez bien recu votre commande ('+mod+'). Merci de confirmer la bonne reception. Merci pour votre confiance !';
+    } else {
+      msg='السلام عليكم '+nom+'، نتمنى تكون وصلتلك طلبيتك ('+mod+') بخير. نرجى تأكيد الاستلام. شكراً على ثقتك فينا!';
+    }
+  }
+  document.getElementById('smsSheetOverlay').style.display='none';
+  window.location.href='sms:+216'+num+'?body='+encodeURIComponent(msg);
 }
 // ──────────────────────────────────────────────────────────────────────────
 
