@@ -1187,8 +1187,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <div id="crGlobalKpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px"></div>
     <!-- Barre chart canvas -->
     <div style="margin-bottom:16px">
-      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">📈 Bénéfice net par carte</div>
-      <canvas id="cartesRapportChart" style="width:100%;max-height:200px"></canvas>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">🥧 Bénéfice net par carte</div>
+      <canvas id="cartesRapportChart" style="width:100%;display:block"></canvas>
     </div>
     <!-- Liste des cartes -->
     <div id="crCartesList"></div>
@@ -3611,43 +3611,89 @@ function renderCartesRapport(){
     <div class="kpi"><div class="kpi-label">💳 Investi total</div><div class="kpi-value yellow">${fmt(totInv)}</div></div>
     <div class="kpi"><div class="kpi-label">🧾 Nb ventes</div><div class="kpi-value purple">${totVentes}</div></div>`;
 
-  // Bar chart
+  // Pie chart
   if(stats.length>0){
     const canvas=document.getElementById('cartesRapportChart');
     if(canvas){
+      const COLORS=['#ff7a00','#10b981','#3b82f6','#a855f7','#f59e0b','#ef4444','#06b6d4','#84cc16'];
       const dpr=window.devicePixelRatio||1;
       const W=canvas.offsetWidth||320;
-      const H=Math.min(200, stats.length*36+30);
+      const SIZE=Math.min(W, 220);
+      const LEGEND_H=stats.length*22+10;
+      const H=SIZE+LEGEND_H;
       canvas.width=W*dpr; canvas.height=H*dpr;
       canvas.style.height=H+'px';
       const ctx=canvas.getContext('2d');
       ctx.scale(dpr,dpr);
       ctx.clearRect(0,0,W,H);
-      const maxV=Math.max(...stats.map(c=>Math.abs(c.benefNet)),1);
-      const barH=22; const gap=14; const padL=8; const padR=14; const padT=6;
-      stats.forEach((c,i)=>{
-        const y=padT+i*(barH+gap);
-        const pct=Math.abs(c.benefNet)/maxV;
-        const avail=W-padL-padR-70;
-        const bW=Math.max(4,pct*avail);
-        const isPos=c.benefNet>=0;
-        // bar
-        ctx.fillStyle=isPos?'rgba(16,185,129,.75)':'rgba(239,68,68,.75)';
-        const r=6;
+
+      const posStats=stats.filter(c=>c.benefNet>0);
+      const total=posStats.reduce((a,c)=>a+c.benefNet,0)||1;
+      const cx=W/2, cy=SIZE/2, R=SIZE/2-14;
+
+      // Draw pie slices
+      let angle=-Math.PI/2;
+      posStats.forEach((c,i)=>{
+        const slice=(c.benefNet/total)*Math.PI*2;
         ctx.beginPath();
-        ctx.roundRect(padL+70,y,bW,barH,r);
+        ctx.moveTo(cx,cy);
+        ctx.arc(cx,cy,R,angle,angle+slice);
+        ctx.closePath();
+        ctx.fillStyle=COLORS[i%COLORS.length];
+        ctx.fill();
+        ctx.strokeStyle='#0d0f1a';
+        ctx.lineWidth=2;
+        ctx.stroke();
+
+        // % label inside slice
+        if(slice>0.25){
+          const midA=angle+slice/2;
+          const tx=cx+Math.cos(midA)*R*0.65;
+          const ty=cy+Math.sin(midA)*R*0.65;
+          const pct=((c.benefNet/total)*100).toFixed(0)+'%';
+          ctx.fillStyle='#fff';
+          ctx.font='bold 12px Outfit,sans-serif';
+          ctx.textAlign='center';
+          ctx.textBaseline='middle';
+          ctx.fillText(pct,tx,ty);
+        }
+        angle+=slice;
+      });
+
+      // Center donut hole
+      ctx.beginPath();
+      ctx.arc(cx,cy,R*0.42,0,Math.PI*2);
+      ctx.fillStyle='#0d0f1a';
+      ctx.fill();
+      // Center text
+      ctx.fillStyle='#ff7a00';
+      ctx.font='bold 13px Outfit,sans-serif';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText(fmt(total),cx,cy);
+
+      // Legend
+      const legY=SIZE+8;
+      posStats.forEach((c,i)=>{
+        const row=i;
+        const y=legY+row*22;
+        // color dot
+        ctx.beginPath();
+        ctx.arc(14,y+8,7,0,Math.PI*2);
+        ctx.fillStyle=COLORS[i%COLORS.length];
         ctx.fill();
         // label
-        ctx.fillStyle='#888';
-        ctx.font=`600 11px Outfit,sans-serif`;
-        ctx.textAlign='right';
-        ctx.textBaseline='middle';
-        ctx.fillText(c.label.length>10?c.label.slice(0,9)+'…':c.label, padL+66, y+barH/2);
-        // value
-        ctx.fillStyle=isPos?'#10b981':'#ef4444';
-        ctx.font=`700 12px JetBrains Mono,monospace`;
+        ctx.fillStyle='#ccc';
+        ctx.font='600 12px Outfit,sans-serif';
         ctx.textAlign='left';
-        ctx.fillText(fmt(c.benefNet), padL+70+bW+6, y+barH/2);
+        ctx.textBaseline='middle';
+        const lbl=c.label.length>14?c.label.slice(0,13)+'…':c.label;
+        ctx.fillText(lbl,26,y+8);
+        // value
+        ctx.fillStyle='#10b981';
+        ctx.font='700 12px JetBrains Mono,monospace';
+        ctx.textAlign='right';
+        ctx.fillText(fmt(c.benefNet),W-8,y+8);
       });
     }
   }
