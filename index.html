@@ -2,7 +2,7 @@
 <html lang="fr" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>🏪 MegaStore</title>
 <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -24,7 +24,7 @@
 }
 :root{--accent:#ff7a00;--accent2:#ff9a3c;--green:#10b981;--yellow:#f59e0b;--red:#ef4444;--radius:14px;}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:24px;transition:background .3s,color .3s}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:env(safe-area-inset-bottom,24px);padding-top:env(safe-area-inset-top,0);padding-left:env(safe-area-inset-left,0);padding-right:env(safe-area-inset-right,0);transition:background .3s,color .3s}
 
 /* HEADER */
 header{background:var(--surface);padding:18px 18px 14px;position:sticky;top:0;z-index:100;width:100%;box-sizing:border-box;left:0;border-bottom:2px solid var(--accent)}
@@ -63,7 +63,7 @@ header{background:var(--surface);padding:18px 18px 14px;position:sticky;top:0;z-
 .tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
 
 /* SECTIONS */
-.section{padding:0 12px;display:none;opacity:0;transform:translateY(6px)}.section.active{display:block;animation:sectionIn .25s ease forwards}
+.section{padding:0 0;display:none;opacity:0;transform:translateY(6px)}.section.active{display:block;animation:sectionIn .25s ease forwards}
 @keyframes sectionIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 /* FORM */
