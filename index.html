@@ -2069,7 +2069,7 @@ function renderClients(){
       ${client.tel?`
       <div style="display:flex;gap:8px;margin-top:10px">
         <a href="tel:${client.tel.replace(/\s/g,'')}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);border-radius:11px;color:var(--green);font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;text-decoration:none">📞 Appeler</a>
-        <a href="https://wa.me/216${client.tel.replace(/\D/g,'').replace(/^216/,'')}&text=${encodeURIComponent('Bonjour '+client.nom+' 👋')}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);border-radius:11px;color:#25d366;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;text-decoration:none">💬 WhatsApp</a>
+        <a href="https://wa.me/216${client.tel.replace(/\D/g,'').replace(/^216/,'')}?text=${encodeURIComponent('Bonjour '+client.nom+' 👋')}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);border-radius:11px;color:#25d366;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;text-decoration:none">💬 WhatsApp</a>
       </div>`:''}
       ${!client.auto?`
       <div class="sale-actions" style="margin-top:10px">
