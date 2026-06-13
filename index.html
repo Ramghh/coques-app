@@ -2,7 +2,7 @@
 <html lang="fr" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🏪 MegaStore</title>
 <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -24,7 +24,7 @@
 }
 :root{--accent:#ff7a00;--accent2:#ff9a3c;--green:#10b981;--yellow:#f59e0b;--red:#ef4444;--radius:14px;}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:env(safe-area-inset-bottom,24px);padding-top:env(safe-area-inset-top,0);padding-left:env(safe-area-inset-left,0);padding-right:env(safe-area-inset-right,0);transition:background .3s,color .3s}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:24px;transition:background .3s,color .3s}
 
 /* HEADER */
 header{background:var(--surface);padding:18px 18px 14px;position:sticky;top:0;z-index:100;width:100%;box-sizing:border-box;left:0;border-bottom:2px solid var(--accent)}
@@ -63,7 +63,7 @@ header{background:var(--surface);padding:18px 18px 14px;position:sticky;top:0;z-
 .tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
 
 /* SECTIONS */
-.section{padding:0 0;display:none;opacity:0;transform:translateY(6px)}.section.active{display:block;animation:sectionIn .25s ease forwards}
+.section{padding:0 12px;display:none;opacity:0;transform:translateY(6px)}.section.active{display:block;animation:sectionIn .25s ease forwards}
 @keyframes sectionIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 /* FORM */
@@ -646,6 +646,22 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .kb-move-btn{flex:1;min-width:0;padding:5px 4px;font-size:11px;font-weight:600;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .15s}
 .kb-move-btn:hover{border-color:var(--accent);color:var(--accent)}
 .kb-empty{font-size:12px;color:var(--muted);text-align:center;padding:18px 0;font-style:italic}
+
+/* WALL MODE */
+#wallMode{position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;gap:24px}
+.wall-close{position:absolute;top:18px;right:18px;background:var(--surface2);border:1px solid var(--border);color:var(--text);width:44px;height:44px;border-radius:12px;font-size:20px;cursor:pointer;z-index:2}
+.wall-clock{font-family:'JetBrains Mono',monospace;font-size:clamp(28px,6vw,52px);font-weight:700;color:var(--muted);letter-spacing:1px}
+.wall-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;width:100%;max-width:1100px}
+.wall-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px 16px;text-align:center;box-shadow:var(--shadow)}
+.wall-label{font-size:clamp(12px,1.8vw,18px);color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:14px}
+.wall-value{font-family:'Cabinet Grotesk',sans-serif;font-size:clamp(24px,5vw,46px);font-weight:800;color:var(--accent);line-height:1.1}
+.wall-sub{font-family:'JetBrains Mono',monospace;font-size:clamp(16px,3vw,28px);font-weight:700;color:var(--green);margin-top:10px}
+.wall-card-small{padding:16px 12px}
+.wall-value-small{font-family:'JetBrains Mono',monospace;font-size:clamp(16px,2.6vw,28px);font-weight:700;color:var(--text)}
+@media (max-width:768px){
+  .wall-grid{grid-template-columns:1fr}
+  .wall-grid-bottom{grid-template-columns:repeat(3,1fr)}
+}
 </style>
 <script src="https://unpkg.com/@zxing/library@0.19.3/umd/index.min.js"></script>
 </head>
@@ -725,6 +741,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <button id="drawerThemeBtn" onclick="toggleTheme()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s"></button>
       <button onclick="openGistModal();closeDrawer()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s">☁️ <span>Sync</span></button>
     </div>
+    <button onclick="openColorModal();closeDrawer()" style="width:100%;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s">🎨 <span>Couleurs du thème</span></button>
   </div>
 </div>
 
@@ -744,6 +761,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       </div>
       <button class="theme-btn" id="gistBtn" onclick="openGistModal()" title="Sync Gist" style="display:none">☁️</button>
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" style="display:none"></button>
+      <button class="theme-btn" id="wallBtn" onclick="openWallMode()" title="Mode Mur (KPIs)">📺</button>
     </div>
   </div>
   
@@ -956,7 +974,21 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
         <div id="fPartagePreview" style="margin-top:6px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;min-height:18px"></div>
       </div>
     </div>
-    <button class="btn-add" onclick="addSale()">✅ Enregistrer la vente</button>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn-add" style="flex:1;background:linear-gradient(135deg,#3b82f6,#60a5fa)" onclick="addToPanier()">🛒 Ajouter au panier</button>
+      <button class="btn-add" id="addSaleBtn" style="flex:1" onclick="addSale()">✅ Enregistrer la vente</button>
+    </div>
+    <div id="panierBox" style="display:none;margin-top:14px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:700;font-size:14px">🛒 Panier (<span id="panierCount">0</span>)</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--accent)" id="panierTotal">0.000 DT</div>
+      </div>
+      <div id="panierItemsList"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="clearPanier()" style="flex:1;padding:11px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif">🗑️ Vider</button>
+        <button onclick="checkoutPanier()" style="flex:2;padding:11px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Cabinet Grotesk',sans-serif">✅ Enregistrer le panier</button>
+      </div>
+    </div>
     <button onclick="openFournModal()" style="width:100%;margin-top:12px;padding:13px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:12px;font-size:15px;cursor:pointer;font-family:'Outfit',sans-serif;">⚙️ Gérer les fournisseurs</button>
   </div>
 </div>
@@ -1743,6 +1775,83 @@ function toggleTheme(){
   save();
 }
 
+// ── CUSTOM THEME COLORS ─────────────────────────────────────────────────
+const COLOR_PRESETS=[
+  {name:'Orange',accent:'#ff7a00',accent2:'#ff9a3c'},
+  {name:'Bleu',accent:'#3b82f6',accent2:'#60a5fa'},
+  {name:'Vert',accent:'#10b981',accent2:'#34d399'},
+  {name:'Violet',accent:'#8b5cf6',accent2:'#a78bfa'},
+  {name:'Rose',accent:'#ec4899',accent2:'#f472b6'},
+  {name:'Rouge',accent:'#ef4444',accent2:'#f87171'},
+  {name:'Cyan',accent:'#06b6d4',accent2:'#22d3ee'},
+  {name:'Jaune',accent:'#f59e0b',accent2:'#fbbf24'},
+  {name:'Gris',accent:'#6b7280',accent2:'#9ca3af'}
+];
+
+function lighten(hex,amt){
+  hex=hex.replace('#','');
+  if(hex.length===3) hex=hex.split('').map(c=>c+c).join('');
+  const num=parseInt(hex,16);
+  let r=(num>>16)+amt, g=((num>>8)&0xff)+amt, b=(num&0xff)+amt;
+  r=Math.min(255,Math.max(0,r)); g=Math.min(255,Math.max(0,g)); b=Math.min(255,Math.max(0,b));
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+
+function setThemeAccent(accent,accent2){
+  accent2=accent2||lighten(accent,40);
+  document.documentElement.style.setProperty('--accent',accent);
+  document.documentElement.style.setProperty('--accent2',accent2);
+  localStorage.setItem('flousFlowAccent',accent);
+  localStorage.setItem('flousFlowAccent2',accent2);
+  const input=document.getElementById('customAccentInput');
+  if(input) input.value=accent;
+}
+
+function applyCustomAccent(hex){
+  setThemeAccent(hex);
+}
+
+function resetThemeColors(){
+  document.documentElement.style.removeProperty('--accent');
+  document.documentElement.style.removeProperty('--accent2');
+  localStorage.removeItem('flousFlowAccent');
+  localStorage.removeItem('flousFlowAccent2');
+  const input=document.getElementById('customAccentInput');
+  if(input) input.value='#ff7a00';
+  showToast('🎨 Couleurs réinitialisées');
+}
+
+function renderColorPresets(){
+  const wrap=document.getElementById('colorPresets');
+  if(!wrap) return;
+  wrap.innerHTML=COLOR_PRESETS.map(p=>`
+    <button onclick="setThemeAccent('${p.accent}','${p.accent2}')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-family:'Outfit',sans-serif">
+      <span style="width:28px;height:28px;border-radius:50%;background:${p.accent};display:block;border:2px solid var(--surface)"></span>
+      <span style="font-size:11px;color:var(--text);font-weight:600">${p.name}</span>
+    </button>`).join('');
+}
+
+function applyStoredThemeColors(){
+  const accent=localStorage.getItem('flousFlowAccent');
+  const accent2=localStorage.getItem('flousFlowAccent2');
+  if(accent){
+    document.documentElement.style.setProperty('--accent',accent);
+    if(accent2) document.documentElement.style.setProperty('--accent2',accent2);
+  }
+}
+
+function openColorModal(){
+  renderColorPresets();
+  const stored=localStorage.getItem('flousFlowAccent')||'#ff7a00';
+  const input=document.getElementById('customAccentInput');
+  if(input) input.value=stored;
+  document.getElementById('colorModal').classList.add('open');
+}
+function closeColorModal(){
+  document.getElementById('colorModal').classList.remove('open');
+}
+applyStoredThemeColors();
+
 // ── STOCK ─────────────────────────────────────────────────────────────────
 function saveStock(){ localStorage.setItem('flousFlowStock', JSON.stringify(stockItems)); }
 
@@ -2069,7 +2178,7 @@ function renderClients(){
       ${client.tel?`
       <div style="display:flex;gap:8px;margin-top:10px">
         <a href="tel:${client.tel.replace(/\s/g,'')}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);border-radius:11px;color:var(--green);font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;text-decoration:none">📞 Appeler</a>
-        <a href="https://wa.me/216${client.tel.replace(/\D/g,'').replace(/^216/,'')}?text=${encodeURIComponent('Bonjour '+client.nom+' 👋')}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);border-radius:11px;color:#25d366;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;text-decoration:none">💬 WhatsApp</a>
+        <a href="https://wa.me/216${client.tel.replace(/\D/g,'').replace(/^216/,'')}&text=${encodeURIComponent('Bonjour '+client.nom+' 👋')}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);border-radius:11px;color:#25d366;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;text-decoration:none">💬 WhatsApp</a>
       </div>`:''}
       ${!client.auto?`
       <div class="sale-actions" style="margin-top:10px">
@@ -2268,10 +2377,209 @@ function addSale(){
   if(document.getElementById('fPartageWrapper')) document.getElementById('fPartageWrapper').style.display='none';
   if(document.getElementById('fPartagePreview')) document.getElementById('fPartagePreview').textContent='';
   document.getElementById('fDate').value=new Date().toISOString().split('T')[0];
-  const btn=document.querySelector('.btn-add');
+  const btn=document.getElementById('addSaleBtn');
   btn.textContent='✅ Enregistrée!'; btn.style.background='linear-gradient(135deg,#059669,#10b981)';
   setTimeout(()=>{btn.textContent='✅ Enregistrer la vente';btn.style.background='';},1800);
 }
+
+// ── PANIER (multi-produits, une seule facture) ─────────────────────────────
+let panierItems=[];
+
+function readSaleFormItem(){
+  const model=document.getElementById('fModel').value.trim();
+  const prix=parseFloat(document.getElementById('fPrix').value)||0;
+  if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return null;}
+  return {
+    model,
+    color:document.getElementById('fColor').value.trim(),
+    qty:parseFloat(document.getElementById('fQty').value)||1,
+    prix,
+    cout:parseFloat(document.getElementById('fCout').value)||0,
+    envoi:parseFloat(document.getElementById('fEnvoi').value)||0,
+    fourn:document.getElementById('fFourn').value,
+    carteId:document.getElementById('fCarte').value,
+    partageF:document.getElementById('fPartageF')?.value||'',
+    partageP:parseFloat(document.getElementById('fPartageP')?.value)||0,
+    status:document.getElementById('fStatus')?.value||'',
+    fraisRetour:document.getElementById('fStatus')?.value==='retourne'?(parseFloat(document.getElementById('fFraisRetour')?.value)||0):0
+  };
+}
+
+function clearProductFields(){
+  ['fModel','fColor','fEnvoi','fQty','fPrix','fCout'].forEach(i=>{const el=document.getElementById(i); if(el) el.value='';});
+  if(document.getElementById('fStatus')) document.getElementById('fStatus').value='';
+  if(document.getElementById('fFraisRetour')) document.getElementById('fFraisRetour').value='';
+  if(document.getElementById('fFraisRetourWrap')) document.getElementById('fFraisRetourWrap').style.display='none';
+  if(document.getElementById('fPartageF')) document.getElementById('fPartageF').value='';
+  if(document.getElementById('fPartageP')) document.getElementById('fPartageP').value='';
+  if(document.getElementById('fPartageWrapper')) document.getElementById('fPartageWrapper').style.display='none';
+  if(document.getElementById('fPartagePreview')) document.getElementById('fPartagePreview').textContent='';
+  const ind=document.getElementById('stockIndicator'); if(ind) ind.style.display='none';
+}
+
+function addToPanier(){
+  const item=readSaleFormItem();
+  if(!item) return;
+  panierItems.push(item);
+  renderPanier();
+  clearProductFields();
+  document.getElementById('fModel').focus();
+  showToast('🛒 Article ajouté au panier');
+}
+
+function renderPanier(){
+  const box=document.getElementById('panierBox');
+  const list=document.getElementById('panierItemsList');
+  const countEl=document.getElementById('panierCount');
+  const totalEl=document.getElementById('panierTotal');
+  if(!panierItems.length){ box.style.display='none'; return; }
+  box.style.display='block';
+  countEl.textContent=panierItems.length;
+  let total=0;
+  list.innerHTML=panierItems.map((it,i)=>{
+    const lineTotal=it.qty*it.prix;
+    total+=lineTotal;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
+      <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px">${it.model}${it.color?' — '+it.color:''} <span style="color:var(--muted)">×${it.qty}</span></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-weight:700;white-space:nowrap">${fmtI(lineTotal)} DT</div>
+      <button onclick="removePanierItem(${i})" style="margin-left:8px;background:transparent;border:none;color:var(--red);font-size:16px;cursor:pointer;line-height:1">✕</button>
+    </div>`;
+  }).join('');
+  totalEl.textContent=fmt(total);
+}
+
+function removePanierItem(i){
+  panierItems.splice(i,1);
+  renderPanier();
+}
+
+function clearPanier(){
+  if(!panierItems.length) return;
+  if(!confirm('Vider le panier ?')) return;
+  panierItems=[];
+  renderPanier();
+}
+
+function checkoutPanier(){
+  if(!panierItems.length) return;
+  const date=document.getElementById('fDate').value||new Date().toISOString().split('T')[0];
+  const ville=document.getElementById('fVille').value.trim();
+  const client=document.getElementById('fClient').value.trim();
+  const phone=document.getElementById('fPhone').value.trim();
+
+  const invYear=date.slice(0,4);
+  const invCount=sales.filter(s=>s.invNum&&s.invNum.startsWith('INV-'+invYear)).length+1;
+  const invNum=`INV-${invYear}-${String(invCount).padStart(3,'0')}`;
+  const baseId=Date.now();
+
+  const newSales=[];
+  panierItems.forEach((it,i)=>{
+    const s={id:baseId+i,invNum,date,model:it.model,color:it.color,ville,client,phone,
+      fourn:it.fourn,carteId:it.carteId,qty:it.qty,prix:it.prix,cout:it.cout,envoi:it.envoi,
+      partageF:it.partageF,partageP:it.partageP,status:it.status,fraisRetour:it.fraisRetour,
+      ...calc(it.qty,it.prix,it.cout,it.envoi)};
+    sales.push(s);
+    newSales.push(s);
+    // Mettre à jour stock si ce modèle existe
+    const stockItem=stockItems.find(x=>x.model.toLowerCase()===it.model.toLowerCase());
+    if(stockItem){
+      stockItem.history=stockItem.history||[];
+      stockItem.history.push({date,qty:-it.qty,type:'vente'});
+    }
+  });
+  saveStock();
+  save(); updateKPIs(); refreshFilterSelects(); refreshStockModelList(); checkStockForModel();
+
+  panierItems=[];
+  renderPanier();
+  ['fModel','fColor','fVille','fClient','fPhone','fEnvoi','fQty','fPrix','fCout'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('fFourn').value='';
+  document.getElementById('fCarte').value='';
+  document.getElementById('fDate').value=new Date().toISOString().split('T')[0];
+
+  showToast(`✅ Panier enregistré — ${newSales.length} article(s), facture ${invNum}`);
+  printInvoiceMulti(newSales, invNum);
+}
+
+// ── FACTURE MULTI-PRODUITS ───────────────────────────────────────────────
+let _printSaleIds=null;
+
+function printInvoiceMulti(salesArr, invNum){
+  _printSaleId=null;
+  _printSaleIds=salesArr.map(s=>s.id);
+  updateInvoicePreview();
+  const savedNom=localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
+  const nomEl=document.getElementById('invNomEntreprise');
+  if(nomEl) nomEl.value=savedNom;
+  ['invColor','invAccent','invMerci','invNomEntreprise','invRemise','invTVA'].forEach(i=>{
+    const el=document.getElementById(i);
+    if(el) el.oninput=()=>{
+      if(i==='invNomEntreprise') localStorage.setItem('flousFlowNomEntreprise', el.value.trim()||'MegaStore');
+      updateInvoicePreview();
+    };
+  });
+  document.getElementById('invoicePreviewModal').classList.add('open');
+}
+
+function buildInvoiceHTMLMulti(salesArr,color,accent,merci,nom,remise=0,tva=0){
+  nom=nom||localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
+  const s0=salesArr[0];
+  const ds=s0.date?new Date(s0.date+'T00:00:00').toLocaleDateString('fr-TN',{day:'2-digit',month:'long',year:'numeric'}):'—';
+  const villeRow=s0.ville?'<div style="font-size:12px;color:#555;margin-top:2px">📍 '+s0.ville+'</div>':'';
+  const phoneRow=s0.phone?'<div style="font-size:12px;color:#555;margin-top:2px">📞 '+s0.phone+'</div>':'';
+  const revenu=salesArr.reduce((a,s)=>a+(s.revenu||0),0);
+  const totalEnvoi=salesArr.reduce((a,s)=>a+(s.envoi||0),0);
+  const rows=salesArr.map(s=>`<tr style="border-bottom:1px solid #eee">
+      <td style="padding:8px 10px;font-size:13px;font-weight:600">${s.model||'—'}${s.color?' — '+s.color:''}</td>
+      <td style="padding:8px 6px;text-align:center;font-size:13px">${s.qty||1}</td>
+      <td style="padding:8px 10px;text-align:right;font-size:13px">${fmtI((s.prix||0)*(s.qty||1))} DT</td>
+    </tr>`).join('');
+  const envoiRow=totalEnvoi>0?`<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:12px;color:#555">Frais de livraison</td><td style="padding:7px 6px;text-align:center;font-size:12px;color:#555">—</td><td style="padding:7px 10px;text-align:right;font-size:12px;color:#555">${fmtI(totalEnvoi)} DT</td></tr>`:'';
+  const remiseRow=remise>0?`<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:12px;color:#e53e3e">🏷️ Remise</td><td style="padding:7px 6px;text-align:center;font-size:12px;color:#e53e3e">—</td><td style="padding:7px 10px;text-align:right;font-size:12px;color:#e53e3e">-${fmtI(remise)} DT</td></tr>`:'';
+  const subtotal=revenu-remise;
+  const tvaAmount=tva>0?subtotal*(tva/100):0;
+  const tvaRow=tva>0?`<tr style="border-bottom:1px solid #eee"><td style="padding:7px 10px;font-size:12px;color:#555">📊 TVA (${tva}%)</td><td style="padding:7px 6px;text-align:center;font-size:12px;color:#555">—</td><td style="padding:7px 10px;text-align:right;font-size:12px;color:#555">+${fmtI(tvaAmount)} DT</td></tr>`:'';
+  const total=subtotal+tvaAmount;
+  const invNum=s0.invNum||('INV-'+(s0.date||'').slice(0,4)+'-???');
+  return `<div style="font-family:'Segoe UI',Arial,sans-serif;width:100%;box-sizing:border-box;color:#111;padding:14px 20px;page-break-after:avoid">
+    <div style="text-align:center;border-bottom:2px solid ${color};padding-bottom:8px;margin-bottom:10px">
+      <div style="font-size:20px;font-weight:900;letter-spacing:1px;color:${color}">${nom}</div>
+      <div style="font-size:11px;color:#555;margin-top:2px">📍 Kélibia, Tunisie &nbsp;|&nbsp; 📞 28 562 177</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:700;color:${color}">🧾 Facture</div>
+      <div style="text-align:right">
+        <div style="font-size:11px;font-weight:700;font-family:monospace;color:${accent}">${invNum}</div>
+        <div style="font-size:11px;color:#555">Date: ${ds}</div>
+      </div>
+    </div>
+    <div style="background:#f7f7f7;border-radius:6px;padding:8px 10px;margin-bottom:10px;border-left:3px solid ${accent}">
+      <div style="font-size:10px;color:#777;margin-bottom:2px">CLIENT</div>
+      <div style="font-size:13px;font-weight:700">${s0.client||'—'}</div>
+      ${phoneRow}${villeRow}
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:10px">
+      <thead>
+        <tr style="background:${color};color:#fff">
+          <th style="padding:6px 10px;text-align:left;font-size:11px;border-radius:5px 0 0 5px">Article</th>
+          <th style="padding:6px 6px;text-align:center;font-size:11px">Qté</th>
+          <th style="padding:6px 10px;text-align:right;font-size:11px;border-radius:0 5px 5px 0">Prix</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}${envoiRow}${remiseRow}${tvaRow}
+      </tbody>
+    </table>
+    <div style="background:${color};color:#fff;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700">TOTAL</div>
+      <div style="font-size:17px;font-weight:900">${fmtI(total)} DT</div>
+    </div>
+    <div style="text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:8px">
+      ${merci}<br>${nom} — Kélibia, Tunisie
+    </div>
+  </div>`;
+}
+
 
 // ── KPIs ───────────────────────────────────────────────────────────────────
 function drawCounter(val, total){
@@ -2288,7 +2596,7 @@ function drawCounter(val, total){
   // Background circle
   ctx.beginPath();
   ctx.arc(cx,cy,R,0,Math.PI*2);
-  ctx.fillStyle=isDarkC?'rgba(255,122,0,.12)':'rgba(255,122,0,.08)';
+  ctx.fillStyle=isDarkC?'rgba(57,255,20,.12)':'rgba(0,150,0,.1)';
   ctx.fill();
   // Track
   ctx.beginPath();
@@ -2300,25 +2608,25 @@ function drawCounter(val, total){
   // Arc progress
   const pct=Math.min(val/Math.max(total,1),1);
   const grad=ctx.createLinearGradient(cx-R,cy,cx+R,cy);
-  grad.addColorStop(0,'#ff7a00');
-  grad.addColorStop(1,'#ffb347');
+  grad.addColorStop(0,isDarkC?'#39ff14':'#16a34a');
+  grad.addColorStop(1,isDarkC?'#00ffaa':'#22c55e');
   ctx.beginPath();
   ctx.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+pct*Math.PI*2);
   ctx.strokeStyle=grad;
   ctx.lineWidth=lw;
   ctx.lineCap='round';
-  ctx.shadowColor='#ff7a00';
-  ctx.shadowBlur=isDarkC?5:2;
+  ctx.shadowColor=isDarkC?'#39ff14':'#16a34a';
+  ctx.shadowBlur=isDarkC?8:4;
   ctx.stroke();
   ctx.shadowBlur=0;
   // Number
-  ctx.fillStyle=isDarkC?'#ff7a00':'#b35400';
+  ctx.fillStyle=isDarkC?'#39ff14':'#14532d';
   ctx.font=`bold ${val>999?13:val>99?15:17}px 'DM Mono',monospace`;
   ctx.textAlign='center';
   ctx.textBaseline='middle';
   ctx.fillText(val, cx, cy-4);
   // Label
-  ctx.fillStyle=isDarkC?'rgba(255,122,0,.7)':'rgba(179,84,0,.7)';
+  ctx.fillStyle=isDarkC?'rgba(57,255,20,.7)':'rgba(20,83,45,.7)';
   ctx.font=`700 8px 'DM Sans',sans-serif`;
   ctx.fillText('ventes', cx, cy+9);
 }
@@ -3113,31 +3421,47 @@ function printInvoice(id){
 }
 
 function updateInvoicePreview(){
-  const s=sales.find(x=>x.id===_printSaleId); if(!s) return;
   const color=document.getElementById('invColor').value||'#111111';
   const accent=document.getElementById('invAccent').value||'#ff7a00';
   const merci=document.getElementById('invMerci').value||'Merci pour votre confiance 🙏';
   const nom=(document.getElementById('invNomEntreprise').value.trim())||localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
   const remise=parseFloat(document.getElementById('invRemise')?.value)||0;
   const tva=parseFloat(document.getElementById('invTVA')?.value)||0;
+  if(_printSaleIds){
+    const arr=sales.filter(s=>_printSaleIds.includes(s.id));
+    if(!arr.length) return;
+    document.getElementById('invoicePreviewContent').innerHTML=buildInvoiceHTMLMulti(arr,color,accent,merci,nom,remise,tva);
+    return;
+  }
+  const s=sales.find(x=>x.id===_printSaleId); if(!s) return;
   document.getElementById('invoicePreviewContent').innerHTML=buildInvoiceHTML(s,color,accent,merci,nom,remise,tva);
 }
 
 function closeInvoicePreview(){
   document.getElementById('invoicePreviewModal').classList.remove('open');
   _printSaleId=null;
+  _printSaleIds=null;
 }
 
 function doPrint(){
-  const s=sales.find(x=>x.id===_printSaleId); if(!s) return;
   const color=document.getElementById('invColor').value||'#111111';
   const accent=document.getElementById('invAccent').value||'#ff7a00';
   const merci=document.getElementById('invMerci').value||'Merci pour votre confiance 🙏';
   const nom=(document.getElementById('invNomEntreprise').value.trim())||localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
   const remise=parseFloat(document.getElementById('invRemise')?.value)||0;
   const tva=parseFloat(document.getElementById('invTVA')?.value)||0;
-  const html=buildInvoiceHTML(s,color,accent,merci,nom,remise,tva);
-  const fullPage=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${s.invNum||'Facture'}</title>
+  let html, invNum;
+  if(_printSaleIds){
+    const arr=sales.filter(s=>_printSaleIds.includes(s.id));
+    if(!arr.length) return;
+    html=buildInvoiceHTMLMulti(arr,color,accent,merci,nom,remise,tva);
+    invNum=arr[0].invNum||'Facture';
+  } else {
+    const s=sales.find(x=>x.id===_printSaleId); if(!s) return;
+    html=buildInvoiceHTML(s,color,accent,merci,nom,remise,tva);
+    invNum=s.invNum||'Facture';
+  }
+  const fullPage=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${invNum}</title>
   <style>*{box-sizing:border-box;margin:0;padding:0}body{background:#fff;font-family:'Segoe UI',Arial,sans-serif}
   .no-print{text-align:center;padding:12px;background:#f5f5f5}
   .no-print button{padding:10px 24px;background:${accent};color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer}
@@ -5502,6 +5826,30 @@ setTimeout(()=>{ updateThemeBtn(); updateLastSyncLabel(); drawMiniChart7d(); },3
   </div>
 </div>
 
+<!-- COLOR THEME MODAL -->
+<div class="gist-modal-overlay" id="colorModal">
+  <div class="gist-modal-box">
+    <div class="gist-modal-title">🎨 Couleurs du thème</div>
+    <div class="gist-modal-sub">Choisis une couleur d'accent ou un préréglage. Le mode (clair/sombre) reste séparé.</div>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <input type="color" id="customAccentInput" value="#ff7a00" oninput="applyCustomAccent(this.value)" style="width:54px;height:54px;border-radius:14px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;padding:0">
+      <div>
+        <div style="font-size:14px;font-weight:700">Couleur personnalisée</div>
+        <div style="font-size:12px;color:var(--muted)">Touche le carré pour choisir n'importe quelle couleur</div>
+      </div>
+    </div>
+
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px">Préréglages</div>
+    <div id="colorPresets" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px"></div>
+
+    <div class="gist-btns">
+      <button class="gist-btn pull" onclick="resetThemeColors()">↺ Réinitialiser</button>
+      <button class="gist-btn cancel" onclick="closeColorModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <!-- GIST SYNC MODAL -->
 <div class="gist-modal-overlay" id="gistModal">
   <div class="gist-modal-box">
@@ -5544,6 +5892,43 @@ setTimeout(()=>{ updateThemeBtn(); updateLastSyncLabel(); drawMiniChart7d(); },3
     <button class="pin-key" style="font-size:18px;color:var(--muted)" onclick="pinCancel()">✕</button>
   </div>
   <div class="pin-error-msg" id="pinErrorMsg"></div>
+</div>
+
+<!-- WALL / KPI FULLSCREEN MODE -->
+<div id="wallMode" style="display:none">
+  <button class="wall-close" onclick="closeWallMode()">✕</button>
+  <div class="wall-clock" id="wallClock"></div>
+  <div class="wall-grid">
+    <div class="wall-card">
+      <div class="wall-label">🗓️ Aujourd'hui</div>
+      <div class="wall-value" id="wallTodayVentes">0 vente</div>
+      <div class="wall-sub" id="wallTodayBenef">+0.000 DT</div>
+    </div>
+    <div class="wall-card">
+      <div class="wall-label">📅 Cette semaine</div>
+      <div class="wall-value" id="wallWeekVentes">0 vente</div>
+      <div class="wall-sub" id="wallWeekBenef">+0.000 DT</div>
+    </div>
+    <div class="wall-card">
+      <div class="wall-label">🗳️ Ce mois</div>
+      <div class="wall-value" id="wallMonthVentes">0 vente</div>
+      <div class="wall-sub" id="wallMonthBenef">+0.000 DT</div>
+    </div>
+  </div>
+  <div class="wall-grid wall-grid-bottom">
+    <div class="wall-card wall-card-small">
+      <div class="wall-label">💰 Total Ventes</div>
+      <div class="wall-value-small" id="wallKpiVentes">0 DT</div>
+    </div>
+    <div class="wall-card wall-card-small">
+      <div class="wall-label">📈 Bénéfice Total</div>
+      <div class="wall-value-small" id="wallKpiBenef">0 DT</div>
+    </div>
+    <div class="wall-card wall-card-small">
+      <div class="wall-label">👥 Clients uniques</div>
+      <div class="wall-value-small" id="wallKpiClients">0</div>
+    </div>
+  </div>
 </div>
 
 <!-- FAB -->
@@ -5591,6 +5976,42 @@ function applySwUpdate(){
     navigator.serviceWorker.controller.postMessage('SKIP_WAITING');
   }
 }
+
+// ── WALL / KPI FULLSCREEN MODE ─────────────────────────────────────────
+let _wallInterval=null, _wallClockInterval=null;
+function refreshWallMode(){
+  const g=id=>document.getElementById(id);
+  const set=(wid,sid)=>{ const src=g(sid); const dst=g(wid); if(src&&dst) dst.textContent=src.textContent; };
+  set('wallTodayVentes','todayVentes');
+  set('wallTodayBenef','todayBenef');
+  set('wallWeekVentes','weekVentes');
+  set('wallWeekBenef','weekBenef');
+  set('wallMonthVentes','monthVentes');
+  set('wallMonthBenef','monthBenef');
+  set('wallKpiVentes','kpiVentes');
+  set('wallKpiBenef','kpiBenef');
+  set('wallKpiClients','kpiClients');
+}
+function updateWallClock(){
+  const el=document.getElementById('wallClock');
+  if(!el) return;
+  const now=new Date();
+  el.textContent=now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' — '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+function openWallMode(){
+  if(typeof updateKPIs==='function') updateKPIs();
+  refreshWallMode();
+  updateWallClock();
+  document.getElementById('wallMode').style.display='flex';
+  _wallInterval=setInterval(()=>{ if(typeof updateKPIs==='function') updateKPIs(); refreshWallMode(); },30000);
+  _wallClockInterval=setInterval(updateWallClock,1000);
+}
+function closeWallMode(){
+  document.getElementById('wallMode').style.display='none';
+  if(_wallInterval){ clearInterval(_wallInterval); _wallInterval=null; }
+  if(_wallClockInterval){ clearInterval(_wallClockInterval); _wallClockInterval=null; }
+}
+
 </script>
 </body>
 </html>
