@@ -431,7 +431,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 /* GIST SYNC MODAL */
 .gist-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
 .gist-modal-overlay.open{display:flex}
-.gist-modal-box{background:var(--surface);border-radius:24px 24px 0 0;padding:24px 20px 32px;width:100%;max-width:480px;animation:slideUpModal .3s ease}
+.gist-modal-box{background:var(--surface);border-radius:24px 24px 0 0;padding:24px 20px 32px;width:100%;max-width:480px;animation:slideUpModal .3s ease;max-height:calc(100vh - 70px);overflow-y:auto}
+@media(max-width:768px){.gist-modal-box{padding-bottom:80px}}
 @keyframes slideUpModal{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
 .gist-modal-title{font-family:'Cabinet Grotesk',sans-serif;font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px}
 .gist-modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5}
@@ -647,6 +648,43 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .kb-move-btn:hover{border-color:var(--accent);color:var(--accent)}
 .kb-empty{font-size:12px;color:var(--muted);text-align:center;padding:18px 0;font-style:italic}
 
+/* BOTTOM NAV */
+.bottom-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  height:62px;
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  z-index:300;
+  box-shadow:0 -4px 20px rgba(0,0,0,.15);
+}
+.bottom-nav-inner{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  height:100%;
+}
+.bnav-btn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;border:none;background:transparent;color:var(--muted);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:color .15s,transform .15s;
+  padding:6px 0 8px;
+  font-family:'Outfit',sans-serif;
+}
+.bnav-btn:active{transform:scale(.88)}
+.bnav-btn.active{color:var(--accent)}
+.bnav-btn.active .bnav-icon{
+  background:rgba(255,122,0,.14);
+  border-radius:14px;
+}
+.bnav-icon{font-size:20px;line-height:1;padding:4px 12px;transition:background .15s,border-radius .15s}
+.bnav-label{font-size:10px;font-weight:600;letter-spacing:.2px}
+@media(max-width:768px){
+  .bottom-nav{display:block}
+  body{padding-bottom:70px}
+  .fab{bottom:76px}
+  .toast{bottom:80px}
+}
+
 /* WALL MODE */
 #wallMode{position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;gap:24px}
 .wall-close{position:absolute;top:18px;right:18px;background:var(--surface2);border:1px solid var(--border);color:var(--text);width:44px;height:44px;border-radius:12px;font-size:20px;cursor:pointer;z-index:2}
@@ -744,6 +782,32 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <button onclick="openColorModal();closeDrawer()" style="width:100%;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s">🎨 <span>Couleurs du thème</span></button>
   </div>
 </div>
+
+<!-- BOTTOM NAV (mobile only) -->
+<nav class="bottom-nav" id="bottomNav">
+  <div class="bottom-nav-inner">
+    <button class="bnav-btn active" id="bnav-ajouter" onclick="bnavGo('ajouter')">
+      <span class="bnav-icon">➕</span>
+      <span class="bnav-label">Ajouter</span>
+    </button>
+    <button class="bnav-btn" id="bnav-ventes" onclick="bnavGo('ventes')">
+      <span class="bnav-icon">📋</span>
+      <span class="bnav-label">Ventes</span>
+    </button>
+    <button class="bnav-btn" id="bnav-clients" onclick="bnavGo('clients')">
+      <span class="bnav-icon">👤</span>
+      <span class="bnav-label">Clients</span>
+    </button>
+    <button class="bnav-btn" id="bnav-backup" onclick="bnavGo('backup')">
+      <span class="bnav-icon">💾</span>
+      <span class="bnav-label">Backup</span>
+    </button>
+    <button class="bnav-btn" id="bnav-menu" onclick="openDrawer()">
+      <span class="bnav-icon">☰</span>
+      <span class="bnav-label">Menu</span>
+    </button>
+  </div>
+</nav>
 
 <header>
   <div class="header-top">
@@ -1606,6 +1670,14 @@ function syncDrawerActive(id){
   if(db) db.classList.add('active');
   const pill=document.getElementById('activeTabPill');
   if(pill) pill.textContent = DRAWER_LABELS[id]||id;
+  // sync bottom nav
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  const bb=document.getElementById('bnav-'+id);
+  if(bb) bb.classList.add('active');
+}
+
+function bnavGo(id){
+  showTab(id, null);
 }
 
 function showTab(id,btn,pushHistory=true){
