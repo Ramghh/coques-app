@@ -765,6 +765,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <button class="drawer-btn" id="dbtn-marques" onclick="drawerNav('marques')"><span class="d-icon">🏷️</span><span class="d-label">Marques</span></button>
     <button class="drawer-btn" id="dbtn-fournisseurs" onclick="drawerNav('fournisseurs')"><span class="d-icon">🧑‍💼</span><span class="d-label">Fournisseurs</span></button>
     <button class="drawer-btn" id="dbtn-partage" onclick="drawerNav('partage')"><span class="d-icon">🤝</span><span class="d-label">Partage</span></button>
+    <button class="drawer-btn" id="dbtn-partenaire" onclick="drawerNav('partenaire')"><span class="d-icon">🤲</span><span class="d-label">Partenaire</span></button>
     <button class="drawer-btn" id="dbtn-rapport" onclick="drawerNav('rapport')"><span class="d-icon">📊</span><span class="d-label">Rapport</span></button>
     <button class="drawer-btn" id="dbtn-annuel" onclick="drawerNav('annuel')"><span class="d-icon">📅</span><span class="d-label">Annuel</span></button>
     <button class="drawer-btn" id="dbtn-cartes-rapport" onclick="drawerNav('cartes-rapport')"><span class="d-icon">💳</span><span class="d-label">Rentabilité Cartes</span></button>
@@ -1368,6 +1369,42 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   </div>
 </div>
 
+<!-- PARTENAIRE -->
+<div class="section" id="tab-partenaire">
+  <div class="form-card">
+    <div class="form-title">🤲 Deals Partenaire</div>
+
+    <!-- Formulaire ajout -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div class="form-full" style="grid-column:1/-1">
+        <label>Désignation</label>
+        <input type="text" id="pNom" placeholder="Ex: Coques Samsung S24">
+      </div>
+      <div>
+        <label>Donné par</label>
+        <input type="text" id="pDonnePar" placeholder="Ex: Nessib Ali">
+      </div>
+      <div>
+        <label>Date</label>
+        <input type="date" id="pDate">
+      </div>
+      <div>
+        <label>Montant Demandé (DT)</label>
+        <input type="number" id="pDemande" placeholder="50.000" step="0.001" oninput="updatePartenairePreview()">
+      </div>
+      <div>
+        <label>Montant Réel (DT)</label>
+        <input type="number" id="pReel" placeholder="35.000" step="0.001" oninput="updatePartenairePreview()">
+      </div>
+    </div>
+    <div id="pPreview" style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:10px;min-height:18px"></div>
+    <button class="btn-primary" onclick="addPartenaireDeal()">➕ Ajouter Deal</button>
+  </div>
+
+  <!-- Liste deals -->
+  <div id="partenaireList" style="margin-top:12px"></div>
+</div>
+
 <!-- BACKUP -->
 
 
@@ -1565,7 +1602,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 <script>
 const DRAWER_LABELS = {
   ajouter:'➕ Ajouter', ventes:'📋 Ventes', clients:'👤 Clients', stock:'📦 Stock',
-  top:'🏆 Top', marques:'🏷️ Marques', fournisseurs:'🧑‍💼 Fournisseurs', partage:'🤝 Partage',
+  top:'🏆 Top', marques:'🏷️ Marques', fournisseurs:'🧑‍💼 Fournisseurs', partage:'🤝 Partage', partenaire:'🤲 Partenaire',
   rapport:'📊 Rapport', annuel:'📅 Annuel', 'cartes-rapport':'💳 Rentabilité Cartes', dashboard:'🗺️ Dashboard', backup:'💾 Backup'
 };
 
@@ -1699,6 +1736,7 @@ function showTab(id,btn,pushHistory=true){
   if(id==='marques') renderMarques();
   if(id==='fournisseurs') renderFournTab();
   if(id==='partage') renderPartageTab();
+  if(id==='partenaire'){ document.getElementById('pDate').value=new Date().toISOString().split('T')[0]; renderPartenaireList(); }
   if(id==='cartes-rapport') setTimeout(()=>renderCartesRapport(), 50);
   if(id==='backup') { loadDriveUrl(); renderPinSettings(); }
 }
@@ -1730,6 +1768,7 @@ let fourns = loadData('flousFlowFourns', 'coquesFourns');
 let achats = JSON.parse(localStorage.getItem('flousFlowAchats') || '[]');
 let stockItems = JSON.parse(localStorage.getItem('flousFlowStock') || '[]');
 let clients = JSON.parse(localStorage.getItem('flousFlowClients') || '[]');
+let partenaireDeals = JSON.parse(localStorage.getItem('flousFlowPartenaire') || '[]');
 let theme  = localStorage.getItem('flousFlowTheme') || localStorage.getItem('coquesTheme') || 'light';
 
 // Migration: si anciens fourns étaient des strings
@@ -1802,6 +1841,7 @@ function fmtP(n){return ((n||0)*100).toFixed(1)+'%';}
 function save(){
   localStorage.setItem('flousFlowSales',JSON.stringify(sales));
   localStorage.setItem('flousFlowFourns',JSON.stringify(fourns));
+  localStorage.setItem('flousFlowPartenaire',JSON.stringify(partenaireDeals));
   localStorage.setItem('flousFlowTheme',theme);
   localStorage.setItem('flousFlowLastSave', Date.now());
 }
@@ -1810,6 +1850,114 @@ function calc(qty,prix,cout,envoi){
   return {revenu:r, coutTotal:c, benefBrut:b, marge:r>0?b/r:0};
 }
 // Bénéfice net = benefBrut - part du fournisseur (partage) - frais retour
+// ── PARTENAIRE ─────────────────────────────────────────────────────────────
+function savePartenaire(){ localStorage.setItem('flousFlowPartenaire',JSON.stringify(partenaireDeals)); }
+
+function updatePartenairePreview(){
+  const dem=parseFloat(document.getElementById('pDemande').value)||0;
+  const reel=parseFloat(document.getElementById('pReel').value)||0;
+  const el=document.getElementById('pPreview');
+  if(!dem||!reel){ el.textContent=''; return; }
+  const marge=dem-reel;
+  el.innerHTML=`Marge = <span style="color:${marge>=0?'var(--green)':'var(--red)'}; font-weight:700">${marge>=0?'+':''}${marge.toFixed(3)} DT</span>`;
+}
+
+function addPartenaireDeal(){
+  const nom=(document.getElementById('pNom').value||'').trim();
+  const donne=(document.getElementById('pDonnePar').value||'').trim();
+  const date=document.getElementById('pDate').value;
+  const dem=parseFloat(document.getElementById('pDemande').value)||0;
+  const reel=parseFloat(document.getElementById('pReel').value)||0;
+  if(!nom){ alert('Désignation obligatoire'); return; }
+  if(!dem){ alert('Montant Demandé obligatoire'); return; }
+  const deal={
+    id:uid(), nom, donnePar:donne,
+    date:date||new Date().toISOString().split('T')[0],
+    demande:dem, reel:reel||0,
+    statut:'attente' // attente | vendu
+  };
+  partenaireDeals.unshift(deal);
+  savePartenaire();
+  // reset form
+  ['pNom','pDonnePar','pDemande','pReel'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pPreview').textContent='';
+  renderPartenaireList();
+  updateKPIs();
+}
+
+function deletePartenaireDeal(id){
+  if(!confirm('Supprimer ce deal ?')) return;
+  partenaireDeals=partenaireDeals.filter(d=>d.id!==id);
+  savePartenaire();
+  renderPartenaireList();
+  updateKPIs();
+}
+
+function setPartenaireStatut(id, statut){
+  const d=partenaireDeals.find(d=>d.id===id);
+  if(!d) return;
+  d.statut=statut;
+  savePartenaire();
+  renderPartenaireList();
+  updateKPIs();
+}
+
+function totalPartenaireMarge(){
+  return 0; // informatif seulement, n'affecte pas le bénéfice
+}
+
+function renderPartenaireList(){
+  const el=document.getElementById('partenaireList');
+  if(!el) return;
+  if(!partenaireDeals.length){
+    el.innerHTML='<div style="text-align:center;color:var(--muted);padding:24px;font-size:13px">Aucun deal pour le moment</div>';
+    return;
+  }
+  const totalEco=partenaireDeals.reduce((a,d)=>a+(d.demande-d.reel),0);
+  const totalDeals=partenaireDeals.length;
+  const vendus=partenaireDeals.filter(d=>d.statut==='vendu').length;
+  el.innerHTML=`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
+      <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Deals</div><div style="font-size:18px;font-weight:800;color:var(--text)">${totalDeals}</div></div>
+      <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px"> Vendus</div><div style="font-size:18px;font-weight:800;color:var(--green)">${vendus}</div></div>
+      <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Économie totale</div><div style="font-size:14px;font-weight:800;color:var(--accent);font-family:'JetBrains Mono',monospace">${totalEco>=0?'+':''}${totalEco.toFixed(3)} DT</div></div>
+    </div>
+    ${partenaireDeals.map(d=>{
+      const eco=d.demande-d.reel;
+      const isRecu=d.statut==='vendu';
+      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div>
+            <div style="font-weight:700;font-size:14px;color:var(--text)">${d.nom}</div>
+            ${d.donnePar?`<div style="font-size:11px;color:var(--muted);margin-top:2px">👤 ${d.donnePar}</div>`:''}
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">📅 ${d.date}</div>
+          </div>
+          <button onclick="deletePartenaireDeal('${d.id}')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:2px 4px">🗑️</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;font-family:'JetBrains Mono',monospace;font-size:12px">
+          <div style="background:var(--bg);border-radius:8px;padding:6px;text-align:center">
+            <div style="color:var(--muted);font-size:10px">Demandé</div>
+            <div style="font-weight:700;color:var(--text)">${d.demande.toFixed(3)}</div>
+          </div>
+          <div style="background:var(--bg);border-radius:8px;padding:6px;text-align:center">
+            <div style="color:var(--muted);font-size:10px">Payé</div>
+            <div style="font-weight:700;color:var(--text)">${d.reel.toFixed(3)}</div>
+          </div>
+          <div style="background:var(--bg);border-radius:8px;padding:6px;text-align:center">
+            <div style="color:var(--muted);font-size:10px">Économie</div>
+            <div style="font-weight:800;color:${eco>=0?'var(--green)':'var(--red)'}">${eco>=0?'+':''}${eco.toFixed(3)}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button onclick="setPartenaireStatut('${d.id}','attente')" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border);background:${!isRecu?'var(--accent)':'var(--bg)'};color:${!isRecu?'#fff':'var(--muted)'};font-size:12px;font-weight:600;cursor:pointer">⏳ En attente</button>
+          <button onclick="setPartenaireStatut('${d.id}','vendu')" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border);background:${isRecu?'var(--green)':'var(--bg)'};color:${isRecu?'#fff':'var(--muted)'};font-size:12px;font-weight:600;cursor:pointer">✅ Vendu</button>
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+}
+// ── END PARTENAIRE ──────────────────────────────────────────────────────────
+
 function benefNet(s){
   const brut=s.benefBrut||s.benef||0;
   let net=brut;
@@ -2802,7 +2950,8 @@ function updateTodayCard(){
 
 function updateKPIs(){
   const tv=sales.reduce((a,s)=>a+s.revenu,0);
-  const benef=sales.reduce((a,s)=>a+benefNet(s),0);
+  const benefVentes=sales.reduce((a,s)=>a+benefNet(s),0);
+  const benef=benefVentes;
   const cout=sales.reduce((a,s)=>a+s.coutTotal,0);
   const mg=tv>0?benef/tv:0;
   document.getElementById('kpiVentes').textContent=fmt(tv);
@@ -5842,6 +5991,7 @@ function updateLastSyncLabel(){
 function saveLocal(){
   localStorage.setItem('flousFlowSales',JSON.stringify(sales));
   localStorage.setItem('flousFlowFourns',JSON.stringify(fourns));
+  localStorage.setItem('flousFlowPartenaire',JSON.stringify(partenaireDeals));
   localStorage.setItem('flousFlowTheme',theme);
   localStorage.setItem('flousFlowLastSave', Date.now());
   if(typeof updateLastSyncLabel==='function') updateLastSyncLabel();
