@@ -626,6 +626,9 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .cost-card-cout .cost-card-val{color:var(--yellow)}
 .cost-card-livr .cost-card-label{color:var(--red)}
 .cost-card-livr .cost-card-val{color:var(--red)}
+.cost-card-roi{background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(16,185,129,.05));border:1px solid rgba(16,185,129,.3)}
+.cost-card-roi .cost-card-label{color:var(--green)}
+.cost-card-roi .cost-card-val{color:var(--green)}
 @media(max-width:768px){
   .cost-cards-row{gap:6px;margin:8px 0}
   .cost-card{padding:12px 10px}
@@ -883,6 +886,16 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   <div class="cost-card cost-card-livr">
     <div class="cost-card-label">🚚 Coût Livraison</div>
     <div class="cost-card-val" id="kpiEnvoi">0.000 DT</div>
+  </div>
+</div>
+<div class="cost-card cost-card-roi" style="margin:10px 0">
+  <div class="cost-card-label">📈 ROI Global</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+    <div class="cost-card-val" id="kpiROI">0.0%</div>
+    <div style="font-size:11px;color:var(--muted);text-align:right;line-height:1.4">Bénéfice net<br>/ Coût achats</div>
+  </div>
+  <div style="margin-top:8px;height:6px;background:var(--border);border-radius:4px;overflow:hidden">
+    <div id="kpiROIBar" style="height:100%;width:0%;background:var(--green);border-radius:4px;transition:width .5s"></div>
   </div>
 </div>
 
@@ -2959,6 +2972,11 @@ function updateKPIs(){
   const uniqueClients=new Set(sales.map(s=>s.client).filter(Boolean)).size;
   document.getElementById('kpiClients').textContent=uniqueClients;
   document.getElementById('kpiCout').textContent=fmt(cout);
+  const roiVal=cout>0?benef/cout*100:0;
+  const roiEl=document.getElementById('kpiROI');
+  const roiBarEl=document.getElementById('kpiROIBar');
+  if(roiEl){ roiEl.textContent=(roiVal>=0?'+':'')+roiVal.toFixed(1)+'%'; roiEl.style.color=roiVal>=0?'var(--green)':'var(--red)'; }
+  if(roiBarEl){ roiBarEl.style.width=Math.min(100,Math.abs(roiVal)/2)+'%'; roiBarEl.style.background=roiVal>=0?'var(--green)':'var(--red)'; }
   const envoiEl=document.getElementById('kpiEnvoi'); if(envoiEl) envoiEl.textContent=fmt(sales.reduce((a,s)=>a+(s.envoi||0),0));
   const nbEl=document.getElementById('kpiNbVentes'); if(nbEl) nbEl.textContent=sales.length;
   const badge=document.getElementById('totalCount');
