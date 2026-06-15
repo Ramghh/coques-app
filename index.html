@@ -766,6 +766,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <button class="drawer-btn" id="dbtn-fournisseurs" onclick="drawerNav('fournisseurs')"><span class="d-icon">🧑‍💼</span><span class="d-label">Fournisseurs</span></button>
     <button class="drawer-btn" id="dbtn-partage" onclick="drawerNav('partage')"><span class="d-icon">🤝</span><span class="d-label">Partage</span></button>
     <button class="drawer-btn" id="dbtn-partenaire" onclick="drawerNav('partenaire')"><span class="d-icon">🤲</span><span class="d-label">Partenaire</span></button>
+    <button class="drawer-btn" id="dbtn-calendrier" onclick="drawerNav('calendrier')"><span class="d-icon">🗓️</span><span class="d-label">Calendrier</span></button>
     <button class="drawer-btn" id="dbtn-rapport" onclick="drawerNav('rapport')"><span class="d-icon">📊</span><span class="d-label">Rapport</span></button>
     <button class="drawer-btn" id="dbtn-annuel" onclick="drawerNav('annuel')"><span class="d-icon">📅</span><span class="d-label">Annuel</span></button>
     <button class="drawer-btn" id="dbtn-cartes-rapport" onclick="drawerNav('cartes-rapport')"><span class="d-icon">💳</span><span class="d-label">Rentabilité Cartes</span></button>
@@ -1271,6 +1272,43 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   </div>
 </div>
 
+<!-- CALENDRIER DES VENTES -->
+<div class="section" id="tab-calendrier">
+  <div class="form-card" style="padding:16px">
+    <!-- Navigation mois -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <button onclick="calPrevMonth()" style="width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">‹</button>
+      <div style="text-align:center">
+        <div id="calMonthTitle" style="font-family:'Cabinet Grotesk',sans-serif;font-size:20px;font-weight:800"></div>
+        <div id="calMonthTotal" style="font-size:12px;color:var(--muted);margin-top:2px"></div>
+      </div>
+      <button onclick="calNextMonth()" style="width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">›</button>
+    </div>
+    <!-- KPIs rapides -->
+    <div id="calKpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px"></div>
+    <!-- Jours de semaine header -->
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px">
+      <div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:4px 0">Lun</div>
+      <div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:4px 0">Mar</div>
+      <div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:4px 0">Mer</div>
+      <div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:4px 0">Jeu</div>
+      <div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:4px 0">Ven</div>
+      <div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:4px 0">Sam</div>
+      <div style="text-align:center;font-size:11px;font-weight:700;color:var(--accent);padding:4px 0">Dim</div>
+    </div>
+    <!-- Grille calendrier -->
+    <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
+    <!-- Légende -->
+    <div style="display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:3px;background:rgba(255,122,0,.15);border:1px solid rgba(255,122,0,.3)"></div>1–3 ventes</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:3px;background:rgba(255,122,0,.4)"></div>4–7 ventes</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:3px;background:#ff7a00"></div>8+ ventes</div>
+    </div>
+  </div>
+  <!-- Détail jour sélectionné -->
+  <div id="calDayDetail" style="display:none;margin-top:0"></div>
+</div>
+
 <!-- RENTABILITÉ CARTES -->
 <div class="section" id="tab-cartes-rapport">
   <div class="form-card">
@@ -1614,7 +1652,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 const DRAWER_LABELS = {
   ajouter:'➕ Ajouter', ventes:'📋 Ventes', clients:'👤 Clients', stock:'📦 Stock',
   top:'🏆 Top', marques:'🏷️ Marques', fournisseurs:'🧑‍💼 Fournisseurs', partage:'🤝 Partage', partenaire:'🤲 Partenaire',
-  rapport:'📊 Rapport', annuel:'📅 Annuel', 'cartes-rapport':'💳 Rentabilité Cartes', dashboard:'🗺️ Dashboard', backup:'💾 Backup'
+  rapport:'📊 Rapport', annuel:'📅 Annuel', calendrier:'🗓️ Calendrier', 'cartes-rapport':'💳 Rentabilité Cartes', dashboard:'🗺️ Dashboard', backup:'💾 Backup'
 };
 
 // ── MINI CHART 7 JOURS ────────────────────────────────────────────────────
@@ -1743,6 +1781,7 @@ function showTab(id,btn,pushHistory=true){
   if(id==='top') setTimeout(()=>renderTop(), 50);
   if(id==='rapport') setTimeout(()=>renderRapport(), 50);
   if(id==='annuel') renderAnnuel();
+  if(id==='calendrier') renderCalendrier();
   if(id==='dashboard') { renderDash(); renderHeatmap(); setTimeout(()=>{ buildYearSelectorForComp(); updateGroupedChart(); initTunisiaMap(); },400); }
   if(id==='marques') renderMarques();
   if(id==='fournisseurs') renderFournTab();
@@ -4075,6 +4114,198 @@ function renderAnnuel(){
   });
   document.getElementById('annuelMonths').innerHTML=html||'<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Aucune vente en '+year+'.</div></div>';
 }
+// ── CALENDRIER DES VENTES ──────────────────────────────────────────────────
+let _calYear  = new Date().getFullYear();
+let _calMonth = new Date().getMonth(); // 0-based
+let _calSelDay = null;
+
+function calPrevMonth(){
+  _calMonth--;
+  if(_calMonth < 0){ _calMonth = 11; _calYear--; }
+  _calSelDay = null;
+  renderCalendrier();
+}
+function calNextMonth(){
+  _calMonth++;
+  if(_calMonth > 11){ _calMonth = 0; _calYear++; }
+  _calSelDay = null;
+  renderCalendrier();
+}
+
+function renderCalendrier(){
+  const monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const year  = _calYear;
+  const month = _calMonth; // 0-based
+  const prefix = `${year}-${String(month+1).padStart(2,'0')}`;
+  const todayStr = localDateStr(new Date());
+
+  // All sales this month
+  const mSales = sales.filter(s => s.date && s.date.startsWith(prefix) && s.statut !== 'Annulé');
+  const tv = mSales.reduce((a,s)=>a+s.revenu,0);
+  const tb = mSales.reduce((a,s)=>a+benefNet(s),0);
+
+  // Title + total
+  document.getElementById('calMonthTitle').textContent = `${monthNames[month]} ${year}`;
+  document.getElementById('calMonthTotal').textContent = mSales.length
+    ? `${mSales.length} vente${mSales.length>1?'s':''} · ${fmt(tb)} bénéfice`
+    : 'Aucune vente';
+
+  // KPIs
+  document.getElementById('calKpis').innerHTML = `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">💰 Ventes</div>
+      <div style="font-size:15px;font-weight:800;color:var(--yellow);font-family:'Cabinet Grotesk',sans-serif">${fmt(tv)}</div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">✅ Bénéfice</div>
+      <div style="font-size:15px;font-weight:800;color:var(--green);font-family:'Cabinet Grotesk',sans-serif">${fmt(tb)}</div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">📦 Nb</div>
+      <div style="font-size:15px;font-weight:800;color:var(--accent);font-family:'Cabinet Grotesk',sans-serif">${mSales.length}</div>
+    </div>`;
+
+  // Build per-day map
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const dayMap = {};
+  for(let d=1; d<=daysInMonth; d++){
+    const ds = `${prefix}-${String(d).padStart(2,'0')}`;
+    const ds_sales = mSales.filter(s => s.date === ds);
+    dayMap[d] = {
+      sales: ds_sales,
+      nb: ds_sales.length,
+      benef: ds_sales.reduce((a,s)=>a+benefNet(s),0),
+      revenu: ds_sales.reduce((a,s)=>a+s.revenu,0)
+    };
+  }
+
+  const maxBenef = Math.max(...Object.values(dayMap).map(d=>d.benef), 1);
+
+  // First weekday of month (Mon=0 ... Sun=6)
+  let firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  firstDay = (firstDay + 6) % 7; // convert to Mon=0
+
+  // Build grid cells
+  let cells = '';
+  // Empty cells before first day
+  for(let i=0; i<firstDay; i++){
+    cells += `<div style="aspect-ratio:1;border-radius:8px"></div>`;
+  }
+
+  for(let d=1; d<=daysInMonth; d++){
+    const ds = `${prefix}-${String(d).padStart(2,'0')}`;
+    const info = dayMap[d];
+    const isToday = ds === todayStr;
+    const isSel   = _calSelDay === d;
+    const isSun   = (new Date(year, month, d).getDay() === 0);
+    const nb = info.nb;
+
+    // Color intensity based on nb sales
+    let bg, textCol, border;
+    if(nb === 0){
+      bg = 'transparent';
+      border = isSel ? 'var(--accent)' : (isToday ? 'rgba(255,122,0,.5)' : 'var(--border)');
+      textCol = isSun ? 'var(--accent)' : 'var(--muted)';
+    } else if(nb <= 3){
+      bg = 'rgba(255,122,0,.14)';
+      border = isSel ? 'var(--accent)' : 'rgba(255,122,0,.35)';
+      textCol = 'var(--text)';
+    } else if(nb <= 7){
+      bg = 'rgba(255,122,0,.42)';
+      border = isSel ? '#fff' : 'rgba(255,122,0,.6)';
+      textCol = '#fff';
+    } else {
+      bg = '#ff7a00';
+      border = isSel ? '#fff' : '#e06000';
+      textCol = '#fff';
+    }
+
+    const benefStr = nb > 0
+      ? `<div style="font-size:9px;font-weight:700;line-height:1.1;margin-top:2px;opacity:.9">${info.benef>0?'+':''}${Math.round(info.benef)}</div>`
+      : '';
+    const dotStr = nb > 0
+      ? `<div style="font-size:9px;line-height:1;opacity:.85">${nb > 9 ? '9+' : nb}v</div>`
+      : '';
+
+    cells += `<div onclick="calSelectDay(${d})"
+      style="aspect-ratio:1;border-radius:8px;border:1.5px solid ${border};background:${bg};
+             display:flex;flex-direction:column;align-items:center;justify-content:center;
+             cursor:${nb>0?'pointer':'default'};transition:all .15s;
+             ${isSel?'box-shadow:0 0 0 2px var(--accent)':''}
+             ${isToday&&nb===0?'box-shadow:0 0 0 1.5px rgba(255,122,0,.4)':''}">
+      <div style="font-size:13px;font-weight:${isToday?'800':'600'};color:${isToday&&nb===0?'var(--accent)':textCol};line-height:1">${d}</div>
+      ${dotStr}
+      ${benefStr}
+    </div>`;
+  }
+
+  document.getElementById('calGrid').innerHTML = cells;
+
+  // Refresh day detail if one is selected
+  if(_calSelDay) calShowDetail(_calSelDay);
+  else document.getElementById('calDayDetail').style.display = 'none';
+}
+
+// Cache dayMap for detail use
+let dayMap_cache = null;
+
+function calShowDetail(d){
+  const prefix = `${_calYear}-${String(_calMonth+1).padStart(2,'0')}`;
+  const ds = `${prefix}-${String(d).padStart(2,'0')}`;
+  const daySales = sales.filter(s => s.date === ds && s.statut !== 'Annulé');
+  const el = document.getElementById('calDayDetail');
+
+  if(!daySales.length){ el.style.display='none'; return; }
+
+  const tb = daySales.reduce((a,s)=>a+benefNet(s),0);
+  const tv = daySales.reduce((a,s)=>a+s.revenu,0);
+  const monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const dateLabel = `${d} ${monthNames[_calMonth]} ${_calYear}`;
+
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="form-card" style="margin-top:0;border-top:3px solid var(--accent)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-family:'Cabinet Grotesk',sans-serif;font-size:17px;font-weight:800">📅 ${dateLabel}</div>
+        <div style="font-size:12px;color:var(--muted)">${daySales.length} vente${daySales.length>1?'s':''}</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <div style="flex:1;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px">Bénéfice</div>
+          <div style="font-size:16px;font-weight:800;color:var(--green);font-family:'Cabinet Grotesk',sans-serif">${fmt(tb)}</div>
+        </div>
+        <div style="flex:1;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px">Revenu</div>
+          <div style="font-size:16px;font-weight:800;color:var(--yellow);font-family:'Cabinet Grotesk',sans-serif">${fmt(tv)}</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${getSorted(daySales).map(s=>`
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.model||'—'}</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">${s.client||'—'} ${s.ville?'· '+s.ville:''} · qté ${s.qty||1}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--green);font-weight:700">${fmt(benefNet(s))}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:1px">${fmt(s.revenu||0)}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// Override calSelectDay to also trigger detail
+function calSelectDay(d){
+  const prefix = `${_calYear}-${String(_calMonth+1).padStart(2,'0')}`;
+  const ds = `${prefix}-${String(d).padStart(2,'0')}`;
+  const nb = sales.filter(s=>s.date===ds && s.statut!=='Annulé').length;
+  if(nb === 0) return;
+  _calSelDay = (_calSelDay === d) ? null : d;
+  renderCalendrier();
+  if(_calSelDay) setTimeout(()=>{ document.getElementById('calDayDetail')?.scrollIntoView({behavior:'smooth',block:'nearest'}); }, 100);
+}
+
 function drawLineChartDouble(canvasId, labels, values1, values2, label1, label2){
   const canvas=document.getElementById(canvasId);
   if(!canvas) return;
