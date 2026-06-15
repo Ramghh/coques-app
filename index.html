@@ -1779,16 +1779,27 @@ function showTab(id,btn,pushHistory=true){
   if(id==='ventes') { refreshFilterSelects(); renderSales(); }
   if(id==='achats') { refreshAchatFournSelect(); renderAchats(); }
   if(id==='top') setTimeout(()=>renderTop(), 50);
-  if(id==='rapport') setTimeout(()=>renderRapport(), 50);
-  if(id==='annuel') renderAnnuel();
-  if(id==='calendrier') renderCalendrier();
-  if(id==='dashboard') { renderDash(); renderHeatmap(); setTimeout(()=>{ buildYearSelectorForComp(); updateGroupedChart(); initTunisiaMap(); },400); }
-  if(id==='marques') renderMarques();
   if(id==='fournisseurs') renderFournTab();
   if(id==='partage') renderPartageTab();
   if(id==='partenaire'){ document.getElementById('pDate').value=new Date().toISOString().split('T')[0]; renderPartenaireList(); }
-  if(id==='cartes-rapport') setTimeout(()=>renderCartesRapport(), 50);
   if(id==='backup') { loadDriveUrl(); renderPinSettings(); renderSnapshots(); }
+
+  // Tabs with canvas — wait for layout then draw
+  if(['rapport','annuel','calendrier','dashboard','marques','cartes-rapport'].includes(id)){
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        if(id==='rapport')        renderRapport();
+        if(id==='annuel')         renderAnnuel();
+        if(id==='calendrier')     renderCalendrier();
+        if(id==='marques')        renderMarques();
+        if(id==='cartes-rapport') renderCartesRapport();
+        if(id==='dashboard'){
+          renderDash(); renderHeatmap();
+          setTimeout(()=>{ buildYearSelectorForComp(); updateGroupedChart(); initTunisiaMap(); }, 300);
+        }
+      });
+    });
+  }
 }
 
 function goTabBack(){
@@ -6545,6 +6556,39 @@ function saveLocal(){
 // resize redraw
 window.addEventListener('resize',()=>drawMiniChart7d());
 setTimeout(()=>{ updateThemeBtn(); updateLastSyncLabel(); drawMiniChart7d(); },300);
+
+// ── REDRAW ON APP RESUME ───────────────────────────────────────────────────
+// Quand l'utilisateur revient dans l'app (background → foreground),
+// les canvas ont offsetWidth=0 et besoin d'être redessinés.
+function _redrawActiveTab(){
+  const active = document.querySelector('.section.active');
+  if(!active) return;
+  const id = active.id.replace('tab-','');
+  drawMiniChart7d();
+  if(id==='dashboard'){
+    renderHeatmap();
+    setTimeout(()=>{ updateGroupedChart(); initTunisiaMap(); }, 200);
+  }
+  if(id==='rapport')   setTimeout(()=>renderRapport(), 100);
+  if(id==='annuel')    setTimeout(()=>renderAnnuel(), 100);
+  if(id==='calendrier') setTimeout(()=>renderCalendrier(), 100);
+  if(id==='marques')   setTimeout(()=>renderMarques(), 100);
+  if(id==='cartes-rapport') setTimeout(()=>renderCartesRapport(), 100);
+}
+
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible') _redrawActiveTab();
+});
+
+window.addEventListener('pageshow', (e)=>{
+  // pageshow fires on bfcache restore too
+  if(e.persisted) _redrawActiveTab();
+});
+
+window.addEventListener('focus', ()=>{
+  // Extra safety for PWA on Android
+  _redrawActiveTab();
+});
 
 
 
