@@ -626,9 +626,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .cost-card-cout .cost-card-val{color:var(--yellow)}
 .cost-card-livr .cost-card-label{color:var(--red)}
 .cost-card-livr .cost-card-val{color:var(--red)}
-.cost-card-roi{background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(16,185,129,.05));border:1px solid rgba(16,185,129,.3)}
-.cost-card-roi .cost-card-label{color:var(--green)}
-.cost-card-roi .cost-card-val{color:var(--green)}
 @media(max-width:768px){
   .cost-cards-row{gap:6px;margin:8px 0}
   .cost-card{padding:12px 10px}
@@ -886,16 +883,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   <div class="cost-card cost-card-livr">
     <div class="cost-card-label">🚚 Coût Livraison</div>
     <div class="cost-card-val" id="kpiEnvoi">0.000 DT</div>
-  </div>
-</div>
-<div class="cost-card cost-card-roi" style="margin:10px 0">
-  <div class="cost-card-label">📈 ROI Global</div>
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-    <div class="cost-card-val" id="kpiROI">0.0%</div>
-    <div style="font-size:11px;color:var(--muted);text-align:right;line-height:1.4">Bénéfice net<br>/ Coût achats</div>
-  </div>
-  <div style="margin-top:8px;height:6px;background:var(--border);border-radius:4px;overflow:hidden">
-    <div id="kpiROIBar" style="height:100%;width:0%;background:var(--green);border-radius:4px;transition:width .5s"></div>
   </div>
 </div>
 
@@ -1238,7 +1225,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 <!-- RAPPORT -->
 <div class="section" id="tab-rapport">
   <div class="form-card">
-    <div class="form-title">📊 Rapport Mensuel</div>
+    <div class="form-title" style="justify-content:space-between">
+      <span>📊 Rapport Mensuel</span>
+      <button onclick="exportPDF('mensuel')" style="padding:8px 14px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px">📄 PDF</button>
+    </div>
     <div class="month-select-row">
       <select id="monthSelect" onchange="renderRapport()"></select>
     </div>
@@ -1256,7 +1246,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 <!-- RAPPORT ANNUEL -->
 <div class="section" id="tab-annuel">
   <div class="form-card">
-    <div class="form-title">📅 Rapport Annuel</div>
+    <div class="form-title" style="justify-content:space-between">
+      <span>📅 Rapport Annuel</span>
+      <button onclick="exportPDF('annuel')" style="padding:8px 14px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px">📄 PDF</button>
+    </div>
     <div class="month-select-row" style="display:flex;gap:10px;align-items:center">
       <div style="flex:1">
         <div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Année</div>
@@ -1443,6 +1436,11 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <strong style="color:var(--accent)">🔀 Fusionner</strong> — garde tes données et ajoute les nouvelles (ignore les doublons par ID).<br>
       <span style="color:var(--yellow)">💡 Depuis Drive: télécharge d'abord le fichier sur ton appareil, puis importe-le ici.</span>
     </div>
+  </div>
+  <div class="backup-card" style="margin-top:4px">
+    <div class="backup-title">⏪ Versions automatiques</div>
+    <div class="backup-desc">MegaStore garde les 5 dernières versions. Clique sur une version pour la restaurer.</div>
+    <div id="snapshotList" style="display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
   </div>
   <div class="backup-info">
     <strong>💡 Conseil :</strong> Exporte régulièrement et enregistre dans <strong>Google Drive</strong>.<br>
@@ -1751,7 +1749,7 @@ function showTab(id,btn,pushHistory=true){
   if(id==='partage') renderPartageTab();
   if(id==='partenaire'){ document.getElementById('pDate').value=new Date().toISOString().split('T')[0]; renderPartenaireList(); }
   if(id==='cartes-rapport') setTimeout(()=>renderCartesRapport(), 50);
-  if(id==='backup') { loadDriveUrl(); renderPinSettings(); }
+  if(id==='backup') { loadDriveUrl(); renderPinSettings(); renderSnapshots(); }
 }
 
 function goTabBack(){
@@ -1857,6 +1855,82 @@ function save(){
   localStorage.setItem('flousFlowPartenaire',JSON.stringify(partenaireDeals));
   localStorage.setItem('flousFlowTheme',theme);
   localStorage.setItem('flousFlowLastSave', Date.now());
+  autoSnapshot();
+}
+
+// ── AUTO SNAPSHOTS (آخر 5 نسخ) ──────────────────────────────────────────────
+const SNAPSHOT_KEY = 'ff_snapshots';
+const SNAPSHOT_MAX = 5;
+
+function autoSnapshot(){
+  try{
+    const snap = {
+      ts: Date.now(),
+      sales: JSON.parse(JSON.stringify(sales)),
+      fourns: JSON.parse(JSON.stringify(fourns)),
+      achats: JSON.parse(JSON.stringify(achats)),
+      stockItems: JSON.parse(JSON.stringify(stockItems)),
+      clients: JSON.parse(JSON.stringify(clients)),
+      partenaireDeals: JSON.parse(JSON.stringify(partenaireDeals))
+    };
+    let snaps = getSnapshots();
+    snaps.unshift(snap);
+    if(snaps.length > SNAPSHOT_MAX) snaps = snaps.slice(0, SNAPSHOT_MAX);
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snaps));
+  } catch(e){ console.warn('Snapshot failed:', e); }
+}
+
+function getSnapshots(){
+  try{ return JSON.parse(localStorage.getItem(SNAPSHOT_KEY)||'[]'); }
+  catch(e){ return []; }
+}
+
+function restoreSnapshot(index){
+  const snaps = getSnapshots();
+  const snap = snaps[index];
+  if(!snap) return;
+  const d = new Date(snap.ts);
+  const label = d.toLocaleDateString('fr-TN',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('fr-TN',{hour:'2-digit',minute:'2-digit'});
+  if(!confirm(`⏪ Restaurer la version du ${label} ?\n⚠️ Les données actuelles seront remplacées.`)) return;
+  sales = snap.sales || [];
+  fourns = snap.fourns || [];
+  achats = snap.achats || [];
+  stockItems = snap.stockItems || [];
+  clients = snap.clients || [];
+  partenaireDeals = snap.partenaireDeals || [];
+  save(); saveAchats(); saveStock(); saveClients();
+  updateKPIs(); renderSales(); refreshFournSelects(); refreshStockModelList();
+  showToast(`✅ Version du ${label} restaurée!`);
+  renderSnapshots();
+}
+
+function renderSnapshots(){
+  const el = document.getElementById('snapshotList');
+  if(!el) return;
+  const snaps = getSnapshots();
+  if(!snaps.length){
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:14px 0">Aucune version sauvegardée pour l\'instant.</div>';
+    return;
+  }
+  el.innerHTML = snaps.map((s, i) => {
+    const d = new Date(s.ts);
+    const dateStr = d.toLocaleDateString('fr-TN',{weekday:'short',day:'2-digit',month:'short'});
+    const timeStr = d.toLocaleTimeString('fr-TN',{hour:'2-digit',minute:'2-digit'});
+    const ventes = (s.sales||[]).length;
+    const fournsCount = (s.fourns||[]).length;
+    const isLatest = i === 0;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:var(--surface2);border:1px solid ${isLatest?'rgba(255,122,0,.35)':'var(--border)'};border-radius:12px;gap:10px">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+          ${isLatest ? '<span style="background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px">DERNIÈRE</span>' : `<span style="color:var(--muted);font-size:12px;font-weight:700">#${i+1}</span>`}
+          <span style="font-size:14px;font-weight:700;color:var(--text)">${dateStr}</span>
+          <span style="font-size:13px;color:var(--muted)">${timeStr}</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted)">${ventes} vente(s) · ${fournsCount} fourn.</div>
+      </div>
+      <button onclick="restoreSnapshot(${i})" style="flex-shrink:0;padding:8px 14px;background:linear-gradient(135deg,rgba(255,122,0,.18),rgba(255,122,0,.06));border:1px solid rgba(255,122,0,.35);color:var(--accent);border-radius:10px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer">⏪ Restaurer</button>
+    </div>`;
+  }).join('');
 }
 function calc(qty,prix,cout,envoi){
   const r=qty*prix, c=qty*cout+envoi, b=r-c;
@@ -2972,11 +3046,6 @@ function updateKPIs(){
   const uniqueClients=new Set(sales.map(s=>s.client).filter(Boolean)).size;
   document.getElementById('kpiClients').textContent=uniqueClients;
   document.getElementById('kpiCout').textContent=fmt(cout);
-  const roiVal=cout>0?benef/cout*100:0;
-  const roiEl=document.getElementById('kpiROI');
-  const roiBarEl=document.getElementById('kpiROIBar');
-  if(roiEl){ roiEl.textContent=(roiVal>=0?'+':'')+roiVal.toFixed(1)+'%'; roiEl.style.color=roiVal>=0?'var(--green)':'var(--red)'; }
-  if(roiBarEl){ roiBarEl.style.width=Math.min(100,Math.abs(roiVal)/2)+'%'; roiBarEl.style.background=roiVal>=0?'var(--green)':'var(--red)'; }
   const envoiEl=document.getElementById('kpiEnvoi'); if(envoiEl) envoiEl.textContent=fmt(sales.reduce((a,s)=>a+(s.envoi||0),0));
   const nbEl=document.getElementById('kpiNbVentes'); if(nbEl) nbEl.textContent=sales.length;
   const badge=document.getElementById('totalCount');
@@ -5725,6 +5794,233 @@ function exportExcel(){
   if(stockRows.length) XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(stockRows),'Stock');
   XLSX.writeFile(wb,`megastore-${new Date().toISOString().split('T')[0]}.xlsx`);
   showToast('✅ Excel téléchargé!');
+}
+
+// ── EXPORT PDF ─────────────────────────────────────────────────────────────
+function exportPDF(type){
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#ff7a00';
+  const green  = '#10b981';
+  const red    = '#ef4444';
+  const yellow = '#f59e0b';
+
+  let title, kpisHTML, chartDataUrl, tableHTML, periodLabel;
+
+  if(type === 'mensuel'){
+    const val = document.getElementById('monthSelect').value;
+    const [yr, mo] = val.split('-');
+    const monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    periodLabel = `${monthNames[parseInt(mo)-1]} ${yr}`;
+    title = '📊 Rapport Mensuel — ' + periodLabel;
+
+    const ms = sales.filter(s => s.date && s.date.startsWith(val));
+    const tv = ms.reduce((a,s)=>a+s.revenu,0);
+    const tb = ms.reduce((a,s)=>a+benefNet(s),0);
+    const tc = ms.reduce((a,s)=>a+s.coutTotal,0);
+    const marge = tv>0 ? tb/tv : 0;
+    const clients_u = new Set(ms.map(s=>s.client).filter(Boolean)).size;
+
+    kpisHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+        ${kpiCard('💰 Ventes',fmt(tv),yellow)}
+        ${kpiCard('✅ Bénéfice',fmt(tb),green)}
+        ${kpiCard('🛒 Coût',fmt(tc),red)}
+        ${kpiCard('📈 Marge',fmtP(marge),accent)}
+        ${kpiCard('🧾 Nb Ventes',ms.length,'')}
+        ${kpiCard('👤 Clients',clients_u,accent)}
+      </div>`;
+
+    // Capture chart canvas as image
+    const canvas = document.getElementById('rapportChart');
+    chartDataUrl = canvas ? canvas.toDataURL('image/png') : null;
+
+    // Table des ventes
+    const sorted = getSorted(ms);
+    tableHTML = sorted.length ? `
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:16px">
+        <thead>
+          <tr style="background:#f3f4f6;color:#374151">
+            <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e7eb">Date</th>
+            <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e7eb">Modèle</th>
+            <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e7eb">Client</th>
+            <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e7eb">Ville</th>
+            <th style="padding:8px 10px;text-align:right;border-bottom:1px solid #e5e7eb">Qté</th>
+            <th style="padding:8px 10px;text-align:right;border-bottom:1px solid #e5e7eb">Revenu</th>
+            <th style="padding:8px 10px;text-align:right;border-bottom:1px solid #e5e7eb">Bénéf.</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sorted.map((s,i)=>`
+          <tr style="background:${i%2?'#fafafa':'#fff'}">
+            <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;color:#6b7280">${s.date||''}</td>
+            <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-weight:600">${s.model||''}</td>
+            <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6">${s.client||'—'}</td>
+            <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;color:#6b7280">${s.ville||'—'}</td>
+            <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;text-align:right">${s.qty||1}</td>
+            <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;text-align:right;color:#f59e0b;font-weight:600">${fmt(s.revenu||0)}</td>
+            <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;text-align:right;color:#10b981;font-weight:700">${fmt(benefNet(s))}</td>
+          </tr>`).join('')}
+        </tbody>
+        <tfoot>
+          <tr style="background:#f3f4f6;font-weight:700">
+            <td colspan="5" style="padding:9px 10px;border-top:2px solid #e5e7eb">TOTAL (${sorted.length} vente${sorted.length>1?'s':''})</td>
+            <td style="padding:9px 10px;border-top:2px solid #e5e7eb;text-align:right;color:#f59e0b">${fmt(tv)}</td>
+            <td style="padding:9px 10px;border-top:2px solid #e5e7eb;text-align:right;color:#10b981">${fmt(tb)}</td>
+          </tr>
+        </tfoot>
+      </table>` : '<p style="color:#9ca3af;text-align:center;margin:20px 0">Aucune vente ce mois.</p>';
+
+  } else {
+    // ANNUEL
+    const year = document.getElementById('yearSelect').value;
+    const year2 = document.getElementById('yearSelect2')?.value || '';
+    periodLabel = year + (year2 ? ' vs ' + year2 : '');
+    title = '📅 Rapport Annuel — ' + periodLabel;
+
+    const ySales = sales.filter(s=>s.date&&s.date.startsWith(year));
+    const tv = ySales.reduce((a,s)=>a+s.revenu,0);
+    const tb = ySales.reduce((a,s)=>a+benefNet(s),0);
+    const tc = ySales.reduce((a,s)=>a+s.coutTotal,0);
+
+    kpisHTML = `
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px">
+        ${kpiCard('💰 Total Ventes',fmt(tv),yellow)}
+        ${kpiCard('✅ Bénéfice Net',fmt(tb),green)}
+        ${kpiCard('🛒 Coût Total',fmt(tc),red)}
+        ${kpiCard('📦 Nb Ventes',ySales.length,accent)}
+      </div>`;
+
+    const canvas = document.getElementById('annuelChart');
+    chartDataUrl = canvas ? canvas.toDataURL('image/png') : null;
+
+    const months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    const maxB = Math.max(...months.map((_,i)=>{
+      const ms = `${year}-${String(i+1).padStart(2,'0')}`;
+      return ySales.filter(s=>s.date&&s.date.startsWith(ms)).reduce((a,s)=>a+benefNet(s),0);
+    }), 1);
+
+    tableHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:16px">
+        <thead>
+          <tr style="background:#f3f4f6;color:#374151">
+            <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e7eb">Mois</th>
+            <th style="padding:8px 10px;text-align:right;border-bottom:1px solid #e5e7eb">Ventes</th>
+            <th style="padding:8px 10px;text-align:right;border-bottom:1px solid #e5e7eb">Revenu</th>
+            <th style="padding:8px 10px;text-align:right;border-bottom:1px solid #e5e7eb">Bénéfice</th>
+            ${year2?`<th style="padding:8px 10px;text-align:right;border-bottom:1px solid #e5e7eb">Bénéf. ${year2}</th>`:''}
+            <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e5e7eb;width:80px">Progression</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${months.map((mname,i)=>{
+            const ms = `${year}-${String(i+1).padStart(2,'0')}`;
+            const mSales = ySales.filter(s=>s.date&&s.date.startsWith(ms));
+            const mv = mSales.reduce((a,s)=>a+s.revenu,0);
+            const mb = mSales.reduce((a,s)=>a+benefNet(s),0);
+            const pct = Math.round((mb/maxB)*100);
+            let y2cell = '';
+            if(year2){
+              const ms2 = `${year2}-${String(i+1).padStart(2,'0')}`;
+              const mb2 = sales.filter(s=>s.date&&s.date.startsWith(ms2)).reduce((a,s)=>a+benefNet(s),0);
+              y2cell = `<td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;text-align:right;color:#9ca3af">${fmt(mb2)}</td>`;
+            }
+            return `<tr style="background:${i%2?'#fafafa':'#fff'}${!mSales.length?';opacity:.45':''}">
+              <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-weight:600">${mname}</td>
+              <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;text-align:right;color:#6b7280">${mSales.length}</td>
+              <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;text-align:right;color:#f59e0b;font-weight:600">${fmt(mv)}</td>
+              <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;text-align:right;color:#10b981;font-weight:700">${fmt(mb)}</td>
+              ${y2cell}
+              <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6">
+                <div style="height:6px;background:#e5e7eb;border-radius:4px;overflow:hidden">
+                  <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#ff7a00,#10b981);border-radius:4px"></div>
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+        <tfoot>
+          <tr style="background:#f3f4f6;font-weight:700">
+            <td style="padding:9px 10px;border-top:2px solid #e5e7eb">TOTAL ${year}</td>
+            <td style="padding:9px 10px;border-top:2px solid #e5e7eb;text-align:right;color:#6b7280">${ySales.length}</td>
+            <td style="padding:9px 10px;border-top:2px solid #e5e7eb;text-align:right;color:#f59e0b">${fmt(tv)}</td>
+            <td style="padding:9px 10px;border-top:2px solid #e5e7eb;text-align:right;color:#10b981">${fmt(tb)}</td>
+            ${year2?`<td style="padding:9px 10px;border-top:2px solid #e5e7eb"></td>`:''}
+            <td style="padding:9px 10px;border-top:2px solid #e5e7eb"></td>
+          </tr>
+        </tfoot>
+      </table>`;
+  }
+
+  function kpiCard(label, value, color){
+    return `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px">${label}</div>
+      <div style="font-size:17px;font-weight:800;color:${color||'#111827'};font-family:monospace">${value}</div>
+    </div>`;
+  }
+
+  const chartImg = chartDataUrl
+    ? `<div style="margin:20px 0">
+        <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">📈 ${type==='mensuel'?'Bénéfice par jour':'Bénéfice par mois'}</div>
+        <img src="${chartDataUrl}" style="width:100%;border-radius:10px;border:1px solid #e5e7eb">
+       </div>`
+    : '';
+
+  const nom = localStorage.getItem('flousFlowNomEntreprise') || 'MegaStore';
+  const now = new Date().toLocaleDateString('fr-TN',{day:'2-digit',month:'long',year:'numeric'});
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;color:#111827;padding:0}
+  @page{size:A4;margin:14mm 12mm}
+  @media print{
+    .no-print{display:none!important}
+    body{padding:0}
+  }
+  .page{max-width:800px;margin:0 auto;padding:24px}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #ff7a00}
+  .brand{font-size:26px;font-weight:800;color:#111827}
+  .brand span{color:#ff7a00}
+  .meta{text-align:right;font-size:12px;color:#6b7280;line-height:1.8}
+  .report-title{font-size:18px;font-weight:700;color:#374151;margin-bottom:20px}
+  .print-btn{position:fixed;bottom:24px;right:24px;padding:12px 24px;background:#ff7a00;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(255,122,0,.4)}
+  .print-btn:hover{background:#e06800}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div>
+      <div class="brand">🏪 <span>${nom}</span></div>
+      <div style="font-size:13px;color:#6b7280;margin-top:4px">Rapport généré le ${now}</div>
+    </div>
+    <div class="meta">
+      <div style="font-size:16px;font-weight:700;color:#111827">${periodLabel}</div>
+      <div style="color:#ff7a00;font-weight:600">${type==='mensuel'?'Rapport Mensuel':'Rapport Annuel'}</div>
+    </div>
+  </div>
+  <div class="report-title">${title.replace(/📊|📅/,'').trim()}</div>
+  ${kpisHTML}
+  ${chartImg}
+  <div style="font-size:13px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">${type==='mensuel'?'📋 Détail des ventes':'📊 Détail par mois'}</div>
+  ${tableHTML}
+  <div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center">
+    ${nom} · Rapport ${type==='mensuel'?'Mensuel':'Annuel'} · ${periodLabel} · CouvriTN
+  </div>
+</div>
+<button class="print-btn no-print" onclick="window.print()">🖨️ Imprimer / Enregistrer PDF</button>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  if(!win){ showToast('❌ Popup bloqué — autorise les popups!', true); return; }
+  win.document.write(html);
+  win.document.close();
+  win.focus();
 }
 
 // ── IMPORT JSON ────────────────────────────────────────────────────────────
