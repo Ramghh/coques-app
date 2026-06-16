@@ -309,6 +309,10 @@ input:focus,select:focus{outline:none;border-color:var(--accent)!important;box-s
 
 /* RAPPORT */
 .month-select-row{margin-bottom:14px}
+.chip-date{flex-shrink:0;padding:7px 13px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:12px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;white-space:nowrap;transition:.15s}
+.chip-date:active{transform:scale(.96)}
+.chip-date.active{background:var(--accent);border-color:var(--accent);color:#fff}
+#smartDateChips::-webkit-scrollbar{display:none}
 .month-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
 .month-kpi{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;box-shadow:var(--shadow)}
 .month-kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px}
@@ -1152,15 +1156,25 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
         </select>
       </div>
     </div>
+    <!-- Filtre date rapide -->
+    <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px" id="smartDateChips">
+      <button type="button" onclick="applySmartDateFilter('today')" class="chip-date">Aujourd'hui</button>
+      <button type="button" onclick="applySmartDateFilter('week')" class="chip-date">Cette semaine</button>
+      <button type="button" onclick="applySmartDateFilter('30d')" class="chip-date">30 derniers jours</button>
+      <button type="button" onclick="applySmartDateFilter('month')" class="chip-date">Ce mois</button>
+      <button type="button" onclick="applySmartDateFilter('quarter')" class="chip-date">Ce trimestre</button>
+      <button type="button" onclick="applySmartDateFilter('year')" class="chip-date">Cette année</button>
+      <button type="button" onclick="applySmartDateFilter('lastyear')" class="chip-date">Année dernière</button>
+    </div>
     <!-- Ligne 3: Date de → Date à -->
     <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
       <div style="flex:1">
         <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">📅 Du</label>
-        <input type="date" id="filterDateFrom" onchange="renderSales()" style="font-size:13px;padding:9px 10px">
+        <input type="date" id="filterDateFrom" onchange="document.querySelectorAll('#smartDateChips .chip-date').forEach(c=>c.classList.remove('active'));renderSales()" style="font-size:13px;padding:9px 10px">
       </div>
       <div style="flex:1">
         <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">📅 Au</label>
-        <input type="date" id="filterDateTo" onchange="renderSales()" style="font-size:13px;padding:9px 10px">
+        <input type="date" id="filterDateTo" onchange="document.querySelectorAll('#smartDateChips .chip-date').forEach(c=>c.classList.remove('active'));renderSales()" style="font-size:13px;padding:9px 10px">
       </div>
     </div>
     <!-- Ligne 4: Bénéfice min → max -->
@@ -3456,6 +3470,53 @@ function refreshFilterSelects(){
 function resetFilters(){
   ['filterFourn','filterCarte','filterVille','filterModel'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
   ['filterDateFrom','filterDateTo','filterBenefMin','filterBenefMax'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
+  document.querySelectorAll('#smartDateChips .chip-date').forEach(c=>c.classList.remove('active'));
+  renderSales();
+}
+
+// ── FILTRE DATE INTELLIGENT ──────────────────────────────────────────────
+function applySmartDateFilter(range){
+  const now=new Date();
+  let from=null, to=null;
+  const startOfWeek=(d)=>{ // Lundi = début de semaine
+    const r=new Date(d);
+    const day=r.getDay(); // 0=dim,1=lun...
+    const diff=(day===0?-6:1-day);
+    r.setDate(r.getDate()+diff);
+    return r;
+  };
+  switch(range){
+    case 'today':
+      from=now; to=now;
+      break;
+    case 'week':
+      from=startOfWeek(now); to=now;
+      break;
+    case '30d':
+      from=new Date(now); from.setDate(from.getDate()-29); to=now;
+      break;
+    case 'month':
+      from=new Date(now.getFullYear(),now.getMonth(),1); to=now;
+      break;
+    case 'quarter': {
+      const qStartMonth=Math.floor(now.getMonth()/3)*3;
+      from=new Date(now.getFullYear(),qStartMonth,1); to=now;
+      break;
+    }
+    case 'year':
+      from=new Date(now.getFullYear(),0,1); to=now;
+      break;
+    case 'lastyear':
+      from=new Date(now.getFullYear()-1,0,1); to=new Date(now.getFullYear()-1,11,31);
+      break;
+    default: return;
+  }
+  document.getElementById('filterDateFrom').value=localDateStr(from);
+  document.getElementById('filterDateTo').value=localDateStr(to);
+  document.querySelectorAll('#smartDateChips .chip-date').forEach(c=>c.classList.remove('active'));
+  const idx=['today','week','30d','month','quarter','year','lastyear'].indexOf(range);
+  const btns=document.querySelectorAll('#smartDateChips .chip-date');
+  if(btns[idx]) btns[idx].classList.add('active');
   renderSales();
 }
 
