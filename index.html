@@ -373,6 +373,17 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 /* MAP FULLSCREEN BUTTON */
 .map-container{position:relative;}
 .map-fullscreen-btn{position:absolute;top:10px;right:10px;z-index:1000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);border:none;border-radius:8px;width:36px;height:36px;font-size:20px;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+.scroll-top-btn{position:fixed;right:16px;bottom:84px;z-index:500;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;box-shadow:0 4px 14px rgba(0,0,0,.35);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .2s,transform .2s,visibility .2s}
+.scroll-top-btn.show{opacity:1;visibility:visible;transform:translateY(0)}
+.scroll-top-btn:active{transform:scale(.92)}
+.sac-wrap{position:relative}
+.sac-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:400;max-height:220px;overflow-y:auto;display:none}
+.sac-dropdown.open{display:block;animation:fadeIn .15s ease}
+.sac-item{padding:10px 14px;font-size:14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s}
+.sac-item:last-child{border-bottom:none}
+.sac-item:hover,.sac-item.active{background:var(--surface2)}
+.sac-item mark{background:none;color:var(--accent);font-weight:700}
+.sac-empty{padding:10px 14px;font-size:13px;color:var(--muted)}
 .map-fullscreen-btn:hover{background:rgba(0,0,0,0.8);transform:scale(1.05);}
 #tunisiaMap.fullscreen-map{position:fixed !important;top:0;left:0;width:100vw !important;height:100vh !important;z-index:9999;border-radius:0 !important;}
 
@@ -453,6 +464,12 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .gist-btn.pull{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
 .gist-btn.cancel{grid-column:1/-1;background:transparent;border:1px solid var(--border);color:var(--muted);padding:12px}
 .gist-link{font-size:11px;color:var(--accent);text-decoration:none;display:block;margin-top:10px;text-align:center}
+.sync-status-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;transition:background .2s}
+.sync-status-dot.idle{background:var(--muted);opacity:.4}
+.sync-status-dot.ok{background:var(--green)}
+.sync-status-dot.err{background:var(--red)}
+.sync-status-dot.loading{background:var(--yellow);animation:syncPulse 1s ease-in-out infinite}
+@keyframes syncPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
 .wa-sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:8000;display:flex;align-items:flex-end;justify-content:center}
 .wa-sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 18px 32px;width:100%;max-width:480px;animation:slideUp .25s ease}
 .wa-icon-btn{width:18px;height:18px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2325d366'%3E%3Cpath d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z'/%3E%3Cpath d='M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 0 0 .606.633l6.284-1.634A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.013-1.376l-.36-.214-3.732.97.999-3.63-.235-.374A9.818 9.818 0 1 1 12 21.818z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-size:contain}
@@ -783,11 +800,14 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <div id="lastSaveLabel" style="font-size:11px;color:var(--muted);margin-bottom:10px;min-height:16px"></div>
     <div style="display:flex;gap:8px">
       <button id="drawerThemeBtn" onclick="toggleTheme()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s"></button>
-      <button onclick="openGistModal();closeDrawer()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s">☁️ <span>Sync</span></button>
+      <button onclick="openGistModal();closeDrawer()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s">☁️ <span>Sync</span> <span class="sync-status-dot idle" id="syncStatusDot" title="Statut sync"></span></button>
     </div>
     <button onclick="openColorModal();closeDrawer()" style="width:100%;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .18s">🎨 <span>Couleurs du thème</span></button>
   </div>
 </div>
+
+<!-- SCROLL TO TOP -->
+<button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Retour en haut" aria-label="Retour en haut">⬆️</button>
 
 <!-- BOTTOM NAV (mobile only) -->
 <nav class="bottom-nav" id="bottomNav">
@@ -964,7 +984,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div class="form-full">
         <label>Modèle Téléphone</label>
         <div style="display:flex;gap:6px;align-items:center">
-        <input type="text" id="stockModel" placeholder="ex: HTC, iPhone 15 Pro..." list="stockModelsList" style="flex:1">
+        <div class="sac-wrap" style="flex:1">
+        <input type="text" id="stockModel" placeholder="ex: HTC, iPhone 15 Pro..." autocomplete="off" style="width:100%">
+        <div class="sac-dropdown" id="stockModel-dd"></div>
+        </div>
         <button type="button" class="scan-btn" onclick="openScanner('stockModel')" title="Scanner">📷</button>
         </div>
         <datalist id="stockModelsList"></datalist>
@@ -1017,15 +1040,18 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Date</label><input type="date" id="fDate"></div>
       <div><label>Modèle</label>
         <div style="display:flex;gap:6px;align-items:center">
-        <input type="text" id="fModel" placeholder="iPhone 15 Pro" list="fModelList" oninput="checkStockForModel()" style="flex:1">
+        <div class="sac-wrap" style="flex:1">
+        <input type="text" id="fModel" placeholder="iPhone 15 Pro" autocomplete="off" oninput="checkStockForModel()" style="width:100%">
+        <div class="sac-dropdown" id="fModel-dd"></div>
+        </div>
         <button type="button" class="scan-btn" onclick="openScanner('fModel')" title="Scanner">📷</button>
         </div>
         <datalist id="fModelList"></datalist>
         <div id="stockIndicator" style="display:none;margin-top:5px;font-size:12px;padding:6px 10px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-weight:600"></div>
       </div>
-      <div><label>Couleur</label><input type="text" id="fColor" placeholder="Noir" list="fColorList"><datalist id="fColorList"></datalist></div>
-      <div><label>Ville</label><input type="text" id="fVille" placeholder="Tunis" list="fVilleList"><datalist id="fVilleList"></datalist></div>
-      <div><label>N° Client</label><input type="text" id="fClient" placeholder="C-0001" list="fClientList" oninput="autoFillClientPhone(this.value)"><datalist id="fClientList"></datalist></div>
+      <div><label>Couleur</label><div class="sac-wrap"><input type="text" id="fColor" placeholder="Noir" autocomplete="off" style="width:100%"><div class="sac-dropdown" id="fColor-dd"></div></div><datalist id="fColorList"></datalist></div>
+      <div><label>Ville</label><div class="sac-wrap"><input type="text" id="fVille" placeholder="Tunis" autocomplete="off" style="width:100%"><div class="sac-dropdown" id="fVille-dd"></div></div><datalist id="fVilleList"></datalist></div>
+      <div><label>N° Client</label><div class="sac-wrap"><input type="text" id="fClient" placeholder="C-0001" autocomplete="off" oninput="autoFillClientPhone(this.value)" style="width:100%"><div class="sac-dropdown" id="fClient-dd"></div></div><datalist id="fClientList"></datalist></div>
       <div><label>Téléphone</label><input type="tel" id="fPhone" placeholder="2X XXX XXX"></div>
       <div><label>Quantité</label><input type="number" id="fQty" placeholder="1" min="1"></div>
       <div><label>Fournisseur</label>
@@ -6540,12 +6566,27 @@ function gistBuildPayload(){
   return JSON.stringify({version:2,exportDate:new Date().toISOString(),sales,fourns,achats,stockItems,clients},null,2);
 }
 
+function setSyncStatusDot(state){
+  const dot=document.getElementById('syncStatusDot');
+  if(!dot) return;
+  dot.className='sync-status-dot '+state;
+  const titles={idle:'Aucune sync encore',loading:'Synchronisation en cours...',ok:'Dernière sync réussie',err:'Dernière sync échouée'};
+  dot.title=titles[state]||'';
+}
+
+function initSyncStatusDot(){
+  const lastPush=localStorage.getItem(GIST_LAST_PUSH);
+  const lastPull=localStorage.getItem(GIST_LAST_PULL);
+  setSyncStatusDot((lastPush||lastPull)?'ok':'idle');
+}
+
 async function gistPush(){
   const token=document.getElementById('gistToken').value.trim()||localStorage.getItem(GIST_TOKEN_KEY)||'';
-  if(!token){gistSetStatus('❌ Token manquant!','err');return;}
-  if(!sales.length){gistSetStatus('⚠️ Aucune donnée à uploader.','err');return;}
+  if(!token){gistSetStatus('❌ Token manquant!','err');setSyncStatusDot('err');return;}
+  if(!sales.length){gistSetStatus('⚠️ Aucune donnée à uploader.','err');setSyncStatusDot('err');return;}
   localStorage.setItem(GIST_TOKEN_KEY,token);
   gistSetStatus('⏳ Upload en cours...','loading');
+  setSyncStatusDot('loading');
   const existingId=localStorage.getItem(GIST_ID_KEY);
   const body={files:{[GIST_FILENAME]:{content:gistBuildPayload()}}};
   try{
@@ -6573,16 +6614,18 @@ async function gistPush(){
     gistUpdateLink();
     const d=new Date().toLocaleString('fr-TN');
     gistSetStatus(`✅ Uploadé avec succès!\n📅 ${d}\n📦 ${sales.length} ventes • ${fourns.length} fournisseurs`,'ok');
+    setSyncStatusDot('ok');
     showToast('☁️ Gist mis à jour!');
-  }catch(e){gistSetStatus('❌ Erreur: '+e.message,'err');}
+  }catch(e){gistSetStatus('❌ Erreur: '+e.message,'err');setSyncStatusDot('err');}
 }
 
 async function gistPull(){
   const token=document.getElementById('gistToken').value.trim()||localStorage.getItem(GIST_TOKEN_KEY)||'';
   const id=localStorage.getItem(GIST_ID_KEY)||document.getElementById('gistId').value.trim();
-  if(!token){gistSetStatus('❌ Token manquant!','err');return;}
-  if(!id){gistSetStatus('❌ Gist ID manquant — fais un Push d\'abord.','err');return;}
+  if(!token){gistSetStatus('❌ Token manquant!','err');setSyncStatusDot('err');return;}
+  if(!id){gistSetStatus('❌ Gist ID manquant — fais un Push d\'abord.','err');setSyncStatusDot('err');return;}
   gistSetStatus('⏳ Téléchargement...','loading');
+  setSyncStatusDot('loading');
   try{
     const res=await fetch(`https://api.github.com/gists/${id}`,{
       headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github+json'}
@@ -6594,7 +6637,7 @@ async function gistPull(){
     const data=JSON.parse(fileContent);
     if(!data.sales||!Array.isArray(data.sales)) throw new Error('Format invalide');
     if(!confirm(`⬇️ Remplacer les données locales par le Gist?\n(${data.sales.length} ventes • exporté le ${data.exportDate?.slice(0,10)||'?'})`)) {
-      gistSetStatus('⚠️ Annulé.','err'); return;
+      gistSetStatus('⚠️ Annulé.','err'); setSyncStatusDot('ok'); return;
     }
     sales=data.sales;
     if(data.fourns) fourns=data.fourns;
@@ -6606,15 +6649,102 @@ async function gistPull(){
     localStorage.setItem(GIST_LAST_PULL, Date.now().toString());
     const dp=new Date().toLocaleString('fr-TN');
     gistSetStatus(`✅ ${sales.length} ventes importées depuis le Gist!\n📅 ${dp}`,'ok');
+    setSyncStatusDot('ok');
     showToast('☁️ Données synchronisées!');
-  }catch(e){gistSetStatus('❌ Erreur: '+e.message,'err');}
+  }catch(e){gistSetStatus('❌ Erreur: '+e.message,'err');setSyncStatusDot('err');}
 }
 // close modal on overlay click — wait for DOM
+// ── SMART AUTOCOMPLETE (recherche par sous-chaîne, pas juste prefix) ───────
+function sacOptionsFromDatalist(datalistId){
+  const dl=document.getElementById(datalistId);
+  if(!dl) return [];
+  return [...dl.querySelectorAll('option')].map(o=>o.value).filter(Boolean);
+}
+function sacHighlight(text,q){
+  if(!q) return text;
+  const idx=text.toLowerCase().indexOf(q.toLowerCase());
+  if(idx===-1) return text;
+  return text.slice(0,idx)+'<mark>'+text.slice(idx,idx+q.length)+'</mark>'+text.slice(idx+q.length);
+}
+function attachSmartAutocomplete(inputId, datalistId, onSelect){
+  const input=document.getElementById(inputId);
+  const dd=document.getElementById(inputId+'-dd');
+  if(!input||!dd) return;
+  let activeIdx=-1;
+  function render(items,q){
+    if(!items.length){ dd.innerHTML=''; dd.classList.remove('open'); return; }
+    dd.innerHTML=items.slice(0,40).map((v,i)=>`<div class="sac-item${i===activeIdx?' active':''}" data-val="${v.replace(/"/g,'&quot;')}">${sacHighlight(v,q)}</div>`).join('');
+    dd.classList.add('open');
+    dd.querySelectorAll('.sac-item').forEach(el=>{
+      el.addEventListener('mousedown',(e)=>{
+        e.preventDefault();
+        const val=el.getAttribute('data-val');
+        input.value=val;
+        dd.classList.remove('open');
+        if(onSelect) onSelect(val);
+        input.dispatchEvent(new Event('input',{bubbles:true}));
+      });
+    });
+  }
+  function filterAndShow(){
+    const q=input.value.trim();
+    const all=sacOptionsFromDatalist(datalistId);
+    activeIdx=-1;
+    if(!q){ render(all.slice(0,40),''); return; }
+    const ql=q.toLowerCase();
+    const matches=all.filter(v=>v.toLowerCase().includes(ql))
+      .sort((a,b)=>{
+        const ai=a.toLowerCase().indexOf(ql), bi=b.toLowerCase().indexOf(ql);
+        if(ai!==bi) return ai-bi;
+        return a.length-b.length;
+      });
+    render(matches,q);
+  }
+  input.addEventListener('input',filterAndShow);
+  input.addEventListener('focus',filterAndShow);
+  input.addEventListener('blur',()=>setTimeout(()=>dd.classList.remove('open'),120));
+  input.addEventListener('keydown',(e)=>{
+    const items=[...dd.querySelectorAll('.sac-item')];
+    if(!items.length) return;
+    if(e.key==='ArrowDown'){ e.preventDefault(); activeIdx=Math.min(activeIdx+1,items.length-1); items.forEach((el,i)=>el.classList.toggle('active',i===activeIdx)); items[activeIdx].scrollIntoView({block:'nearest'}); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); activeIdx=Math.max(activeIdx-1,0); items.forEach((el,i)=>el.classList.toggle('active',i===activeIdx)); items[activeIdx].scrollIntoView({block:'nearest'}); }
+    else if(e.key==='Enter'){ if(activeIdx>=0){ e.preventDefault(); items[activeIdx].dispatchEvent(new Event('mousedown')); } }
+    else if(e.key==='Escape'){ dd.classList.remove('open'); }
+  });
+}
+document.addEventListener('DOMContentLoaded',function(){
+  attachSmartAutocomplete('stockModel','stockModelsList');
+  attachSmartAutocomplete('fModel','fModelList',()=>checkStockForModel());
+  attachSmartAutocomplete('fColor','fColorList');
+  attachSmartAutocomplete('fVille','fVilleList');
+  attachSmartAutocomplete('fClient','fClientList',(v)=>autoFillClientPhone(v));
+});
+
 document.addEventListener('DOMContentLoaded',function(){
   const gm=document.getElementById('gistModal');
   if(gm) gm.addEventListener('click',function(e){if(e.target===this) closeGistModal();});
   pinInit();
+  initSyncStatusDot();
 });
+
+// ── SCROLL TO TOP (page Ventes) ─────────────────────────────────────────
+(function(){
+  const btn=document.getElementById('scrollTopBtn');
+  if(!btn) return;
+  let ticking=false;
+  function updateScrollTopBtn(){
+    const ventesActive=document.getElementById('tab-ventes')?.classList.contains('active');
+    const past=window.scrollY>400;
+    btn.classList.toggle('show', !!ventesActive && past);
+    ticking=false;
+  }
+  window.addEventListener('scroll',()=>{
+    if(!ticking){ requestAnimationFrame(updateScrollTopBtn); ticking=true; }
+  },{passive:true});
+  document.addEventListener('DOMContentLoaded',updateScrollTopBtn);
+  // Re-check whenever tabs change (showTab doesn't emit an event, so hook on click of nav)
+  document.addEventListener('click',()=>setTimeout(updateScrollTopBtn,60));
+})();
 
 
 
