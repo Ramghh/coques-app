@@ -912,6 +912,15 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div id="cartesBar" style="height:100%;width:0%;border-radius:4px;transition:width .6s ease"></div>
     </div>
   </div>
+  <div style="margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">📈 ROI Global</span>
+      <span id="cartesRoiGlobal" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px">0%</span>
+    </div>
+    <div style="height:5px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:6px">
+      <div id="cartesRoiBar" style="height:100%;width:0%;border-radius:4px;transition:width .5s"></div>
+    </div>
+  </div>
 </div>
 
 <!-- nav-wrap replaced by side drawer -->
@@ -1912,22 +1921,39 @@ function save(){
 const SNAPSHOT_KEY = 'ff_snapshots';
 const SNAPSHOT_MAX = 5;
 
+const SNAPSHOT_MIN_INTERVAL_MS = 5*60*1000; // ne snapshotter qu'une fois max toutes les 5 minutes
+let _lastSnapshotTs = parseInt(localStorage.getItem('ff_lastSnapshotTs')||'0');
+let _snapshotPending = false;
+
 function autoSnapshot(){
-  try{
-    const snap = {
-      ts: Date.now(),
-      sales: JSON.parse(JSON.stringify(sales)),
-      fourns: JSON.parse(JSON.stringify(fourns)),
-      achats: JSON.parse(JSON.stringify(achats)),
-      stockItems: JSON.parse(JSON.stringify(stockItems)),
-      clients: JSON.parse(JSON.stringify(clients)),
-      partenaireDeals: JSON.parse(JSON.stringify(partenaireDeals))
-    };
-    let snaps = getSnapshots();
-    snaps.unshift(snap);
-    if(snaps.length > SNAPSHOT_MAX) snaps = snaps.slice(0, SNAPSHOT_MAX);
-    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snaps));
-  } catch(e){ console.warn('Snapshot failed:', e); }
+  const now = Date.now();
+  if(now - _lastSnapshotTs < SNAPSHOT_MIN_INTERVAL_MS){
+    return; // trop tôt, on évite de resérialiser toute la base à chaque tap
+  }
+  if(_snapshotPending) return;
+  _snapshotPending = true;
+  // On différe le travail lourd (clonage + écriture) après le rendu/le tap en cours,
+  // pour que le bouton réponde immédiatement.
+  setTimeout(()=>{
+    try{
+      const snap = {
+        ts: Date.now(),
+        sales: JSON.parse(JSON.stringify(sales)),
+        fourns: JSON.parse(JSON.stringify(fourns)),
+        achats: JSON.parse(JSON.stringify(achats)),
+        stockItems: JSON.parse(JSON.stringify(stockItems)),
+        clients: JSON.parse(JSON.stringify(clients)),
+        partenaireDeals: JSON.parse(JSON.stringify(partenaireDeals))
+      };
+      let snaps = getSnapshots();
+      snaps.unshift(snap);
+      if(snaps.length > SNAPSHOT_MAX) snaps = snaps.slice(0, SNAPSHOT_MAX);
+      localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snaps));
+      _lastSnapshotTs = Date.now();
+      localStorage.setItem('ff_lastSnapshotTs', String(_lastSnapshotTs));
+    } catch(e){ console.warn('Snapshot failed:', e); }
+    finally{ _snapshotPending = false; }
+  }, 0);
 }
 
 function getSnapshots(){
@@ -2691,7 +2717,11 @@ function refreshStockModelList(){
 }
 
 // ── ADD SALE ───────────────────────────────────────────────────────────────
+let _addSaleBusy=false;
 function addSale(){
+  if(_addSaleBusy) return;
+  _addSaleBusy=true;
+  setTimeout(()=>{_addSaleBusy=false;},400);
   const date=document.getElementById('fDate').value;
   const model=document.getElementById('fModel').value.trim();
   const color=document.getElementById('fColor').value.trim();
@@ -2817,8 +2847,12 @@ function clearPanier(){
   renderPanier();
 }
 
+let _checkoutBusy=false;
 function checkoutPanier(){
+  if(_checkoutBusy) return;
   if(!panierItems.length) return;
+  _checkoutBusy=true;
+  setTimeout(()=>{_checkoutBusy=false;},400);
   const date=document.getElementById('fDate').value||new Date().toISOString().split('T')[0];
   const ville=document.getElementById('fVille').value.trim();
   const client=document.getElementById('fClient').value.trim();
@@ -3116,6 +3150,12 @@ function updateKPIs(){
   const totalNetRevCartes=totalRevCartes-totalEnvoiCartes;
   const aRec=totalMont-totalNetRevCartes;
   const pct=totalMont>0?Math.min(100,(totalNetRevCartes/totalMont)*100):0;
+  // ROI global = bénéfice net total des ventes liées à une carte / total investi dans les cartes
+  const totalBenefCartes=fourns.reduce((a,f)=>a+f.cartes.reduce((b,c)=>{
+    const v=sales.filter(s=>s.carteId===c.id);
+    return b+v.reduce((x,s)=>x+benefNet(s),0);
+  },0),0);
+  const roiGlobal=totalMont>0?(totalBenefCartes/totalMont)*100:0;
 
   const banner=document.getElementById('cartesBanner');
   if(totalMont>0){
@@ -3150,6 +3190,18 @@ function updateKPIs(){
     const bar=document.getElementById('cartesBar');
     bar.style.width=pct+'%';
     bar.style.background=`rgb(${r},${g},68)`;
+
+    // ROI Global
+    const roiEl=document.getElementById('cartesRoiGlobal');
+    if(roiEl){
+      roiEl.textContent=(roiGlobal>=0?'+':'')+roiGlobal.toFixed(1)+'%';
+      roiEl.style.color=roiGlobal>0?'var(--green)':roiGlobal<0?'var(--red)':'var(--muted)';
+    }
+    const roiBarEl=document.getElementById('cartesRoiBar');
+    if(roiBarEl){
+      roiBarEl.style.width=Math.min(100,Math.abs(roiGlobal)/2)+'%';
+      roiBarEl.style.background=roiGlobal>=0?'var(--green)':'var(--red)';
+    }
   } else {
     banner.style.display='none';
   }
@@ -3410,18 +3462,20 @@ function getFiltered(){
   const filterBenefMin=document.getElementById('filterBenefMin')?parseFloat(document.getElementById('filterBenefMin').value)||null:null;
   const filterBenefMax=document.getElementById('filterBenefMax')?parseFloat(document.getElementById('filterBenefMax').value)||null:null;
 
+  // Pré-calculs hors boucle pour éviter de refaire ce travail pour CHAQUE vente
+  // (avant: allCartes() et fourns.find() étaient appelés à l'intérieur du .filter(),
+  // ce qui rendait la pagination/le filtrage très lents avec beaucoup de ventes)
+  const fournById={}, fournByNom={};
+  fourns.forEach(f=>{ fournById[f.id]=f; fournByNom[f.nom]=f; });
+  const cartesCache = filterCarteId ? allCartes() : null;
+  const carteObjCache = filterCarteId ? (cartesCache.find(c=>c.id===filterCarteId)||null) : null;
+
   let result=sales.filter(s=>{
-    const fObj=fourns.find(x=>x.id===s.fourn||x.nom===s.fourn);
+    const fObj=fournById[s.fourn]||fournByNom[s.fourn];
     const fNom=fObj?fObj.nom:'';
     const benef=benefNet(s);
     const matchQ=!q||(s.model||'').toLowerCase().includes(q)||(s.ville||'').toLowerCase().includes(q)||(s.client||'').toLowerCase().includes(q)||(s.color||'').toLowerCase().includes(q)||fNom.toLowerCase().includes(q);
-    const matchCarte=!filterCarteId||(()=>{
-      // Compatibilité: certaines ventes ont carteId=id, d'autres ont carteId=label (anciennes données)
-      if(s.carteId===filterCarteId) return true;
-      const carteObj=allCartes().find(c=>c.id===filterCarteId);
-      if(carteObj && s.carteId===carteObj.label) return true;
-      return false;
-    })();
+    const matchCarte=!filterCarteId||(s.carteId===filterCarteId)||(carteObjCache && s.carteId===carteObjCache.label);
     const matchFourn=!filterFournId||s.fourn===filterFournId||(fObj&&fObj.id===filterFournId);
     const matchVille=!filterVille||s.ville===filterVille;
     const matchModel=!filterModel||s.model===filterModel;
