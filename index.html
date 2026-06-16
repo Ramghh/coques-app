@@ -1239,13 +1239,21 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <span>📊 Rapport Mensuel</span>
       <button onclick="exportPDF('mensuel')" style="padding:8px 14px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px">📄 PDF</button>
     </div>
-    <div class="month-select-row">
-      <select id="monthSelect" onchange="renderRapport()"></select>
+    <div class="month-select-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <select id="monthSelect" onchange="renderRapport()" style="flex:1"></select>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap">
+        <input type="checkbox" id="monthCompareYoY" onchange="renderRapport()" style="width:16px;height:16px;accent-color:var(--accent)">
+        vs année dernière
+      </label>
     </div>
     <div class="month-cards" id="monthKpis"></div>
+    <div id="monthCompareNote"></div>
     <!-- Chart -->
     <div style="margin-bottom:14px">
-      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">📈 Bénéfice par jour</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px">📈 Bénéfice par jour</div>
+        <div id="monthChartLegend" style="display:flex;gap:12px;font-size:11px"></div>
+      </div>
       <canvas id="rapportChart" style="width:100%;max-height:180px"></canvas>
     </div>
     <div class="month-sales-title">📋 Ventes du mois</div>
@@ -4450,13 +4458,39 @@ function renderRapport(){
   const tv=ms.reduce((a,s)=>a+s.revenu,0);
   const tb=ms.reduce((a,s)=>a+benefNet(s),0);
   const tc=ms.reduce((a,s)=>a+s.coutTotal,0);
+  const nbV=ms.length;
+  const nbClients=new Set(ms.map(s=>s.client).filter(Boolean)).size;
+
+  const compareOn=document.getElementById('monthCompareYoY')?.checked;
+  const [yearNow,monthNow]=val.split('-').map(Number);
+  const prevVal=`${yearNow-1}-${String(monthNow).padStart(2,'0')}`;
+  const msPrev=compareOn?sales.filter(s=>s.date&&s.date.startsWith(prevVal)):[];
+  const tvP=msPrev.reduce((a,s)=>a+s.revenu,0);
+  const tbP=msPrev.reduce((a,s)=>a+benefNet(s),0);
+  const tcP=msPrev.reduce((a,s)=>a+s.coutTotal,0);
+  const nbVP=msPrev.length;
+  const nbClientsP=new Set(msPrev.map(s=>s.client).filter(Boolean)).size;
+
+  const delta=(cur,prev)=>{
+    if(!compareOn) return '';
+    if(prev===0) return cur>0?`<span style="font-size:11px;color:var(--green)">🆕 nouveau</span>`:'';
+    const pct=((cur-prev)/Math.abs(prev))*100;
+    const up=pct>=0;
+    return `<span style="font-size:11px;color:${up?'var(--green)':'var(--red)'}">${up?'▲':'▼'} ${Math.abs(pct).toFixed(0)}%</span>`;
+  };
+
+  const monthNames=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const compareNote=compareOn?`<div style="font-size:11px;color:var(--muted);margin:-4px 0 10px;text-align:center">vs ${monthNames[monthNow-1]} ${yearNow-1} (${nbVP} vente${nbVP>1?'s':''})</div>`:'';
+
   document.getElementById('monthKpis').innerHTML=`
-    <div class="month-kpi"><div class="month-kpi-label">💰 Total Ventes</div><div class="month-kpi-val" style="color:var(--yellow)">${fmt(tv)}</div></div>
-    <div class="month-kpi"><div class="month-kpi-label">✅ Bénéfice</div><div class="month-kpi-val" style="color:var(--green)">${fmt(tb)}</div></div>
-    <div class="month-kpi"><div class="month-kpi-label">🛒 Coût Total</div><div class="month-kpi-val" style="color:var(--red)">${fmt(tc)}</div></div>
+    <div class="month-kpi"><div class="month-kpi-label">💰 Total Ventes</div><div class="month-kpi-val" style="color:var(--yellow)">${fmt(tv)}</div>${delta(tv,tvP)}</div>
+    <div class="month-kpi"><div class="month-kpi-label">✅ Bénéfice</div><div class="month-kpi-val" style="color:var(--green)">${fmt(tb)}</div>${delta(tb,tbP)}</div>
+    <div class="month-kpi"><div class="month-kpi-label">🛒 Coût Total</div><div class="month-kpi-val" style="color:var(--red)">${fmt(tc)}</div>${delta(tc,tcP)}</div>
     <div class="month-kpi"><div class="month-kpi-label">📈 Marge Moy.</div><div class="month-kpi-val" style="color:var(--accent)">${fmtP(tv>0?tb/tv:0)}</div></div>
-    <div class="month-kpi"><div class="month-kpi-label">🧾 Nb Ventes</div><div class="month-kpi-val" style="color:var(--text)">${ms.length}</div></div>
-    <div class="month-kpi"><div class="month-kpi-label">👤 Clients</div><div class="month-kpi-val" style="color:var(--accent)">${new Set(ms.map(s=>s.client).filter(Boolean)).size}</div></div>`;
+    <div class="month-kpi"><div class="month-kpi-label">🧾 Nb Ventes</div><div class="month-kpi-val" style="color:var(--text)">${nbV}</div>${delta(nbV,nbVP)}</div>
+    <div class="month-kpi"><div class="month-kpi-label">👤 Clients</div><div class="month-kpi-val" style="color:var(--accent)">${nbClients}</div>${delta(nbClients,nbClientsP)}</div>`;
+  const noteHolder=document.getElementById('monthCompareNote');
+  if(noteHolder) noteHolder.innerHTML=compareNote;
 
   // Chart par jour
   const [year,month]=val.split('-').map(Number);
@@ -4468,12 +4502,35 @@ function renderRapport(){
       if(day>=0&&day<daysInMonth) dailyBenef[day]+=benefNet(s);
     }
   });
-  // Only show days with data or compress to active days
-  const activeDays=dailyBenef.map((v,i)=>({day:i+1,val:v})).filter(d=>d.val>0);
-  if(activeDays.length>=2){
-    drawLineChart('rapportChart', activeDays.map(d=>d.day+''), activeDays.map(d=>d.val));
+
+  if(compareOn){
+    const daysInMonthPrev=new Date(yearNow-1,monthNow,0).getDate();
+    const dailyBenefPrev=Array(daysInMonthPrev).fill(0);
+    msPrev.forEach(s=>{
+      if(s.date){
+        const day=parseInt(s.date.split('-')[2])-1;
+        if(day>=0&&day<daysInMonthPrev) dailyBenefPrev[day]+=benefNet(s);
+      }
+    });
+    const maxDays=Math.max(daysInMonth,daysInMonthPrev);
+    const labels=Array.from({length:maxDays},(_,i)=>String(i+1));
+    const v1=Array.from({length:maxDays},(_,i)=>dailyBenef[i]||0);
+    const v2=Array.from({length:maxDays},(_,i)=>dailyBenefPrev[i]||0);
+    drawLineChartDouble('rapportChart', labels, v1, v2, monthNames[monthNow-1]+' '+yearNow, monthNames[monthNow-1]+' '+(yearNow-1));
+    const legendEl=document.getElementById('monthChartLegend');
+    if(legendEl) legendEl.innerHTML=`
+      <span style="color:#ff7a00">● ${yearNow}</span>
+      <span style="color:#ff9a3c">● ${yearNow-1}</span>`;
   } else {
-    drawLineChart('rapportChart', Array.from({length:daysInMonth},(_,i)=>String(i+1)), dailyBenef);
+    const legendEl=document.getElementById('monthChartLegend');
+    if(legendEl) legendEl.innerHTML='';
+    // Only show days with data or compress to active days
+    const activeDays=dailyBenef.map((v,i)=>({day:i+1,val:v})).filter(d=>d.val>0);
+    if(activeDays.length>=2){
+      drawLineChart('rapportChart', activeDays.map(d=>d.day+''), activeDays.map(d=>d.val));
+    } else {
+      drawLineChart('rapportChart', Array.from({length:daysInMonth},(_,i)=>String(i+1)), dailyBenef);
+    }
   }
 
   const listEl=document.getElementById('monthSalesList');
