@@ -95,9 +95,6 @@ button{-webkit-tap-highlight-color:transparent}
 .kpi{transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s ease}
 .kpi:hover{transform:scale(1.03);box-shadow:0 6px 20px rgba(0,0,0,.18)}
 .kpi:active{transform:scale(.95)}
-/* FAB bounce */
-.fab{transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s}
-.fab:active{transform:scale(.88)}
 /* Badge pop */
 .badge{transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
 .badge:active{transform:scale(.9)}
@@ -241,10 +238,6 @@ input:focus,select:focus{transform:translateY(-1px);box-shadow:0 4px 12px rgba(2
 .btn-add:active{transform:scale(.97)!important}
 .sale-card{transition:transform .18s ease,box-shadow .18s ease!important}
 .sale-card:active{transform:scale(.985)!important}
-.fab{animation:fabPop .5s cubic-bezier(.34,1.56,.64,1)!important}
-.fab:hover{transform:scale(1.12) rotate(45deg)!important;box-shadow:0 6px 26px rgba(255,122,0,.65)!important}
-.fab:active{transform:scale(.9)!important}
-@keyframes fabPop{from{opacity:0;transform:scale(0) rotate(-90deg)}to{opacity:1;transform:scale(1) rotate(0)}}
 .btn-edit-card,.btn-del-card,.btn-dup-card,.btn-print-card,.btn-sms-card{transition:all .13s ease!important}
 .btn-edit-card:active,.btn-del-card:active,.btn-dup-card:active,.btn-print-card:active{transform:scale(.92)!important}
 input:focus,select:focus{outline:none;border-color:var(--accent)!important;box-shadow:0 0 0 3px rgba(255,122,0,.14)!important}
@@ -284,8 +277,6 @@ input:focus,select:focus{outline:none;border-color:var(--accent)!important;box-s
   #invoicePrintArea{display:block!important;position:fixed;inset:0;background:#fff;z-index:9999;padding:0}
   @page{size:A5 landscape;margin:6mm}
 }
-.fab{position:fixed;bottom:28px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;font-size:28px;border:none;cursor:pointer;box-shadow:0 4px 18px rgba(255,122,0,.5);z-index:150;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s;line-height:1}
-.fab:active{transform:scale(.93);box-shadow:0 2px 10px rgba(255,122,0,.4)}
 
 /* TOP VENTES */
 .top-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
@@ -587,9 +578,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   .sort-bar { gap: 6px; }
   .sort-btn { padding: 7px 14px; font-size: 13px; }
 
-  /* FAB — légèrement plus petit */
-  .fab { width: 50px; height: 50px; font-size: 24px; bottom: 22px; right: 16px; }
-
   /* REC BANNER (récupération globale) */
   .rec-amount { font-size: 22px; }
   .rec-sub-val { font-size: 15px; }
@@ -702,7 +690,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 @media(max-width:768px){
   .bottom-nav{display:block}
   body{padding-bottom:70px}
-  .fab{bottom:76px}
   .toast{bottom:80px}
 }
 
@@ -7080,8 +7067,8 @@ window.addEventListener('focus', ()=>{
   </div>
 </div>
 
-<!-- FAB -->
-<button class="fab" onclick="goAddSale()" title="Nouvelle vente">＋</button>
+      <!-- FAB removed: redundant with bottom nav "+" button -->
+      <!-- présent fix -->
 
 <!-- PWA Update Banner -->
 <div id="swUpdateBanner" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;background:linear-gradient(135deg,#ff7a00,#ff9500);color:#fff;padding:12px 20px;border-radius:14px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;box-shadow:0 4px 20px rgba(255,122,0,.4);display:none;align-items:center;gap:10px;cursor:pointer;max-width:320px;width:90%" onclick="applySwUpdate()">
