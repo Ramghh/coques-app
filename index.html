@@ -2249,7 +2249,8 @@ function resetThemeColors(){
   localStorage.removeItem('flousFlowAccent2');
   const input=document.getElementById('customAccentInput');
   if(input) input.value='#ff7a00';
-  showToast('🎨 Couleurs réinitialisées');
+  applyFontScale(100);
+  showToast('🎨 Couleurs et taille de texte réinitialisées');
 }
 
 function renderColorPresets(){
@@ -2271,17 +2272,39 @@ function applyStoredThemeColors(){
   }
 }
 
+// ── FONT SIZE SCALE ──────────────────────────────────────────────────────
+const FONT_SCALE_KEY='flousFlowFontScale';
+function applyFontScale(pct){
+  pct=Math.min(130,Math.max(85,parseInt(pct)||100));
+  document.body.style.zoom=(pct/100);
+  localStorage.setItem(FONT_SCALE_KEY,pct);
+  const slider=document.getElementById('fontScaleSlider');
+  const label=document.getElementById('fontScaleValue');
+  if(slider) slider.value=pct;
+  if(label) label.textContent=pct+'%';
+}
+function applyStoredFontScale(){
+  const pct=localStorage.getItem(FONT_SCALE_KEY)||'100';
+  document.body.style.zoom=(parseInt(pct)/100);
+  const slider=document.getElementById('fontScaleSlider');
+  const label=document.getElementById('fontScaleValue');
+  if(slider) slider.value=pct;
+  if(label) label.textContent=pct+'%';
+}
+
 function openColorModal(){
   renderColorPresets();
   const stored=localStorage.getItem('flousFlowAccent')||'#ff7a00';
   const input=document.getElementById('customAccentInput');
   if(input) input.value=stored;
+  applyStoredFontScale();
   document.getElementById('colorModal').classList.add('open');
 }
 function closeColorModal(){
   document.getElementById('colorModal').classList.remove('open');
 }
 applyStoredThemeColors();
+applyStoredFontScale();
 
 // ── STOCK ─────────────────────────────────────────────────────────────────
 function saveStock(){ localStorage.setItem('flousFlowStock', JSON.stringify(stockItems)); }
@@ -6955,6 +6978,19 @@ window.addEventListener('focus', ()=>{
 
     <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px">Préréglages</div>
     <div id="colorPresets" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px"></div>
+
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px">🔠 Taille du texte</div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:12px;color:var(--muted)">A</span>
+        <input type="range" id="fontScaleSlider" min="85" max="130" step="5" value="100" oninput="applyFontScale(this.value)" style="flex:1;height:6px;accent-color:var(--accent)">
+        <span style="font-size:18px;color:var(--muted)">A</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <span style="font-size:11px;color:var(--muted)">Ajuste la taille du texte et des éléments</span>
+        <span id="fontScaleValue" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--accent)">100%</span>
+      </div>
+    </div>
 
     <div class="gist-btns">
       <button class="gist-btn pull" onclick="resetThemeColors()">↺ Réinitialiser</button>
