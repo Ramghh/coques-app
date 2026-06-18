@@ -36,6 +36,33 @@ header{background:var(--surface);padding:18px 18px 14px;position:sticky;top:0;z-
 .badge:active{transform:scale(.95)}
 .theme-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center}
 
+/* PRIVACY MODE — flou sur les montants sensibles */
+body.privacy-on .period-benef,
+body.privacy-on .period-ventes,
+body.privacy-on .period-vs,
+body.privacy-on .kpi-value,
+body.privacy-on .sale-benef,
+body.privacy-on .top-benef,
+body.privacy-on .city-benef,
+body.privacy-on .heatmap-benef,
+body.privacy-on .mini-chart-total,
+body.privacy-on canvas#totalCount{
+  filter:blur(7px);
+  transition:filter .15s ease;
+  user-select:none;
+  cursor:pointer;
+}
+body.privacy-on .period-benef:active,
+body.privacy-on .period-ventes:active,
+body.privacy-on .kpi-value:active,
+body.privacy-on .sale-benef:active,
+body.privacy-on .top-benef:active,
+body.privacy-on .city-benef:active,
+body.privacy-on .heatmap-benef:active,
+body.privacy-on .mini-chart-total:active{
+  filter:blur(0);
+}
+
 /* KPI */
 .kpi-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 12px;background:var(--surface);border-bottom:1px solid var(--border)}
 .kpi{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 8px;text-align:center;box-shadow:var(--shadow)}
@@ -834,12 +861,13 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       </div>
     </div>
     <div class="header-right">
-      <canvas id="totalCount" width="72" height="72" style="cursor:pointer" onclick="showTab('ventes',null)"></canvas>
+      <div style="position:relative">
+        <canvas id="totalCount" width="72" height="72" style="cursor:pointer" onclick="showTab('ventes',null)"></canvas>
+        <button id="privacyBtn" onclick="togglePrivacyMode(event)" title="Masquer les montants" style="position:absolute;top:-6px;left:-6px;width:24px;height:24px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25)">👁️</button>
         </div>
       </div>
       <button class="theme-btn" id="gistBtn" onclick="openGistModal()" title="Sync Gist" style="display:none">☁️</button>
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" style="display:none"></button>
-      <button class="theme-btn" id="wallBtn" onclick="openWallMode()" title="Mode Mur (KPIs)">📺</button>
     </div>
   </div>
   
@@ -2170,6 +2198,29 @@ function toggleTheme(){
   animateCounter(sales.filter(s=>s.statut!=='Annulé').length);
   save();
 }
+
+// ── PRIVACY MODE — masquer les montants sensibles (flou) ────────────────
+let privacyMode = localStorage.getItem('flousFlowPrivacy')==='1';
+function applyPrivacyMode(){
+  document.body.classList.toggle('privacy-on', privacyMode);
+  const btn=document.getElementById('privacyBtn');
+  if(btn){
+    btn.textContent = privacyMode ? '🙈' : '👁️';
+    btn.title = privacyMode ? 'Afficher les montants' : 'Masquer les montants';
+    btn.style.background = privacyMode ? 'rgba(239,68,68,.15)' : 'var(--surface2)';
+    btn.style.borderColor = privacyMode ? 'var(--red)' : 'var(--border)';
+    btn.style.color = privacyMode ? 'var(--red)' : 'var(--text)';
+  }
+}
+function togglePrivacyMode(e){
+  if(e) e.stopPropagation();
+  privacyMode = !privacyMode;
+  localStorage.setItem('flousFlowPrivacy', privacyMode?'1':'0');
+  applyPrivacyMode();
+  if(privacyMode) showToast('🙈 Montants masqués');
+  else showToast('👁️ Montants visibles');
+}
+document.addEventListener('DOMContentLoaded', applyPrivacyMode);
 
 // ── CUSTOM THEME COLORS ─────────────────────────────────────────────────
 const COLOR_PRESETS=[
