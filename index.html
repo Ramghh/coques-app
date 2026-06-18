@@ -1048,6 +1048,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
           <option value="Kit bluetooth">🎧 Kit bluetooth</option>
           <option value="Telephone">📞 Telephone</option>
           <option value="Cpl">🔌 Cpl</option>
+          <option value="Box Android">📺 Box Android</option>
+          <option value="Smart Watch">⌚ Smart Watch</option>
           <option value="Accessoires">🧩 Accessoires</option>
           <option value="Autres">🗂️ Autres</option>
         </select>
@@ -1189,6 +1191,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
           <option value="Kit bluetooth">🎧 Kit bluetooth</option>
           <option value="Telephone">📞 Telephone</option>
           <option value="Cpl">🔌 Cpl</option>
+          <option value="Box Android">📺 Box Android</option>
+          <option value="Smart Watch">⌚ Smart Watch</option>
           <option value="Accessoires">🧩 Accessoires</option>
           <option value="Autres">🗂️ Autres</option>
           <option value="__NONE__">❓ Non classé</option>
@@ -1644,11 +1648,12 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Quantité</label><input type="number" id="eQty" min="1" style="margin-top:5px"></div>
       <div><label>Catégorie</label>
         <select id="eCategorie" style="margin-top:5px">
-          <option value="">❓ Non classé</option>
           <option value="Coque">📱 Coque</option>
           <option value="Kit bluetooth">🎧 Kit bluetooth</option>
           <option value="Telephone">📞 Telephone</option>
           <option value="Cpl">🔌 Cpl</option>
+          <option value="Box Android">📺 Box Android</option>
+          <option value="Smart Watch">⌚ Smart Watch</option>
           <option value="Accessoires">🧩 Accessoires</option>
           <option value="Autres">🗂️ Autres</option>
         </select>
@@ -1740,12 +1745,14 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 <script>
 // ── CATÉGORIES (défini en tout premier — utilisé par cardHTML/renderSales
 // qui peuvent être appelées très tôt au chargement via showTab(lastTab)) ───
-const CAT_LIST=['Coque','Kit bluetooth','Telephone','Cpl','Accessoires','Autres'];
+const CAT_LIST=['Coque','Kit bluetooth','Telephone','Cpl','Box Android','Smart Watch','Accessoires','Autres'];
 const CAT_META={
   'Coque':         {icon:'📱', color:'#ff7a00'},
   'Kit bluetooth': {icon:'🎧', color:'#38bdf8'},
   'Telephone':     {icon:'📞', color:'#10b981'},
   'Cpl':           {icon:'🔌', color:'#a78bfa'},
+  'Box Android':   {icon:'📺', color:'#22c55e'},
+  'Smart Watch':   {icon:'⌚', color:'#ec4899'},
   'Accessoires':   {icon:'🧩', color:'#f59e0b'},
   'Autres':        {icon:'🗂️', color:'#6b7b8a'},
   '__none__':      {icon:'❓', color:'#ef4444'}
@@ -5834,7 +5841,7 @@ function openEditModal(id){
   document.getElementById('eClient').value=s.client||'';
   document.getElementById('ePhone').value=s.phone||'';
   document.getElementById('eQty').value=s.qty||1;
-  if(document.getElementById('eCategorie')) document.getElementById('eCategorie').value=s.categorie||'';
+  if(document.getElementById('eCategorie')) document.getElementById('eCategorie').value=s.categorie||'Autres';
   const fObj=fourns.find(x=>x.id===s.fourn||x.nom===s.fourn);
   const fVal=fObj?fObj.id:'';
   document.getElementById('eFourn').value=fVal;
