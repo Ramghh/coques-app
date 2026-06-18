@@ -771,6 +771,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <div class="drawer-section-label">📊 Analyse</div>
     <button class="drawer-btn" id="dbtn-top" onclick="drawerNav('top')"><span class="d-icon">🏆</span><span class="d-label">Top</span></button>
     <button class="drawer-btn" id="dbtn-marques" onclick="drawerNav('marques')"><span class="d-icon">🏷️</span><span class="d-label">Marques</span></button>
+    <button class="drawer-btn" id="dbtn-categories" onclick="drawerNav('categories')"><span class="d-icon">🗂️</span><span class="d-label">Catégories</span></button>
     <button class="drawer-btn" id="dbtn-fournisseurs" onclick="drawerNav('fournisseurs')"><span class="d-icon">🧑‍💼</span><span class="d-label">Fournisseurs</span></button>
     <button class="drawer-btn" id="dbtn-partage" onclick="drawerNav('partage')"><span class="d-icon">🤝</span><span class="d-label">Partage</span></button>
     <button class="drawer-btn" id="dbtn-partenaire" onclick="drawerNav('partenaire')"><span class="d-icon">🤲</span><span class="d-label">Partenaire</span></button>
@@ -1041,6 +1042,16 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>N° Client</label><div class="sac-wrap"><input type="text" id="fClient" placeholder="C-0001" autocomplete="off" oninput="autoFillClientPhone(this.value)" style="width:100%"><div class="sac-dropdown" id="fClient-dd"></div></div><datalist id="fClientList"></datalist></div>
       <div><label>Téléphone</label><input type="tel" id="fPhone" placeholder="2X XXX XXX"></div>
       <div><label>Quantité</label><input type="number" id="fQty" placeholder="1" min="1"></div>
+      <div><label>Catégorie</label>
+        <select id="fCategorie">
+          <option value="Coque">📱 Coque</option>
+          <option value="Kit bluetooth">🎧 Kit bluetooth</option>
+          <option value="Telephone">📞 Telephone</option>
+          <option value="Cpl">🔌 Cpl</option>
+          <option value="Accessoires">🧩 Accessoires</option>
+          <option value="Autres">🗂️ Autres</option>
+        </select>
+      </div>
       <div><label>Fournisseur</label>
         <select id="fFourn" onchange="filterCartesByFourn(this.value,'fCarte');togglePartageSection(this.value,'fPartageF','fPartageWrapper')">
           <option value="">— Fournisseur —</option>
@@ -1166,6 +1177,21 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div style="flex:1">
         <select id="filterModel" onchange="renderSales()" style="font-size:14px;padding:10px 12px">
           <option value="">📱 Tous modèles</option>
+        </select>
+      </div>
+    </div>
+    <!-- Ligne 2b: Catégorie -->
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <div style="flex:1">
+        <select id="filterCategorie" onchange="renderSales()" style="font-size:14px;padding:10px 12px">
+          <option value="">🗂️ Toutes catégories</option>
+          <option value="Coque">📱 Coque</option>
+          <option value="Kit bluetooth">🎧 Kit bluetooth</option>
+          <option value="Telephone">📞 Telephone</option>
+          <option value="Cpl">🔌 Cpl</option>
+          <option value="Accessoires">🧩 Accessoires</option>
+          <option value="Autres">🗂️ Autres</option>
+          <option value="__NONE__">❓ Non classé</option>
         </select>
       </div>
     </div>
@@ -1393,6 +1419,19 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   </div>
 </div>
 
+<!-- CATÉGORIES -->
+<div class="section" id="tab-categories">
+  <div class="form-card" style="padding:16px 0;overflow:hidden">
+    <div style="padding:0 16px">
+      <div class="form-title">🗂️ Catégories</div>
+    </div>
+    <div id="catChartWrap" style="width:100%;padding:0"></div>
+    <div style="padding:0 16px">
+      <div id="catCardsList"></div>
+    </div>
+  </div>
+</div>
+
 <!-- DASHBOARD -->
 <div class="section" id="tab-dashboard">
   <div class="dash-section">
@@ -1519,11 +1558,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <span style="color:var(--yellow)">💡 Depuis Drive: télécharge d'abord le fichier sur ton appareil, puis importe-le ici.</span>
     </div>
   </div>
-  <div class="backup-card" style="margin-top:4px">
-    <div class="backup-title">⏪ Versions automatiques</div>
-    <div class="backup-desc">MegaStore garde les 5 dernières versions. Clique sur une version pour la restaurer.</div>
-    <div id="snapshotList" style="display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
-  </div>
   <div class="backup-info">
     <strong>💡 Conseil :</strong> Exporte régulièrement et enregistre dans <strong>Google Drive</strong>.<br>
     Pour changer de téléphone → Importer → tout revient ✅
@@ -1608,6 +1642,17 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>N° Client</label><input type="text" id="eClient" style="margin-top:5px"></div>
       <div><label>Téléphone</label><input type="tel" id="ePhone" style="margin-top:5px" placeholder="2X XXX XXX"></div>
       <div><label>Quantité</label><input type="number" id="eQty" min="1" style="margin-top:5px"></div>
+      <div><label>Catégorie</label>
+        <select id="eCategorie" style="margin-top:5px">
+          <option value="">❓ Non classé</option>
+          <option value="Coque">📱 Coque</option>
+          <option value="Kit bluetooth">🎧 Kit bluetooth</option>
+          <option value="Telephone">📞 Telephone</option>
+          <option value="Cpl">🔌 Cpl</option>
+          <option value="Accessoires">🧩 Accessoires</option>
+          <option value="Autres">🗂️ Autres</option>
+        </select>
+      </div>
       <div><label>Fournisseur</label>
         <select id="eFourn" style="margin-top:5px" onchange="filterCartesByFourn(this.value,'eCarte');togglePartageSection(this.value,'ePartageF','ePartageWrapper')">
           <option value="">— Fournisseur —</option>
@@ -1693,9 +1738,23 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 </div>
 
 <script>
+// ── CATÉGORIES (défini en tout premier — utilisé par cardHTML/renderSales
+// qui peuvent être appelées très tôt au chargement via showTab(lastTab)) ───
+const CAT_LIST=['Coque','Kit bluetooth','Telephone','Cpl','Accessoires','Autres'];
+const CAT_META={
+  'Coque':         {icon:'📱', color:'#ff7a00'},
+  'Kit bluetooth': {icon:'🎧', color:'#38bdf8'},
+  'Telephone':     {icon:'📞', color:'#10b981'},
+  'Cpl':           {icon:'🔌', color:'#a78bfa'},
+  'Accessoires':   {icon:'🧩', color:'#f59e0b'},
+  'Autres':        {icon:'🗂️', color:'#6b7b8a'},
+  '__none__':      {icon:'❓', color:'#ef4444'}
+};
+function catLabel(key){ return key==='__none__' ? 'Non classé' : key; }
+
 const DRAWER_LABELS = {
   ajouter:'➕ Ajouter', ventes:'📋 Ventes', clients:'👤 Clients', stock:'📦 Stock',
-  top:'🏆 Top', marques:'🏷️ Marques', fournisseurs:'🧑‍💼 Fournisseurs', partage:'🤝 Partage', partenaire:'🤲 Partenaire',
+  top:'🏆 Top', marques:'🏷️ Marques', categories:'🗂️ Catégories', fournisseurs:'🧑‍💼 Fournisseurs', partage:'🤝 Partage', partenaire:'🤲 Partenaire',
   rapport:'📊 Rapport', annuel:'📅 Annuel', calendrier:'🗓️ Calendrier', 'cartes-rapport':'💳 Rentabilité Cartes', dashboard:'🗺️ Dashboard', backup:'💾 Backup'
 };
 
@@ -1826,16 +1885,17 @@ function showTab(id,btn,pushHistory=true){
   if(id==='fournisseurs') renderFournTab();
   if(id==='partage') renderPartageTab();
   if(id==='partenaire'){ document.getElementById('pDate').value=new Date().toISOString().split('T')[0]; renderPartenaireList(); }
-  if(id==='backup') { loadDriveUrl(); renderPinSettings(); renderSnapshots(); }
+  if(id==='backup') { loadDriveUrl(); renderPinSettings(); }
 
   // Tabs with canvas — wait for layout then draw
-  if(['rapport','annuel','calendrier','dashboard','marques','cartes-rapport'].includes(id)){
+  if(['rapport','annuel','calendrier','dashboard','marques','categories','cartes-rapport'].includes(id)){
     requestAnimationFrame(()=>{
       requestAnimationFrame(()=>{
         if(id==='rapport')        renderRapport();
         if(id==='annuel')         renderAnnuel();
         if(id==='calendrier')     renderCalendrier();
         if(id==='marques')        renderMarques();
+        if(id==='categories')     renderCategories();
         if(id==='cartes-rapport') renderCartesRapport();
         if(id==='dashboard'){
           renderDash(); renderHeatmap();
@@ -1867,6 +1927,9 @@ function loadData(newKey, oldKey, def='[]'){
   }
   return JSON.parse(def);
 }
+
+// Nettoyage unique: suppression des anciennes "Versions automatiques" (fonctionnalité retirée)
+try{ localStorage.removeItem('ff_snapshots'); localStorage.removeItem('ff_lastSnapshotTs'); }catch(e){}
 
 let sales  = loadData('flousFlowSales', 'coquesSales');
 let fourns = loadData('flousFlowFourns', 'coquesFourns');
@@ -1949,100 +2012,8 @@ function save(){
   localStorage.setItem('flousFlowPartenaire',JSON.stringify(partenaireDeals));
   localStorage.setItem('flousFlowTheme',theme);
   localStorage.setItem('flousFlowLastSave', Date.now());
-  autoSnapshot();
 }
 
-// ── AUTO SNAPSHOTS (آخر 5 نسخ) ──────────────────────────────────────────────
-const SNAPSHOT_KEY = 'ff_snapshots';
-const SNAPSHOT_MAX = 5;
-
-const SNAPSHOT_MIN_INTERVAL_MS = 5*60*1000; // ne snapshotter qu'une fois max toutes les 5 minutes
-let _lastSnapshotTs = parseInt(localStorage.getItem('ff_lastSnapshotTs')||'0');
-let _snapshotPending = false;
-
-function autoSnapshot(){
-  const now = Date.now();
-  if(now - _lastSnapshotTs < SNAPSHOT_MIN_INTERVAL_MS){
-    return; // trop tôt, on évite de resérialiser toute la base à chaque tap
-  }
-  if(_snapshotPending) return;
-  _snapshotPending = true;
-  // On différe le travail lourd (clonage + écriture) après le rendu/le tap en cours,
-  // pour que le bouton réponde immédiatement.
-  setTimeout(()=>{
-    try{
-      const snap = {
-        ts: Date.now(),
-        sales: JSON.parse(JSON.stringify(sales)),
-        fourns: JSON.parse(JSON.stringify(fourns)),
-        achats: JSON.parse(JSON.stringify(achats)),
-        stockItems: JSON.parse(JSON.stringify(stockItems)),
-        clients: JSON.parse(JSON.stringify(clients)),
-        partenaireDeals: JSON.parse(JSON.stringify(partenaireDeals))
-      };
-      let snaps = getSnapshots();
-      snaps.unshift(snap);
-      if(snaps.length > SNAPSHOT_MAX) snaps = snaps.slice(0, SNAPSHOT_MAX);
-      localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snaps));
-      _lastSnapshotTs = Date.now();
-      localStorage.setItem('ff_lastSnapshotTs', String(_lastSnapshotTs));
-    } catch(e){ console.warn('Snapshot failed:', e); }
-    finally{ _snapshotPending = false; }
-  }, 0);
-}
-
-function getSnapshots(){
-  try{ return JSON.parse(localStorage.getItem(SNAPSHOT_KEY)||'[]'); }
-  catch(e){ return []; }
-}
-
-function restoreSnapshot(index){
-  const snaps = getSnapshots();
-  const snap = snaps[index];
-  if(!snap) return;
-  const d = new Date(snap.ts);
-  const label = d.toLocaleDateString('fr-TN',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('fr-TN',{hour:'2-digit',minute:'2-digit'});
-  if(!confirm(`⏪ Restaurer la version du ${label} ?\n⚠️ Les données actuelles seront remplacées.`)) return;
-  sales = snap.sales || [];
-  fourns = snap.fourns || [];
-  achats = snap.achats || [];
-  stockItems = snap.stockItems || [];
-  clients = snap.clients || [];
-  partenaireDeals = snap.partenaireDeals || [];
-  save(); saveAchats(); saveStock(); saveClients();
-  updateKPIs(); renderSales(); refreshFournSelects(); refreshStockModelList();
-  showToast(`✅ Version du ${label} restaurée!`);
-  renderSnapshots();
-}
-
-function renderSnapshots(){
-  const el = document.getElementById('snapshotList');
-  if(!el) return;
-  const snaps = getSnapshots();
-  if(!snaps.length){
-    el.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:14px 0">Aucune version sauvegardée pour l\'instant.</div>';
-    return;
-  }
-  el.innerHTML = snaps.map((s, i) => {
-    const d = new Date(s.ts);
-    const dateStr = d.toLocaleDateString('fr-TN',{weekday:'short',day:'2-digit',month:'short'});
-    const timeStr = d.toLocaleTimeString('fr-TN',{hour:'2-digit',minute:'2-digit'});
-    const ventes = (s.sales||[]).length;
-    const fournsCount = (s.fourns||[]).length;
-    const isLatest = i === 0;
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:var(--surface2);border:1px solid ${isLatest?'rgba(255,122,0,.35)':'var(--border)'};border-radius:12px;gap:10px">
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
-          ${isLatest ? '<span style="background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px">DERNIÈRE</span>' : `<span style="color:var(--muted);font-size:12px;font-weight:700">#${i+1}</span>`}
-          <span style="font-size:14px;font-weight:700;color:var(--text)">${dateStr}</span>
-          <span style="font-size:13px;color:var(--muted)">${timeStr}</span>
-        </div>
-        <div style="font-size:12px;color:var(--muted)">${ventes} vente(s) · ${fournsCount} fourn.</div>
-      </div>
-      <button onclick="restoreSnapshot(${i})" style="flex-shrink:0;padding:8px 14px;background:linear-gradient(135deg,rgba(255,122,0,.18),rgba(255,122,0,.06));border:1px solid rgba(255,122,0,.35);color:var(--accent);border-radius:10px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer">⏪ Restaurer</button>
-    </div>`;
-  }).join('');
-}
 function calc(qty,prix,cout,envoi){
   const r=qty*prix, c=qty*cout+envoi, b=r-c;
   return {revenu:r, coutTotal:c, benefBrut:b, marge:r>0?b/r:0};
@@ -2787,6 +2758,7 @@ function addSale(){
   const client=document.getElementById('fClient').value.trim();
   const phone=document.getElementById('fPhone').value.trim();
   const qty=parseFloat(document.getElementById('fQty').value)||1;
+  const categorie=document.getElementById('fCategorie')?.value||'Autres';
   const fourn=document.getElementById('fFourn').value;
   const carteId=document.getElementById('fCarte').value;
   const prix=parseFloat(document.getElementById('fPrix').value)||0;
@@ -2800,7 +2772,7 @@ function addSale(){
   const invYear=date.slice(0,4);
   const invCount=sales.filter(s=>s.invNum&&s.invNum.startsWith('INV-'+invYear)).length+1;
   const invNum=`INV-${invYear}-${String(invCount).padStart(3,'0')}`;
-  sales.push({id:Date.now(),invNum,date,model,color,ville,client,phone,fourn,carteId,qty,prix,cout,envoi,partageF,partageP,status,fraisRetour,...calc(qty,prix,cout,envoi)});
+  sales.push({id:Date.now(),invNum,date,model,color,ville,client,phone,fourn,carteId,qty,categorie,prix,cout,envoi,partageF,partageP,status,fraisRetour,...calc(qty,prix,cout,envoi)});
   // Mettre à jour stock si ce modèle existe
   const stockItem=stockItems.find(s=>s.model.toLowerCase()===model.toLowerCase());
   if(stockItem){
@@ -2838,6 +2810,7 @@ function readSaleFormItem(){
     model,
     color:document.getElementById('fColor').value.trim(),
     qty:parseFloat(document.getElementById('fQty').value)||1,
+    categorie:document.getElementById('fCategorie')?.value||'Autres',
     prix,
     cout:parseFloat(document.getElementById('fCout').value)||0,
     envoi:parseFloat(document.getElementById('fEnvoi').value)||0,
@@ -2924,7 +2897,7 @@ function checkoutPanier(){
   const newSales=[];
   panierItems.forEach((it,i)=>{
     const s={id:baseId+i,invNum,date,model:it.model,color:it.color,ville,client,phone,
-      fourn:it.fourn,carteId:it.carteId,qty:it.qty,prix:it.prix,cout:it.cout,envoi:it.envoi,
+      fourn:it.fourn,carteId:it.carteId,qty:it.qty,categorie:it.categorie,prix:it.prix,cout:it.cout,envoi:it.envoi,
       partageF:it.partageF,partageP:it.partageP,status:it.status,fraisRetour:it.fraisRetour,
       ...calc(it.qty,it.prix,it.cout,it.envoi)};
     sales.push(s);
@@ -3504,7 +3477,7 @@ function refreshFilterSelects(){
 }
 
 function resetFilters(){
-  ['filterFourn','filterCarte','filterVille','filterModel'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
+  ['filterFourn','filterCarte','filterVille','filterModel','filterCategorie'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
   ['filterDateFrom','filterDateTo','filterBenefMin','filterBenefMax'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
   document.querySelectorAll('#smartDateChips .chip-date').forEach(c=>c.classList.remove('active'));
   renderSales();
@@ -3562,6 +3535,7 @@ function getFiltered(){
   const filterFournId=document.getElementById('filterFourn')?document.getElementById('filterFourn').value:'';
   const filterVille=document.getElementById('filterVille')?document.getElementById('filterVille').value:'';
   const filterModel=document.getElementById('filterModel')?document.getElementById('filterModel').value:'';
+  const filterCategorie=document.getElementById('filterCategorie')?document.getElementById('filterCategorie').value:'';
   const filterFrom=document.getElementById('filterDateFrom')?document.getElementById('filterDateFrom').value:'';
   const filterTo=document.getElementById('filterDateTo')?document.getElementById('filterDateTo').value:'';
   const filterBenefMin=document.getElementById('filterBenefMin')?parseFloat(document.getElementById('filterBenefMin').value)||null:null;
@@ -3584,11 +3558,12 @@ function getFiltered(){
     const matchFourn=!filterFournId||s.fourn===filterFournId||(fObj&&fObj.id===filterFournId);
     const matchVille=!filterVille||s.ville===filterVille;
     const matchModel=!filterModel||s.model===filterModel;
+    const matchCategorie=!filterCategorie||(filterCategorie==='__NONE__'?!s.categorie:(s.categorie===filterCategorie));
     const matchFrom=!filterFrom||s.date>=filterFrom;
     const matchTo=!filterTo||s.date<=filterTo;
     const matchBenefMin=filterBenefMin===null||benef>=filterBenefMin;
     const matchBenefMax=filterBenefMax===null||benef<=filterBenefMax;
-    return matchQ&&matchCarte&&matchFourn&&matchVille&&matchModel&&matchFrom&&matchTo&&matchBenefMin&&matchBenefMax&&(!filterAttente||s.status==='attente');
+    return matchQ&&matchCarte&&matchFourn&&matchVille&&matchModel&&matchCategorie&&matchFrom&&matchTo&&matchBenefMin&&matchBenefMax&&(!filterAttente||s.status==='attente');
   });
 
   // Mettre à jour le compteur En attente
@@ -3598,7 +3573,7 @@ function getFiltered(){
 
   // Afficher résumé
   const infoEl=document.getElementById('filterInfo');
-  const hasFilter=filterCarteId||filterFournId||filterVille||filterModel||filterFrom||filterTo||filterBenefMin!==null||filterBenefMax!==null||q;
+  const hasFilter=filterCarteId||filterFournId||filterVille||filterModel||filterCategorie||filterFrom||filterTo||filterBenefMin!==null||filterBenefMax!==null||q;
   if(infoEl){
     if(hasFilter){
       const tv=result.reduce((a,s)=>a+s.revenu,0);
@@ -3633,6 +3608,10 @@ function cardHTML(s,q='',delay=0){
   const bv=benefNet(s);
   const bClass=bv>0?'pos':bv<0?'neg':'neu';
   const partageTag=s.partageF&&s.partageP?`<span class="tag" style="color:#f472b6;border-color:rgba(244,114,182,.3);background:rgba(244,114,182,.08)">🤝 ${s.partageP}%</span>`:'';
+  const catInfo=s.categorie?(CAT_META[s.categorie]||CAT_META['Autres']):CAT_META['__none__'];
+  const catTag=s.categorie
+    ?`<span class="tag" style="color:${catInfo.color};border-color:${catInfo.color}4d;background:${catInfo.color}14">${catInfo.icon} ${s.categorie}</span>`
+    :`<span class="tag" style="color:${catInfo.color};border-color:${catInfo.color}4d;background:${catInfo.color}14;cursor:pointer" onclick="openEditModal(${s.id})">${catInfo.icon} Non classé</span>`;
   return `<div class="sale-card sale-card-anim" data-id="${s.id}" style="animation-delay:${delay}s">
     <div class="sale-top">
       <div class="sale-model">${hl(s.model,q)}</div>
@@ -3643,6 +3622,7 @@ function cardHTML(s,q='',delay=0){
     </div>
     <div class="sale-meta">
       <span class="tag">📅 ${ds}</span>
+      ${catTag}
       ${s.color?`<span class="tag">🎨 ${hl(s.color,q)}</span>`:''}
       ${s.ville?`<span class="tag city">📍 ${hl(s.ville,q)}</span>`:''}
       ${s.client?`<span class="tag client">👤 ${hl(s.client,q)}</span>`:''}
@@ -3904,6 +3884,7 @@ function duplicateSale(id){
   document.getElementById('fVille').value=s.ville||'';
   document.getElementById('fClient').value=s.client||'';
   document.getElementById('fQty').value=s.qty||1;
+  if(document.getElementById('fCategorie')) document.getElementById('fCategorie').value=s.categorie||'Autres';
   document.getElementById('fPrix').value=s.prix||'';
   document.getElementById('fCout').value=s.cout||'';
   document.getElementById('fEnvoi').value=s.envoi||'';
@@ -5129,10 +5110,10 @@ function renderMarques(){
   const ctx=canvas.getContext('2d');
   ctx.scale(dpr,dpr);
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
-  const bgColor='#141414';
-  const textColor='#f0f0f0';
+  const bgColor=isDark?'#141414':'#f5f0ea';
+  const textColor=isDark?'#f0f0f0':'#2a2520';
   const mutedColor='rgba(255,122,0,.4)';
-  const trackColor='rgba(255,255,255,.07)';
+  const trackColor=isDark?'rgba(255,255,255,.07)':'rgba(0,0,0,.06)';
 
   ctx.fillStyle=bgColor;
   ctx.roundRect(0,0,W,H,12);
@@ -5271,6 +5252,181 @@ function filterByMarque(marque){
   if(input){ input.value=marque; renderSales(); }
   showToast('🏷️ '+marque+' — ventes filtrées');
 }
+
+function filterByCategorie(cat){
+  showTab('ventes',null);
+  const sel=document.getElementById('filterCategorie');
+  if(sel){ sel.value=(cat==='__none__'?'__NONE__':cat); renderSales(); }
+  const info=CAT_META[cat]||CAT_META['Autres'];
+  showToast(info.icon+' '+(cat==='__none__'?'Non classé':cat)+' — ventes filtrées');
+}
+
+// ── CATÉGORIES (chart + cards) ──────────────────────────────────────────────
+function renderCategories(){
+  const wrap=document.getElementById('catChartWrap');
+  const list=document.getElementById('catCardsList');
+  if(!wrap||!list) return;
+  if(!sales.length){
+    wrap.innerHTML='';
+    list.innerHTML='<div class="empty"><div class="empty-icon">🗂️</div><div class="empty-text">Aucune vente.</div></div>';
+    return;
+  }
+
+  // Build catégorie data (toutes les catégories, même sans ventes — sauf si aucune vente du tout)
+  const cq={};
+  CAT_LIST.forEach(c=>{ cq[c]={count:0,revenu:0,benef:0,first:'',last:''}; });
+  cq['__none__']={count:0,revenu:0,benef:0,first:'',last:''};
+  sales.forEach(s=>{
+    const c=s.categorie&&CAT_LIST.includes(s.categorie)?s.categorie:'__none__';
+    const d=s.date||'';
+    cq[c].count++;
+    cq[c].revenu+=(s.revenu||0);
+    cq[c].benef+=benefNet(s);
+    if(d&&(!cq[c].first||d<cq[c].first)) cq[c].first=d;
+    if(d&&(!cq[c].last ||d>cq[c].last))  cq[c].last=d;
+  });
+
+  // Garder uniquement les catégories qui ont au moins une vente, triées par bénéfice
+  const sorted=Object.entries(cq).filter(([,d])=>d.count>0).sort((a,b)=>b[1].benef-a[1].benef);
+  if(!sorted.length){
+    wrap.innerHTML='';
+    list.innerHTML='<div class="empty"><div class="empty-icon">🗂️</div><div class="empty-text">Aucune vente catégorisée.</div></div>';
+    return;
+  }
+  const maxBenef=Math.max(...sorted.map(([,d])=>Math.abs(d.benef)),1);
+
+  // ── Canvas horizontal bar chart ──
+  const BAR_H=38, GAP=10, PAD={top:16,bottom:16,left:110,right:115};
+  const W=window.innerWidth;
+  const H=PAD.top + sorted.length*(BAR_H+GAP) - GAP + PAD.bottom;
+
+  wrap.innerHTML=`
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">📈 Bénéfice par catégorie</div>
+    <div style="margin-bottom:6px">
+      <canvas id="catCanvas" style="width:100%;cursor:pointer;border-radius:12px;display:block"></canvas>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:20px">Appuyer sur une barre pour filtrer les ventes</div>
+    <div style="height:1px;background:var(--border);margin-bottom:18px"></div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">🗂️ Détail par catégorie</div>`;
+
+  const canvas=document.getElementById('catCanvas');
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=W*dpr;
+  canvas.height=H*dpr;
+  canvas.style.width='100%';
+  canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const bgColor=isDark?'#141414':'#f5f0ea';
+  const textColor=isDark?'#f0f0f0':'#2a2520';
+  const trackColor=isDark?'rgba(255,255,255,.07)':'rgba(0,0,0,.06)';
+
+  ctx.fillStyle=bgColor;
+  ctx.roundRect(0,0,W,H,12);
+  ctx.fill();
+
+  const barRects=[];
+
+  sorted.forEach(([name,d],i)=>{
+    const info=CAT_META[name]||CAT_META['Autres'];
+    const c1=info.color;
+    const y=PAD.top+i*(BAR_H+GAP);
+    const availW=W-PAD.left-PAD.right;
+    const barW=Math.max(4,(Math.abs(d.benef)/maxBenef)*availW);
+
+    ctx.fillStyle=trackColor;
+    ctx.beginPath();
+    ctx.roundRect(PAD.left,y+6,availW,BAR_H-12,6);
+    ctx.fill();
+
+    ctx.fillStyle=c1;
+    ctx.beginPath();
+    ctx.roundRect(PAD.left,y+6,barW,BAR_H-12,6);
+    ctx.fill();
+
+    barRects.push({x:PAD.left,y:y+6,w:availW,h:BAR_H-12,name});
+
+    ctx.fillStyle=textColor;
+    ctx.font=`600 11px 'DM Sans',sans-serif`;
+    ctx.textAlign='right';
+    ctx.textBaseline='middle';
+    const label=info.icon+' '+(catLabel(name).length>9?catLabel(name).slice(0,9)+'…':catLabel(name));
+    ctx.fillText(label,PAD.left-8,y+BAR_H/2);
+
+    const val=fmtI(d.benef)+' DT';
+    ctx.font=`bold 10px 'DM Mono',monospace`;
+    ctx.fillStyle=c1;
+    ctx.textAlign='right';
+    ctx.textBaseline='middle';
+    ctx.fillText(val, W-10, y+BAR_H/2);
+  });
+
+  canvas.onclick=e=>{
+    const rect=canvas.getBoundingClientRect();
+    const scaleX=canvas.width/rect.width;
+    const scaleY=canvas.height/rect.height;
+    const cx=(e.clientX-rect.left)*scaleX;
+    const cy=(e.clientY-rect.top)*scaleY;
+    for(const r of barRects){
+      if(cx>=r.x&&cx<=r.x+r.w&&cy>=r.y&&cy<=r.y+r.h){
+        filterByCategorie(r.name);
+        break;
+      }
+    }
+  };
+
+  // ── Cards ──
+  const fmtD=dt=>dt?new Date(dt+'T00:00:00').toLocaleDateString('fr-TN',{day:'2-digit',month:'short',year:'numeric'}):'—';
+  list.innerHTML=sorted.map(([name,d])=>{
+    const info=CAT_META[name]||CAT_META['Autres'];
+    const c1=info.color;
+    const pct=Math.max(3,(Math.abs(d.benef)/maxBenef)*100);
+    const marge=d.revenu>0?((d.benef/d.revenu)*100).toFixed(1):'0.0';
+    return `<div class="form-card" style="margin-bottom:12px;border-left:3px solid ${c1};cursor:pointer" onclick="filterByCategorie('${name.replace(/'/g,"\\'")}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:17px;font-weight:800">${info.icon} ${catLabel(name)}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:800;color:${c1}">${fmt(d.benef)}</div>
+      </div>
+      <div style="height:7px;background:var(--border);border-radius:6px;overflow:hidden;margin-bottom:10px">
+        <div style="height:100%;width:${pct}%;background:${c1};border-radius:6px"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="background:var(--surface2);border-radius:9px;padding:9px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">VENTES</div>
+          <div style="font-size:15px;font-weight:700">${d.count}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:9px;padding:9px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">REVENU</div>
+          <div style="font-size:13px;font-weight:700;color:var(--yellow)">${fmt(d.revenu)}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:9px;padding:9px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">MARGE</div>
+          <div style="font-size:15px;font-weight:700;color:var(--accent)">${marge}%</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:9px;padding:9px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">MOY/VENTE</div>
+          <div style="font-size:13px;font-weight:700;color:var(--green)">${fmt(d.benef/d.count)}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;background:var(--surface2);border-radius:9px;padding:9px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">🥇 1ÈRE VENTE</div>
+          <div style="font-size:12px;font-weight:600">${fmtD(d.first)}</div>
+        </div>
+        <div style="flex:1;background:var(--surface2);border-radius:9px;padding:9px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">🔚 DERNIÈRE</div>
+          <div style="font-size:12px;font-weight:600">${fmtD(d.last)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Responsive categories chart on orientation change
+window.addEventListener('resize',()=>{
+  if(document.getElementById('tab-categories')&&document.getElementById('tab-categories').style.display!=='none') renderCategories();
+});
 
 // Responsive marques chart on orientation change
 window.addEventListener('resize',()=>{
@@ -5678,6 +5834,7 @@ function openEditModal(id){
   document.getElementById('eClient').value=s.client||'';
   document.getElementById('ePhone').value=s.phone||'';
   document.getElementById('eQty').value=s.qty||1;
+  if(document.getElementById('eCategorie')) document.getElementById('eCategorie').value=s.categorie||'';
   const fObj=fourns.find(x=>x.id===s.fourn||x.nom===s.fourn);
   const fVal=fObj?fObj.id:'';
   document.getElementById('eFourn').value=fVal;
@@ -5714,6 +5871,7 @@ function saveEdit(){
   const fourn=document.getElementById('eFourn').value;
   const carteId=document.getElementById('eCarte').value;
   const qty=parseFloat(document.getElementById('eQty').value)||1;
+  const categorie=document.getElementById('eCategorie')?.value||'';
   const prix=parseFloat(document.getElementById('ePrix').value)||0;
   const cout=parseFloat(document.getElementById('eCout').value)||0;
   const envoi=parseFloat(document.getElementById('eEnvoi').value)||0;
@@ -5722,7 +5880,7 @@ function saveEdit(){
   const status=document.getElementById('eStatus')?.value||'';
   const fraisRetour=status==='retourne'?parseFloat(document.getElementById('eFraisRetour')?.value)||0:0;
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
-  sales[idx]={...sales[idx],date,model,color,ville,client,phone,fourn,carteId,qty,prix,cout,envoi,partageF,partageP,status,fraisRetour,...calc(qty,prix,cout,envoi)};
+  sales[idx]={...sales[idx],date,model,color,ville,client,phone,fourn,carteId,qty,categorie,prix,cout,envoi,partageF,partageP,status,fraisRetour,...calc(qty,prix,cout,envoi)};
   save(); updateKPIs(); renderSales(); closeEditModal();
   showToast('✅ Vente modifiée!');
 }
@@ -6192,6 +6350,7 @@ function exportExcel(){
     const cObj=allCartes().find(x=>x.id===s.carteId);
     return {
       'N°':i+1,'Date':s.date||'','Modèle':s.model||'','Couleur':s.color||'',
+      'Catégorie':s.categorie||'Non classé',
       'Ville':s.ville||'','N° Client':s.client||'','Fournisseur':fObj?fObj.nom:(s.fourn||''),
       'Carte':cObj?cObj.label:'','Quantité':s.qty||1,
       'Prix Vente (DT)':+(s.prix||0).toFixed(3),'Coût Achat (DT)':+(s.cout||0).toFixed(3),
