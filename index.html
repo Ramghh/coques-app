@@ -28,6 +28,37 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 
 /* HEADER */
 header{background:var(--surface);padding:18px 18px 14px;position:sticky;top:0;z-index:100;width:100%;box-sizing:border-box;left:0;border-bottom:2px solid var(--accent)}
+
+/* SPLASH SCREEN */
+#splashScreen{
+  position:fixed;inset:0;z-index:99999;
+  background:linear-gradient(160deg,#1a1410 0%,#241a10 45%,#2e1d0c 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+}
+.splash-logo-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;animation:splashPop .7s cubic-bezier(.34,1.56,.64,1)}
+.splash-icon{
+  font-size:64px;
+  width:104px;height:104px;border-radius:28px;
+  background:linear-gradient(145deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 32px rgba(255,122,0,.45),0 0 0 1px rgba(255,255,255,.08) inset;
+  animation:splashIconPulse 1.6s ease-in-out infinite;
+}
+.splash-name{
+  font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:34px;letter-spacing:-.5px;
+  color:#fdfaf6;
+}
+.splash-name span{color:var(--accent2)}
+.splash-sub{
+  font-family:'Outfit',sans-serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;
+  color:#a89a8a;margin-top:-8px;
+}
+.splash-loader{width:140px;height:3px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:6px}
+.splash-loader-bar{width:40%;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));animation:splashLoading 1.1s ease-in-out infinite}
+@keyframes splashPop{0%{opacity:0;transform:scale(.85) translateY(8px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes splashIconPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes splashLoading{0%{transform:translateX(-120%)}100%{transform:translateX(370%)}}
+@keyframes splashFadeOut{0%{opacity:1;visibility:visible}99%{opacity:0;visibility:visible}100%{opacity:0;visibility:hidden;pointer-events:none}}
 .header-top{display:flex;align-items:center;justify-content:space-between}
 .logo{font-family:'Cabinet Grotesk',sans-serif;font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.5px}
 .logo span{color:#fbbf24}
@@ -740,6 +771,28 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 </head>
 <body>
 
+<!-- SPLASH SCREEN -->
+<div id="splashScreen">
+  <div class="splash-logo-wrap">
+    <div class="splash-icon">🏪</div>
+    <div class="splash-name" id="splashName">Mega<span>Store</span></div>
+  </div>
+  <div class="splash-sub">Gestion des ventes</div>
+  <div class="splash-loader"><div class="splash-loader-bar"></div></div>
+</div>
+<script>
+(function(){
+  try{
+    const nom=localStorage.getItem('flousFlowNomEntreprise');
+    if(nom){
+      const el=document.getElementById('splashName');
+      const mid=Math.ceil(nom.length/2);
+      el.innerHTML=nom.slice(0,mid)+'<span>'+nom.slice(mid)+'</span>';
+    }
+  }catch(e){}
+})();
+</script>
+
 <!-- WHATSAPP MESSAGE SHEET -->
 <div class="wa-sheet-overlay" id="waSheetOverlay" style="display:none" onclick="closeWaSheet(event)">
   <div class="wa-sheet">
@@ -758,6 +811,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 
 <!-- SMS SHEET -->
 <div class="wa-sheet-overlay" id="smsSheetOverlay" style="display:none" onclick="closeSmsSheet(event)">
+
   <div class="wa-sheet">
     <div class="wa-sheet-title">💬 Envoyer SMS</div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
@@ -7364,6 +7418,28 @@ function closeWallMode(){
   if(_wallInterval){ clearInterval(_wallInterval); _wallInterval=null; }
   if(_wallClockInterval){ clearInterval(_wallClockInterval); _wallClockInterval=null; }
 }
+
+// ── SPLASH SCREEN — masquage synchronisé avec le chargement réel ────────
+(function(){
+  const splash=document.getElementById('splashScreen');
+  if(!splash) return;
+  let hidden=false;
+  function hideSplash(){
+    if(hidden) return;
+    hidden=true;
+    splash.style.animation='splashFadeOut .5s ease forwards';
+    setTimeout(()=>{ if(splash.parentNode) splash.remove(); },550);
+  }
+  // se cache dès que tout est chargé, avec un minimum de 700ms pour éviter un flash trop court
+  const minDelay=new Promise(r=>setTimeout(r,700));
+  const pageLoad=new Promise(r=>{
+    if(document.readyState==='complete') r();
+    else window.addEventListener('load',r,{once:true});
+  });
+  Promise.all([minDelay,pageLoad]).then(hideSplash);
+  // sécurité: ne jamais bloquer l'app plus de 4s même en cas de souci réseau
+  setTimeout(hideSplash,4000);
+})();
 
 </script>
 </body>
