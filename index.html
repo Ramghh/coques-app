@@ -7431,14 +7431,14 @@ function closeWallMode(){
     setTimeout(()=>{ if(splash.parentNode) splash.remove(); },550);
   }
   // se cache dès que tout est chargé, avec un minimum de 700ms pour éviter un flash trop court
-  const minDelay=new Promise(r=>setTimeout(r,700));
+  const minDelay=new Promise(r=>setTimeout(r,3000));
   const pageLoad=new Promise(r=>{
     if(document.readyState==='complete') r();
     else window.addEventListener('load',r,{once:true});
   });
   Promise.all([minDelay,pageLoad]).then(hideSplash);
   // sécurité: ne jamais bloquer l'app plus de 4s même en cas de souci réseau
-  setTimeout(hideSplash,4000);
+  setTimeout(hideSplash,6000);
 })();
 
 </script>
