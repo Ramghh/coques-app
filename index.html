@@ -310,6 +310,10 @@ input:focus,select:focus{outline:none;border-color:var(--accent)!important;box-s
 .sale-benef.neg{background:rgba(239,68,68,.15);color:var(--red)}
 .sale-benef.neu{background:rgba(107,107,138,.12);color:var(--muted)}
 .sale-meta{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px}
+.compact-mode .sale-nums,
+.compact-mode .tag-sec{display:none!important}
+.compact-mode .sale-card{padding-bottom:8px}
+.compact-mode .sale-meta{margin-bottom:5px}
 .tag{font-size:12px;padding:3px 8px;border-radius:7px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
 .tag.city{color:var(--yellow);border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.08)}
 .tag.client{color:var(--accent);border-color:rgba(255,122,0,.3);background:rgba(255,122,0,.08)}
@@ -1326,6 +1330,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <button class="sort-btn" onclick="setSort('oldest',this)">📅 Ancien</button>
       <button class="sort-btn" onclick="setSort('benef',this)">💰 Bénéfice</button>
       <button class="sort-btn" id="btnFilterAttente" onclick="toggleAttenteFilter(this)">🟡 En attente <span id="attenteCount" style="background:rgba(245,158,11,.25);border-radius:10px;padding:1px 6px;font-size:11px;margin-left:2px">0</span></button>
+      <button class="sort-btn" id="btnCompactMode" onclick="toggleCompactMode(this)" title="Masquer les détails secondaires">👁️ Compact</button>
     </div>
   </div>
 
@@ -2275,6 +2280,21 @@ function togglePrivacyMode(e){
   else showToast('👁️ Montants visibles');
 }
 document.addEventListener('DOMContentLoaded', applyPrivacyMode);
+
+// ── COMPACT MODE — masquer les détails secondaires des cartes Ventes ────
+let compactMode = localStorage.getItem('flousFlowCompact')==='1';
+function applyCompactMode(){
+  document.body.classList.toggle('compact-mode', compactMode);
+  const btn=document.getElementById('btnCompactMode');
+  if(btn) btn.classList.toggle('active', compactMode);
+}
+function toggleCompactMode(btn){
+  compactMode = !compactMode;
+  localStorage.setItem('flousFlowCompact', compactMode?'1':'0');
+  applyCompactMode();
+  showToast(compactMode ? '👁️ Mode compact activé' : '🔎 Détails complets');
+}
+document.addEventListener('DOMContentLoaded', applyCompactMode);
 
 // ── CUSTOM THEME COLORS ─────────────────────────────────────────────────
 const COLOR_PRESETS=[
@@ -3735,15 +3755,15 @@ function cardHTML(s,q='',delay=0){
     <div class="sale-meta">
       <span class="tag">📅 ${ds}</span>
       ${catTag}
-      ${s.color?`<span class="tag">🎨 ${hl(s.color,q)}</span>`:''}
+      ${s.color?`<span class="tag tag-sec">🎨 ${hl(s.color,q)}</span>`:''}
       ${s.ville?`<span class="tag city">📍 ${hl(s.ville,q)}</span>`:''}
       ${s.client?`<span class="tag client">👤 ${hl(s.client,q)}</span>`:''}
-      ${s.phone?`<a href="tel:${s.phone.replace(/\\s/g,'')}" class="tag" style="color:var(--green);background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);text-decoration:none;display:inline-flex;align-items:center;gap:4px">📞 ${s.phone}</a><button onclick="openWaSheet('${s.phone}','${(s.client||'').replace(/'/g,"\\'")}','${(s.model||'').replace(/'/g,"\\'")}','${s.prix}')" class="tag wa-icon-btn" style="color:#25d366;background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.3);cursor:pointer;border:1px solid rgba(37,211,102,.3);border-radius:7px;padding:2px 4px;display:inline-flex;align-items:center"><img src=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2325d366'%3E%3Cpath d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z'/%3E%3Cpath d='M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 0 0 .606.633l6.284-1.634A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.013-1.376l-.36-.214-3.732.97.999-3.63-.235-.374A9.818 9.818 0 1 1 12 21.818z'/%3E%3C/svg%3E\" width=\"15\" height=\"15\" style=\"display:block\"></button>`:''}
-      ${fNom?`<span class="tag fourn">🧑‍💼 ${hl(fNom,q)}</span>`:''}
-      ${carteObj?`<span class="tag carte">💳 ${carteObj.label}</span>`:''}
+      ${s.phone?`<a href="tel:${s.phone.replace(/\\s/g,'')}" class="tag tag-sec" style="color:var(--green);background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);text-decoration:none;display:inline-flex;align-items:center;gap:4px">📞 ${s.phone}</a><button onclick="openWaSheet('${s.phone}','${(s.client||'').replace(/'/g,"\\'")}','${(s.model||'').replace(/'/g,"\\'")}','${s.prix}')" class="tag tag-sec wa-icon-btn" style="color:#25d366;background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.3);cursor:pointer;border:1px solid rgba(37,211,102,.3);border-radius:7px;padding:2px 4px;display:inline-flex;align-items:center"><img src=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2325d366'%3E%3Cpath d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z'/%3E%3Cpath d='M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 0 0 .606.633l6.284-1.634A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.013-1.376l-.36-.214-3.732.97.999-3.63-.235-.374A9.818 9.818 0 1 1 12 21.818z'/%3E%3C/svg%3E\" width=\"15\" height=\"15\" style=\"display:block\"></button>`:''}
+      ${fNom?`<span class="tag fourn tag-sec">🧑‍💼 ${hl(fNom,q)}</span>`:''}
+      ${carteObj?`<span class="tag carte tag-sec">💳 ${carteObj.label}</span>`:''}
       ${partageTag}
       ${s.status==='attente'?`<span class="tag status-attente" onclick="toggleStatus(${s.id})">🟡 En attente</span>`:s.status==='livre'?`<span class="tag status-livre" onclick="toggleStatus(${s.id})">✅ Livré</span>`:s.status==='retourne'?`<span class="tag status-retourne" onclick="toggleStatus(${s.id})">↩️ Retourné${s.fraisRetour?` -${fmt(s.fraisRetour)}`:''}</span>`:''}
-      <span class="tag">x${s.qty}</span>
+      <span class="tag tag-sec">x${s.qty}</span>
     </div>
     <div class="sale-nums">
       <div class="num-item"><div class="num-label">Revenu</div><div class="num-val" style="color:var(--yellow)">${fmt(s.revenu)}</div></div>
