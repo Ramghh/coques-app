@@ -2145,26 +2145,28 @@ function fsApplyRemoteData(data){
   localStorage.setItem('flousFlowTheme',theme);
 }
 
-// Au démarrage: comparer timestamp local vs distant, prendre le plus récent
+// Au démarrage: la lecture (pull) est automatique et prioritaire.
+// L'écriture (push) automatique au démarrage est volontairement désactivée
+// pour éviter qu'un localStorage local obsolète (vieux test, ancien appareil...)
+// n'écrase des données plus récentes déjà présentes sur Firestore.
 async function fsInitialSync(){
   if(!fsReady) return;
   const localTs = parseInt(localStorage.getItem('flousFlowLastSave')||'0', 10);
   const remote = await fsPullNow(true);
   if(!remote){
-    // rien sur le cloud encore: pousser l'état local actuel
+    // Rien sur le cloud: c'est la toute première synchronisation, on initialise.
     fsPushNow();
     return;
   }
   const remoteTs = remote.updatedAt||0;
   if(remoteTs > localTs){
+    // Le cloud est plus récent (ou égal) → on l'applique localement, toujours.
     fsApplyRemoteData(remote);
-    // Pas de reload automatique (cela redemanderait le PIN).
-    // Les données locales (localStorage) sont à jour ; un simple
-    // rafraîchissement manuel de la page suffira pour les voir affichées.
     if(typeof showToast==='function') showToast('☁️ Nouvelles données disponibles (actualisez pour les voir)');
-  } else if(localTs > remoteTs){
-    fsPushNow();
   }
+  // Si le local semble "plus récent", on NE pousse PAS automatiquement.
+  // L'utilisateur reste sur les données cloud (déjà appliquées via save()/etc
+  // au fil de son utilisation normale, qui déclenchera un push légitime).
 }
 
 window.addEventListener('online', ()=>{ if(fsSyncState==='offline') fsSetStatus('idle'); });
