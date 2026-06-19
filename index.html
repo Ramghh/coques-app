@@ -772,6 +772,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 }
 </style>
 <script src="https://unpkg.com/@zxing/library@0.19.3/umd/index.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -924,6 +926,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
         <button id="privacyBtn" onclick="togglePrivacyMode(event)" title="Masquer les montants" style="position:absolute;top:-6px;left:-6px;width:24px;height:24px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25)">👁️</button>
         </div>
       </div>
+      <span id="fsSyncIndicator" title="Firestore: en attente" style="font-size:16px;cursor:default;display:flex;align-items:center;padding:0 4px">☁️</span>
       <button class="theme-btn" id="gistBtn" onclick="openGistModal()" title="Sync Gist" style="display:none">☁️</button>
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" style="display:none"></button>
     </div>
@@ -2033,6 +2036,140 @@ let clients = JSON.parse(localStorage.getItem('flousFlowClients') || '[]');
 let partenaireDeals = JSON.parse(localStorage.getItem('flousFlowPartenaire') || '[]');
 let theme  = localStorage.getItem('flousFlowTheme') || localStorage.getItem('coquesTheme') || 'light';
 
+// ── FIRESTORE SYNC (single-user, auto background sync) ──────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBy5HhUNdsIY60Ix4jgDbOWXPOzXTElJ1Y",
+  authDomain: "megastore-86efa.firebaseapp.com",
+  projectId: "megastore-86efa",
+  storageBucket: "megastore-86efa.firebasestorage.app",
+  messagingSenderId: "609505827951",
+  appId: "1:609505827951:web:bc6935c20149f73b8b019a"
+};
+let fsDb = null, fsReady = false;
+try{
+  firebase.initializeApp(firebaseConfig);
+  fsDb = firebase.firestore();
+  fsReady = true;
+}catch(e){ console.warn('Firestore init échoué:', e); }
+
+const FS_DOC_REF = ()=> fsDb.collection('megastore').doc('data');
+let fsSyncTimer = null;
+let fsSyncState = 'idle'; // idle | syncing | synced | error | offline
+
+function fsSetStatus(state){
+  fsSyncState = state;
+  const el = document.getElementById('fsSyncIndicator');
+  if(!el) return;
+  const map = {
+    idle:    {icon:'☁️', title:'Firestore: en attente'},
+    syncing: {icon:'🔄', title:'Firestore: synchronisation...'},
+    synced:  {icon:'✅', title:'Firestore: synchronisé'},
+    error:   {icon:'⚠️', title:'Firestore: erreur de sync'},
+    offline: {icon:'📴', title:'Firestore: hors ligne'}
+  };
+  const m = map[state]||map.idle;
+  el.textContent = m.icon;
+  el.title = m.title;
+}
+
+function fsCollectPayload(){
+  return {
+    sales: sales||[],
+    fourns: fourns||[],
+    achats: achats||[],
+    stockItems: stockItems||[],
+    clients: clients||[],
+    partenaireDeals: partenaireDeals||[],
+    partagePayments: (typeof partagePayments!=='undefined'?partagePayments:[])||[],
+    theme: theme||'light',
+    updatedAt: Date.now()
+  };
+}
+
+function scheduleFirestoreSync(){
+  if(!fsReady) return;
+  // ne pas synchroniser tant que l'app est verrouillée par PIN
+  const pinOv = document.getElementById('pinOverlay');
+  if(pinOv && pinOv.style.display==='flex') return;
+  if(fsSyncTimer) clearTimeout(fsSyncTimer);
+  fsSetStatus('syncing');
+  fsSyncTimer = setTimeout(fsPushNow, 2500);
+}
+
+async function fsPushNow(){
+  if(!fsReady) return;
+  try{
+    fsSetStatus('syncing');
+    await FS_DOC_REF().set(fsCollectPayload(), {merge:false});
+    localStorage.setItem('flousFlowFsLastPush', Date.now());
+    fsSetStatus('synced');
+  }catch(e){
+    console.warn('Firestore push échoué:', e);
+    fsSetStatus('error');
+  }
+}
+
+async function fsPullNow(silent){
+  if(!fsReady) return null;
+  try{
+    fsSetStatus('syncing');
+    const snap = await FS_DOC_REF().get();
+    if(!snap.exists){ fsSetStatus('idle'); return null; }
+    const data = snap.data();
+    fsSetStatus('synced');
+    return data;
+  }catch(e){
+    console.warn('Firestore pull échoué:', e);
+    fsSetStatus('error');
+    return null;
+  }
+}
+
+function fsApplyRemoteData(data){
+  if(!data) return;
+  sales = data.sales||[];
+  fourns = data.fourns||[];
+  achats = data.achats||[];
+  stockItems = data.stockItems||[];
+  clients = data.clients||[];
+  partenaireDeals = data.partenaireDeals||[];
+  partagePayments = data.partagePayments||[];
+  theme = data.theme||theme;
+  localStorage.setItem('flousFlowSales',JSON.stringify(sales));
+  localStorage.setItem('flousFlowFourns',JSON.stringify(fourns));
+  localStorage.setItem('flousFlowAchats',JSON.stringify(achats));
+  localStorage.setItem('flousFlowStock',JSON.stringify(stockItems));
+  localStorage.setItem('flousFlowClients',JSON.stringify(clients));
+  localStorage.setItem('flousFlowPartenaire',JSON.stringify(partenaireDeals));
+  localStorage.setItem('flousFlowPartagePayments',JSON.stringify(partagePayments));
+  localStorage.setItem('flousFlowTheme',theme);
+}
+
+// Au démarrage: comparer timestamp local vs distant, prendre le plus récent
+async function fsInitialSync(){
+  if(!fsReady) return;
+  const localTs = parseInt(localStorage.getItem('flousFlowLastSave')||'0', 10);
+  const remote = await fsPullNow(true);
+  if(!remote){
+    // rien sur le cloud encore: pousser l'état local actuel
+    fsPushNow();
+    return;
+  }
+  const remoteTs = remote.updatedAt||0;
+  if(remoteTs > localTs){
+    fsApplyRemoteData(remote);
+    // Pas de reload automatique (cela redemanderait le PIN).
+    // Les données locales (localStorage) sont à jour ; un simple
+    // rafraîchissement manuel de la page suffira pour les voir affichées.
+    if(typeof showToast==='function') showToast('☁️ Nouvelles données disponibles (actualisez pour les voir)');
+  } else if(localTs > remoteTs){
+    fsPushNow();
+  }
+}
+
+window.addEventListener('online', ()=>{ if(fsSyncState==='offline') fsSetStatus('idle'); });
+window.addEventListener('offline', ()=> fsSetStatus('offline'));
+
 // Migration: si anciens fourns étaient des strings
 if(fourns.length && typeof fourns[0]==='string'){
   fourns=fourns.map(f=>({id:uid(),nom:f,cartes:[]}));
@@ -2106,6 +2243,7 @@ function save(){
   localStorage.setItem('flousFlowPartenaire',JSON.stringify(partenaireDeals));
   localStorage.setItem('flousFlowTheme',theme);
   localStorage.setItem('flousFlowLastSave', Date.now());
+  scheduleFirestoreSync();
 }
 
 function calc(qty,prix,cout,envoi){
@@ -2114,7 +2252,7 @@ function calc(qty,prix,cout,envoi){
 }
 // Bénéfice net = benefBrut - part du fournisseur (partage) - frais retour
 // ── PARTENAIRE ─────────────────────────────────────────────────────────────
-function savePartenaire(){ localStorage.setItem('flousFlowPartenaire',JSON.stringify(partenaireDeals)); }
+function savePartenaire(){ localStorage.setItem('flousFlowPartenaire',JSON.stringify(partenaireDeals)); localStorage.setItem('flousFlowLastSave', Date.now()); scheduleFirestoreSync(); }
 
 function updatePartenairePreview(){
   const dem=parseFloat(document.getElementById('pDemande').value)||0;
@@ -2397,7 +2535,7 @@ applyStoredThemeColors();
 applyStoredFontScale();
 
 // ── STOCK ─────────────────────────────────────────────────────────────────
-function saveStock(){ localStorage.setItem('flousFlowStock', JSON.stringify(stockItems)); }
+function saveStock(){ localStorage.setItem('flousFlowStock', JSON.stringify(stockItems)); localStorage.setItem('flousFlowLastSave', Date.now()); scheduleFirestoreSync(); }
 
 function addStock(){
   const model=document.getElementById('stockModel').value.trim();
@@ -2602,7 +2740,7 @@ function saveAddStock(){
 }
 
 // ── CLIENTS CRM ────────────────────────────────────────────────────────────
-function saveClients(){ localStorage.setItem('flousFlowClients', JSON.stringify(clients)); }
+function saveClients(){ localStorage.setItem('flousFlowClients', JSON.stringify(clients)); localStorage.setItem('flousFlowLastSave', Date.now()); scheduleFirestoreSync(); }
 
 function addClient(){
   const nom=document.getElementById('cNom').value.trim();
@@ -2733,7 +2871,7 @@ function renderClients(){
 }
 
 // ── ACHATS ────────────────────────────────────────────────────────────────
-function saveAchats(){ localStorage.setItem('flousFlowAchats',JSON.stringify(achats)); }
+function saveAchats(){ localStorage.setItem('flousFlowAchats',JSON.stringify(achats)); localStorage.setItem('flousFlowLastSave', Date.now()); scheduleFirestoreSync(); }
 
 function addAchat(){
   const date=document.getElementById('aDate').value;
@@ -5000,12 +5138,16 @@ let _pinBuffer='';
 let _pinMode='unlock'; // 'unlock' | 'setup1' | 'setup2'
 let _pinSetupFirst='';
 
-function pinGetStored(){ return localStorage.getItem('ff_pin')||''; }
-function pinIsEnabled(){ return !!pinGetStored(); }
+const FS_HARDCODED_PIN = '1972'; // PIN fixe — protège l'app sur n'importe quel appareil
+function pinGetStored(){ return localStorage.getItem('ff_pin') || FS_HARDCODED_PIN; }
+function pinIsEnabled(){ return true; } // toujours verrouillé, même sur un nouvel appareil
 
 function pinInit(){
   if(pinIsEnabled()){
     showPinOverlay('unlock');
+  } else {
+    // pas de PIN configuré: synchroniser directement
+    if(typeof fsInitialSync==='function') setTimeout(fsInitialSync, 300);
   }
 }
 
@@ -5052,7 +5194,10 @@ function pinKey(k){
   if(_pinBuffer.length===4){
     setTimeout(()=>{
       if(_pinMode==='unlock'){
-        if(_pinBuffer===pinGetStored()){ hidePinOverlay(); }
+        if(_pinBuffer===pinGetStored()){
+          hidePinOverlay();
+          if(typeof fsInitialSync==='function') setTimeout(fsInitialSync, 300);
+        }
         else { pinError('Code incorrect ❌'); }
       } else if(_pinMode==='setup1'){
         _pinSetupFirst=_pinBuffer;
@@ -5090,9 +5235,8 @@ function renderPinSettings(){
   const btnsEl=document.getElementById('pinActionBtns');
   if(!statusEl||!btnsEl) return;
   if(pinIsEnabled()){
-    statusEl.innerHTML='<span style="color:var(--green);font-weight:700">🔒 PIN activé</span> — L\'application se verrouille à l\'ouverture.';
-    btnsEl.innerHTML=`<button onclick="pinSetup()" style="flex:1;padding:12px;background:linear-gradient(135deg,rgba(255,122,0,.15),rgba(255,122,0,.05));border:1px solid rgba(255,122,0,.4);color:var(--accent);border-radius:12px;font-size:14px;font-family:'Outfit',sans-serif;cursor:pointer;font-weight:600">🔄 Changer le PIN</button>
-    <button onclick="pinDisable()" style="flex:1;padding:12px;background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);border-radius:12px;font-size:14px;font-family:'Outfit',sans-serif;cursor:pointer;font-weight:600">🔓 Désactiver</button>`;
+    statusEl.innerHTML='<span style="color:var(--green);font-weight:700">🔒 PIN activé</span> — L\'application se verrouille à l\'ouverture, sur tous les appareils.';
+    btnsEl.innerHTML=`<button onclick="pinSetup()" style="flex:1;padding:12px;background:linear-gradient(135deg,rgba(255,122,0,.15),rgba(255,122,0,.05));border:1px solid rgba(255,122,0,.4);color:var(--accent);border-radius:12px;font-size:14px;font-family:'Outfit',sans-serif;cursor:pointer;font-weight:600">🔄 Changer le PIN</button>`;
     btnsEl.style.display='flex'; btnsEl.style.gap='10px'; btnsEl.style.flexWrap='wrap';
   } else {
     statusEl.innerHTML='<span style="color:var(--muted)">🔓 PIN désactivé</span> — Accès libre à l\'application.';
@@ -5668,6 +5812,8 @@ function updatePartagePreview(){
 let partagePayments=JSON.parse(localStorage.getItem('flousFlowPartagePayments')||'[]');
 function savePartagePayments(){
   localStorage.setItem('flousFlowPartagePayments',JSON.stringify(partagePayments));
+  localStorage.setItem('flousFlowLastSave', Date.now());
+  scheduleFirestoreSync();
 }
 
 // ── KANBAN SUIVI VENTES ──────────────────────────────────────────────────────
@@ -7460,6 +7606,7 @@ function closeWallMode(){
   // sécurité: ne jamais bloquer l'app plus de 4s même en cas de souci réseau
   setTimeout(hideSplash,6000);
 })();
+// ── FIRESTORE: synchronisation initiale — voir pinInit()/pinKey() pour le déclenchement conditionné par le PIN ──
 
 </script>
 </body>
