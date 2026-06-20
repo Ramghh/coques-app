@@ -1643,13 +1643,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     </div>
     <div style="margin-top:10px;font-size:12px;color:var(--muted);line-height:1.7">
       <strong style="color:var(--text)">🔄 Remplacer</strong> — efface les données actuelles et importe tout.<br>
-      <strong style="color:var(--accent)">🔀 Fusionner</strong> — garde tes données et ajoute les nouvelles (ignore les doublons par ID).<br>
       <span style="color:var(--yellow)">💡 Depuis Drive: télécharge d'abord le fichier sur ton appareil, puis importe-le ici.</span>
     </div>
-  </div>
-  <div class="backup-info">
-    <strong>💡 Conseil :</strong> Exporte régulièrement et enregistre dans <strong>Google Drive</strong>.<br>
-    Pour changer de téléphone → Importer → tout revient ✅
   </div>
   <div class="backup-card" style="margin-top:10px">
     <div class="backup-title">🔐 Compte</div>
@@ -2134,6 +2129,31 @@ function loginSubmit(){
     }
   }).finally(function(){
     if(btnEl){ btnEl.disabled=false; btnEl.textContent='Se connecter'; }
+  });
+}
+
+function fsResetPassword(){
+  const emailEl = document.getElementById('loginEmail');
+  const errEl = document.getElementById('loginError');
+  if(!emailEl) return;
+  const email = emailEl.value.trim();
+  if(!email){
+    if(errEl){ errEl.style.color='var(--accent)'; errEl.textContent='Entrez votre email ci-dessus, puis cliquez à nouveau.'; errEl.style.display='block'; }
+    return;
+  }
+  if(!fsAuth){ return; }
+  fsAuth.sendPasswordResetEmail(email).then(function(){
+    if(errEl){ errEl.style.color='var(--green)'; errEl.textContent='📧 Email envoyé ! Vérifiez votre boîte de réception.'; errEl.style.display='block'; }
+  }).catch(function(e){
+    if(errEl){
+      let msg = "Impossible d'envoyer l'email.";
+      if(e && e.code==='auth/user-not-found') msg='Aucun compte avec cet email.';
+      if(e && e.code==='auth/invalid-email') msg='Email invalide.';
+      if(e && e.code==='auth/network-request-failed') msg='Erreur réseau. Vérifiez votre connexion.';
+      errEl.style.color='var(--red)';
+      errEl.textContent = msg;
+      errEl.style.display='block';
+    }
   });
 }
 
@@ -7420,6 +7440,9 @@ window.addEventListener('focus', ()=>{
     <input type="email" id="loginEmail" class="login-input" placeholder="Email" autocomplete="username" inputmode="email">
     <input type="password" id="loginPassword" class="login-input" placeholder="Mot de passe" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginSubmit()">
     <button class="login-submit-btn" id="loginSubmitBtn" onclick="loginSubmit()">Se connecter</button>
+    <div style="text-align:center;margin-top:14px">
+      <a href="#" onclick="fsResetPassword();return false" style="font-size:13px;color:var(--muted);text-decoration:underline">Mot de passe oublié ?</a>
+    </div>
     <div class="login-error-msg" id="loginError"></div>
   </div>
 </div>
