@@ -2221,23 +2221,18 @@ async function fsPushNow(){
   }catch(e){
     console.warn('Firestore push échoué:', e);
     fsSetStatus('error');
+    if(typeof showToast==='function') showToast('⚠️ Pas de connexion: vos données sont enregistrées localement, mais pas encore sauvegardées en ligne.', true);
   }
 }
 
 async function fsPullNow(silent){
-  if(!fsReady) return null;
-  try{
-    fsSetStatus('syncing');
-    const snap = await FS_DOC_REF().get();
-    if(!snap.exists){ fsSetStatus('idle'); return null; }
-    const data = snap.data();
-    fsSetStatus('synced');
-    return data;
-  }catch(e){
-    console.warn('Firestore pull échoué:', e);
-    fsSetStatus('error');
-    return null;
-  }
+  if(!fsReady) throw new Error('Firestore non initialisé');
+  fsSetStatus('syncing');
+  const snap = await FS_DOC_REF().get();
+  if(!snap.exists){ fsSetStatus('idle'); return null; } // vraiment vide, pas une erreur
+  const data = snap.data();
+  fsSetStatus('synced');
+  return data;
 }
 
 function fsApplyRemoteData(data){
@@ -2269,9 +2264,19 @@ function fsApplyRemoteData(data){
 async function fsInitialSync(){
   if(!fsReady) return;
   const localTs = parseInt(localStorage.getItem('flousFlowLastSave')||'0', 10);
-  const remote = await fsPullNow(true);
-  if(!remote){
-    // Rien sur le cloud: c'est la toute première synchronisation, on initialise.
+  let remote;
+  try{
+    remote = await fsPullNow(true);
+  }catch(e){
+    // Échec réseau/connexion: on ne touche à RIEN. Ni pull, ni push.
+    // Mieux vaut rester sur les données locales que risquer de les écraser
+    // avec un push basé sur un état incertain.
+    console.warn('Firestore pull échoué (réseau?), synchronisation reportée:', e);
+    fsSetStatus('error');
+    return;
+  }
+  if(remote===null){
+    // Le document n'existe vraiment pas encore sur Firestore: première sync.
     fsPushNow();
     return;
   }
