@@ -479,22 +479,16 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .cr-bar-bg{background:var(--surface2);border-radius:6px;height:8px;overflow:hidden;margin-top:4px}
 .cr-bar-fill{height:100%;border-radius:6px;transition:width .6s ease}
 /* PIN LOCK */
-#pinOverlay{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+#loginOverlay{position:fixed;inset:0;z-index:9999;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.login-box{width:100%;max-width:320px}
+.login-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:15px;padding:14px 16px;border-radius:12px;font-family:'Outfit',sans-serif;margin-bottom:12px;box-sizing:border-box}
+.login-input:focus{outline:none;border-color:var(--accent)}
+.login-submit-btn{width:100%;padding:14px;background:var(--accent);border:none;color:#fff;border-radius:12px;font-size:15px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;margin-top:4px}
+.login-submit-btn:disabled{opacity:.6}
+.login-error-msg{font-size:13px;color:var(--red);margin-top:14px;min-height:18px;font-weight:600;text-align:center;display:none}
 .pin-logo{font-family:'Cabinet Grotesk',sans-serif;font-size:32px;font-weight:800;color:var(--text);margin-bottom:6px}
 .pin-logo span{color:#fbbf24}
 .pin-subtitle{font-size:14px;color:var(--muted);margin-bottom:32px}
-.pin-dots{display:flex;gap:16px;margin-bottom:32px}
-.pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--accent);background:transparent;transition:background .15s}
-.pin-dot.filled{background:var(--accent)}
-.pin-dot.error{border-color:var(--red);background:var(--red);animation:pinShake .3s ease}
-@keyframes pinShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:240px}
-.pin-key{height:70px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:24px;font-weight:700;font-family:'Cabinet Grotesk',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;-webkit-tap-highlight-color:transparent}
-.pin-key:active{transform:scale(.92);background:var(--accent);color:#fff;border-color:var(--accent)}
-.pin-error-msg{font-size:13px;color:var(--red);margin-top:16px;min-height:18px;font-weight:600;text-align:center}
-.pin-setup-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;text-align:center}
-/* PIN settings button */
-.pin-settings-btn{width:100%;margin-top:10px;padding:13px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:12px;font-size:15px;cursor:pointer;font-family:'Outfit',sans-serif;display:flex;align-items:center;gap:8px;justify-content:center}
 
 /* GIST SYNC MODAL */
 .gist-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
@@ -774,6 +768,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 <script src="https://unpkg.com/@zxing/library@0.19.3/umd/index.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -1657,10 +1652,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     Pour changer de téléphone → Importer → tout revient ✅
   </div>
   <div class="backup-card" style="margin-top:10px">
-    <div class="backup-title">🔒 Verrouillage PIN</div>
-    <div class="backup-desc">Protège l'accès à MegaStore avec un code PIN à 4 chiffres.</div>
-    <div id="pinStatusInfo" style="margin:10px 0;font-size:13px;color:var(--muted)"></div>
-    <div class="backup-btns" id="pinActionBtns"></div>
+    <div class="backup-title">🔐 Compte</div>
+    <div class="backup-desc">Connexion sécurisée à MegaStore.</div>
+    <div id="authStatusInfo" style="margin:10px 0;font-size:13px;color:var(--muted)"></div>
+    <div class="backup-btns" id="authActionBtns"></div>
   </div>
   <div class="backup-card" style="margin-top:10px">
     <div class="backup-title">🔍 Intégrité des données</div>
@@ -1982,7 +1977,7 @@ function showTab(id,btn,pushHistory=true){
   if(id==='fournisseurs') renderFournTab();
   if(id==='partage') renderPartageTab();
   if(id==='partenaire'){ document.getElementById('pDate').value=new Date().toISOString().split('T')[0]; renderPartenaireList(); }
-  if(id==='backup') { loadDriveUrl(); renderPinSettings(); }
+  if(id==='backup') { loadDriveUrl(); renderAuthSettings(); }
 
   // Tabs with canvas — wait for layout then draw
   if(['rapport','annuel','calendrier','dashboard','marques','categories','cartes-rapport'].includes(id)){
@@ -2045,10 +2040,11 @@ const firebaseConfig = {
   messagingSenderId: "609505827951",
   appId: "1:609505827951:web:bc6935c20149f73b8b019a"
 };
-let fsDb = null, fsReady = false;
+let fsDb = null, fsReady = false, fsAuth = null;
 try{
   firebase.initializeApp(firebaseConfig);
   fsDb = firebase.firestore();
+  fsAuth = firebase.auth();
   fsReady = true;
 }catch(e){ console.warn('Firestore init échoué:', e); }
 
@@ -2072,6 +2068,75 @@ function fsSetStatus(state){
   el.title = m.title;
 }
 
+// ── FIREBASE AUTH (email/password, utilisateur unique) ──────────────────────
+function fsLogin(email, password){
+  if(!fsAuth) return Promise.reject(new Error('Auth non initialisé'));
+  return fsAuth.signInWithEmailAndPassword(email, password);
+}
+
+function fsLogout(){
+  if(!fsAuth) return;
+  fsAuth.signOut();
+}
+
+function fsIsLoggedIn(){
+  return !!(fsAuth && fsAuth.currentUser);
+}
+
+// Affiche l'écran de login si pas connecté, sinon lance la sync
+function fsAuthInit(){
+  if(!fsAuth){
+    // Firebase indisponible: laisser l'app fonctionner en local seul
+    return;
+  }
+  fsAuth.onAuthStateChanged(function(user){
+    if(user){
+      hideLoginOverlay();
+      if(typeof fsInitialSync==='function') setTimeout(fsInitialSync, 300);
+    } else {
+      showLoginOverlay();
+    }
+  });
+}
+
+function showLoginOverlay(){
+  const ov = document.getElementById('loginOverlay');
+  if(ov) ov.style.display='flex';
+}
+function hideLoginOverlay(){
+  const ov = document.getElementById('loginOverlay');
+  if(ov) ov.style.display='none';
+}
+
+function loginSubmit(){
+  const emailEl = document.getElementById('loginEmail');
+  const passEl = document.getElementById('loginPassword');
+  const errEl = document.getElementById('loginError');
+  const btnEl = document.getElementById('loginSubmitBtn');
+  if(!emailEl||!passEl) return;
+  const email = emailEl.value.trim();
+  const password = passEl.value;
+  if(!email || !password){
+    if(errEl){ errEl.textContent='Veuillez remplir les deux champs.'; errEl.style.display='block'; }
+    return;
+  }
+  if(errEl) errEl.style.display='none';
+  if(btnEl){ btnEl.disabled=true; btnEl.textContent='Connexion...'; }
+  fsLogin(email, password).then(function(){
+    if(passEl) passEl.value='';
+  }).catch(function(e){
+    if(errEl){
+      let msg = 'Email ou mot de passe incorrect.';
+      if(e && e.code==='auth/too-many-requests') msg='Trop de tentatives. Réessayez plus tard.';
+      if(e && e.code==='auth/network-request-failed') msg='Erreur réseau. Vérifiez votre connexion.';
+      errEl.textContent = msg;
+      errEl.style.display='block';
+    }
+  }).finally(function(){
+    if(btnEl){ btnEl.disabled=false; btnEl.textContent='Se connecter'; }
+  });
+}
+
 function fsCollectPayload(){
   return {
     sales: sales||[],
@@ -2088,9 +2153,8 @@ function fsCollectPayload(){
 
 function scheduleFirestoreSync(){
   if(!fsReady) return;
-  // ne pas synchroniser tant que l'app est verrouillée par PIN
-  const pinOv = document.getElementById('pinOverlay');
-  if(pinOv && pinOv.style.display==='flex') return;
+  // ne pas synchroniser tant que l'utilisateur n'est pas authentifié
+  if(!fsIsLoggedIn()) return;
   if(fsSyncTimer) clearTimeout(fsSyncTimer);
   fsSetStatus('syncing');
   fsSyncTimer = setTimeout(fsPushNow, 2500);
@@ -5136,113 +5200,19 @@ function fixAllIssues(){
   showToast('✅ Toutes les erreurs corrigées !');
   runIntegrityCheck();
 }
-let _pinBuffer='';
-let _pinMode='unlock'; // 'unlock' | 'setup1' | 'setup2'
-let _pinSetupFirst='';
 
-const FS_HARDCODED_PIN = '1972'; // PIN fixe — protège l'app sur n'importe quel appareil
-function pinGetStored(){ return localStorage.getItem('ff_pin') || FS_HARDCODED_PIN; }
-function pinIsEnabled(){ return true; } // toujours verrouillé, même sur un nouvel appareil
-
-function pinInit(){
-  if(pinIsEnabled()){
-    showPinOverlay('unlock');
-  } else {
-    // pas de PIN configuré: synchroniser directement
-    if(typeof fsInitialSync==='function') setTimeout(fsInitialSync, 300);
-  }
-}
-
-function showPinOverlay(mode, subtitle){
-  _pinMode=mode; _pinBuffer='';
-  const overlay=document.getElementById('pinOverlay');
-  if(!overlay) return;
-  overlay.style.display='flex';
-  document.getElementById('pinErrorMsg').textContent='';
-  const sub=document.getElementById('pinSubtitle');
-  if(sub) sub.textContent = subtitle || (mode==='unlock'?'Entrez votre code PIN':mode==='setup1'?'Choisissez un code PIN à 4 chiffres':'Confirmez le code PIN');
-  renderPinDots();
-}
-
-function hidePinOverlay(){
-  const overlay=document.getElementById('pinOverlay');
-  if(overlay) overlay.style.display='none';
-}
-
-function pinCancel(){
-  if(_pinMode==='unlock') return; // cannot cancel unlock
-  hidePinOverlay();
-  renderPinSettings();
-}
-
-function renderPinDots(){
-  for(let i=0;i<4;i++){
-    const d=document.getElementById('pd'+i);
-    if(d){ d.classList.remove('filled','error'); if(i<_pinBuffer.length) d.classList.add('filled'); }
-  }
-}
-
-function pinError(msg){
-  for(let i=0;i<4;i++){ const d=document.getElementById('pd'+i); if(d){d.classList.add('error');} }
-  document.getElementById('pinErrorMsg').textContent=msg;
-  setTimeout(()=>{ _pinBuffer=''; renderPinDots(); for(let i=0;i<4;i++){const d=document.getElementById('pd'+i);if(d)d.classList.remove('error');} document.getElementById('pinErrorMsg').textContent=''; },700);
-}
-
-function pinKey(k){
-  if(k==='del'){ if(_pinBuffer.length>0){_pinBuffer=_pinBuffer.slice(0,-1); renderPinDots();} return; }
-  if(_pinBuffer.length>=4) return;
-  _pinBuffer+=k;
-  renderPinDots();
-  if(_pinBuffer.length===4){
-    setTimeout(()=>{
-      if(_pinMode==='unlock'){
-        if(_pinBuffer===pinGetStored()){
-          hidePinOverlay();
-          if(typeof fsInitialSync==='function') setTimeout(fsInitialSync, 300);
-        }
-        else { pinError('Code incorrect ❌'); }
-      } else if(_pinMode==='setup1'){
-        _pinSetupFirst=_pinBuffer;
-        _pinBuffer='';
-        showPinOverlay('setup2');
-      } else if(_pinMode==='setup2'){
-        if(_pinBuffer===_pinSetupFirst){
-          localStorage.setItem('ff_pin',_pinBuffer);
-          hidePinOverlay();
-          showToast('🔒 Code PIN activé !');
-          renderPinSettings();
-        } else {
-          _pinSetupFirst='';
-          pinError('Codes différents, recommencez');
-          setTimeout(()=>showPinOverlay('setup1'),800);
-        }
-      }
-    },120);
-  }
-}
-
-function pinSetup(){
-  showPinOverlay('setup1');
-}
-
-function pinDisable(){
-  if(!confirm('Désactiver le code PIN ?')) return;
-  localStorage.removeItem('ff_pin');
-  showToast('🔓 PIN désactivé');
-  renderPinSettings();
-}
-
-function renderPinSettings(){
-  const statusEl=document.getElementById('pinStatusInfo');
-  const btnsEl=document.getElementById('pinActionBtns');
+function renderAuthSettings(){
+  const statusEl=document.getElementById('authStatusInfo');
+  const btnsEl=document.getElementById('authActionBtns');
   if(!statusEl||!btnsEl) return;
-  if(pinIsEnabled()){
-    statusEl.innerHTML='<span style="color:var(--green);font-weight:700">🔒 PIN activé</span> — L\'application se verrouille à l\'ouverture, sur tous les appareils.';
-    btnsEl.innerHTML=`<button onclick="pinSetup()" style="flex:1;padding:12px;background:linear-gradient(135deg,rgba(255,122,0,.15),rgba(255,122,0,.05));border:1px solid rgba(255,122,0,.4);color:var(--accent);border-radius:12px;font-size:14px;font-family:'Outfit',sans-serif;cursor:pointer;font-weight:600">🔄 Changer le PIN</button>`;
+  const user = fsAuth && fsAuth.currentUser;
+  if(user){
+    statusEl.innerHTML=`<span style="color:var(--green);font-weight:700">🔒 Connecté</span> — ${user.email}`;
+    btnsEl.innerHTML=`<button onclick="fsLogout()" style="flex:1;padding:12px;background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);border-radius:12px;font-size:14px;font-family:'Outfit',sans-serif;cursor:pointer;font-weight:600">🚪 Se déconnecter</button>`;
     btnsEl.style.display='flex'; btnsEl.style.gap='10px'; btnsEl.style.flexWrap='wrap';
   } else {
-    statusEl.innerHTML='<span style="color:var(--muted)">🔓 PIN désactivé</span> — Accès libre à l\'application.';
-    btnsEl.innerHTML=`<button onclick="pinSetup()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:12px;font-size:16px;font-family:'Cabinet Grotesk',sans-serif;font-weight:700;cursor:pointer">🔒 Activer le code PIN</button>`;
+    statusEl.innerHTML='<span style="color:var(--muted)">🔓 Non connecté</span>';
+    btnsEl.innerHTML='';
   }
 }
 
@@ -7172,7 +7142,7 @@ document.addEventListener('DOMContentLoaded',function(){
 document.addEventListener('DOMContentLoaded',function(){
   const gm=document.getElementById('gistModal');
   if(gm) gm.addEventListener('click',function(e){if(e.target===this) closeGistModal();});
-  pinInit();
+  fsAuthInit();
   initSyncStatusDot();
 });
 
@@ -7443,30 +7413,15 @@ window.addEventListener('focus', ()=>{
 </div>
 
 <!-- PIN LOCK OVERLAY -->
-<div id="pinOverlay" style="display:none">
-  <div class="pin-logo">Mega<span>Store</span></div>
-  <div class="pin-subtitle" id="pinSubtitle">Entrez votre code PIN</div>
-  <div class="pin-dots" id="pinDots">
-    <div class="pin-dot" id="pd0"></div>
-    <div class="pin-dot" id="pd1"></div>
-    <div class="pin-dot" id="pd2"></div>
-    <div class="pin-dot" id="pd3"></div>
+<div id="loginOverlay" style="display:none">
+  <div class="login-box">
+    <div class="pin-logo" style="text-align:center">Mega<span>Store</span></div>
+    <div class="pin-subtitle" style="text-align:center">Connectez-vous pour continuer</div>
+    <input type="email" id="loginEmail" class="login-input" placeholder="Email" autocomplete="username" inputmode="email">
+    <input type="password" id="loginPassword" class="login-input" placeholder="Mot de passe" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginSubmit()">
+    <button class="login-submit-btn" id="loginSubmitBtn" onclick="loginSubmit()">Se connecter</button>
+    <div class="login-error-msg" id="loginError"></div>
   </div>
-  <div class="pin-pad">
-    <button class="pin-key" onclick="pinKey('1')">1</button>
-    <button class="pin-key" onclick="pinKey('2')">2</button>
-    <button class="pin-key" onclick="pinKey('3')">3</button>
-    <button class="pin-key" onclick="pinKey('4')">4</button>
-    <button class="pin-key" onclick="pinKey('5')">5</button>
-    <button class="pin-key" onclick="pinKey('6')">6</button>
-    <button class="pin-key" onclick="pinKey('7')">7</button>
-    <button class="pin-key" onclick="pinKey('8')">8</button>
-    <button class="pin-key" onclick="pinKey('9')">9</button>
-    <button class="pin-key" style="font-size:20px" onclick="pinKey('del')">⌫</button>
-    <button class="pin-key" onclick="pinKey('0')">0</button>
-    <button class="pin-key" style="font-size:18px;color:var(--muted)" onclick="pinCancel()">✕</button>
-  </div>
-  <div class="pin-error-msg" id="pinErrorMsg"></div>
 </div>
 
 <!-- WALL / KPI FULLSCREEN MODE -->
@@ -7608,7 +7563,7 @@ function closeWallMode(){
   // sécurité: ne jamais bloquer l'app plus de 4s même en cas de souci réseau
   setTimeout(hideSplash,6000);
 })();
-// ── FIRESTORE: synchronisation initiale — voir pinInit()/pinKey() pour le déclenchement conditionné par le PIN ──
+// ── FIRESTORE: synchronisation initiale — voir fsAuthInit() pour le déclenchement conditionné par la connexion ──
 
 </script>
 </body>
