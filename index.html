@@ -848,6 +848,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <button class="drawer-btn" id="dbtn-ventes" onclick="drawerNav('ventes')"><span class="d-icon">📋</span><span class="d-label">Ventes</span></button>
 
     <button class="drawer-btn" id="dbtn-clients" onclick="drawerNav('clients')"><span class="d-icon">👤</span><span class="d-label">Clients</span></button>
+    <button class="drawer-btn" id="dbtn-commandes" onclick="drawerNav('commandes')"><span class="d-icon">🛒</span><span class="d-label">Commandes</span></button>
     <button class="drawer-btn" id="dbtn-stock" onclick="drawerNav('stock')"><span class="d-icon">📦</span><span class="d-label">Stock</span></button>
     <div class="drawer-divider"></div>
     <div class="drawer-section-label">📊 Analyse</div>
@@ -1046,6 +1047,33 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   <!-- Liste clients -->
   <div id="clientsList"></div>
 </div>
+
+<!-- COMMANDES -->
+<div class="section" id="tab-commandes">
+  <!-- Form ajout commande -->
+  <div class="form-card">
+    <div class="form-title">🛒 Nouvelle Commande</div>
+    <div class="form-grid">
+      <div><label>Nom du client</label><input type="text" id="ocNom" placeholder="Ahmed Ben Ali"></div>
+      <div><label>Téléphone</label><input type="tel" id="ocTel" placeholder="+216 XX XXX XXX"></div>
+      <div><label>Ville</label><div class="sac-wrap"><input type="text" id="ocVille" placeholder="Tunis" autocomplete="off" style="width:100%"><div class="sac-dropdown" id="ocVille-dd"></div></div><datalist id="ocVilleList"></datalist></div>
+      <div><label>Modèle demandé</label><input type="text" id="ocModel" placeholder="iPhone 15 Pro Max"></div>
+      <div><label>Prix de vente (DT)</label><input type="number" id="ocPrix" placeholder="450.000" step="0.001"></div>
+      <div class="form-full"><label>Notes (optionnel)</label><input type="text" id="ocNotes" placeholder="Couleur, capacité, préférences..."></div>
+    </div>
+    <button class="btn-add" onclick="addCommande()" style="background:linear-gradient(135deg,#ff7a00,#ff9a3c)">🛒 Enregistrer la commande</button>
+  </div>
+
+  <!-- Recherche commandes -->
+  <div class="search-wrap" style="margin-bottom:12px">
+    <span class="search-icon">🔍</span>
+    <input type="text" class="search-input" id="commandeSearch" placeholder="Rechercher nom, téléphone, modèle..." oninput="renderCommandes()">
+  </div>
+
+  <!-- Liste commandes -->
+  <div id="commandesList"></div>
+</div>
+
 
 <!-- STOCK -->
 <div class="section" id="tab-stock">
@@ -1840,7 +1868,7 @@ const CAT_META={
 function catLabel(key){ return key==='__none__' ? 'Non classé' : key; }
 
 const DRAWER_LABELS = {
-  ajouter:'➕ Ajouter', ventes:'📋 Ventes', clients:'👤 Clients', stock:'📦 Stock',
+  ajouter:'➕ Ajouter', ventes:'📋 Ventes', clients:'👤 Clients', commandes:'🛒 Commandes', stock:'📦 Stock',
   top:'🏆 Top', marques:'🏷️ Marques', categories:'🗂️ Catégories', fournisseurs:'🧑‍💼 Fournisseurs', partage:'🤝 Partage', partenaire:'🤲 Partenaire',
   rapport:'📊 Rapport', annuel:'📅 Annuel', calendrier:'🗓️ Calendrier', 'cartes-rapport':'💳 Rentabilité Cartes', dashboard:'🗺️ Dashboard', backup:'💾 Backup'
 };
@@ -1966,6 +1994,7 @@ function showTab(id,btn,pushHistory=true){
   if(pushHistory){ if(typeof _tabHistory!=='undefined') _tabHistory.push(id); }
 
   if(id==='clients') renderClients();
+  if(id==='commandes') renderCommandes();
   if(id==='ventes') { refreshFilterSelects(); renderSales(); }
   if(id==='achats') { refreshAchatFournSelect(); renderAchats(); }
   if(id==='top') setTimeout(()=>renderTop(), 50);
@@ -2023,6 +2052,7 @@ let fourns = loadData('flousFlowFourns', 'coquesFourns');
 let achats = JSON.parse(localStorage.getItem('flousFlowAchats') || '[]');
 let stockItems = JSON.parse(localStorage.getItem('flousFlowStock') || '[]');
 let clients = JSON.parse(localStorage.getItem('flousFlowClients') || '[]');
+let commandes = JSON.parse(localStorage.getItem('flousFlowCommandes') || '[]');
 let partenaireDeals = JSON.parse(localStorage.getItem('flousFlowPartenaire') || '[]');
 let theme  = localStorage.getItem('flousFlowTheme') || localStorage.getItem('coquesTheme') || 'light';
 
@@ -2164,6 +2194,7 @@ function fsCollectPayload(){
     achats: achats||[],
     stockItems: stockItems||[],
     clients: clients||[],
+    commandes: commandes||[],
     partenaireDeals: partenaireDeals||[],
     partagePayments: (typeof partagePayments!=='undefined'?partagePayments:[])||[],
     theme: theme||'light',
@@ -2216,6 +2247,7 @@ function fsApplyRemoteData(data){
   achats = data.achats||[];
   stockItems = data.stockItems||[];
   clients = data.clients||[];
+  commandes = data.commandes||[];
   partenaireDeals = data.partenaireDeals||[];
   partagePayments = data.partagePayments||[];
   theme = data.theme||theme;
@@ -2224,6 +2256,7 @@ function fsApplyRemoteData(data){
   localStorage.setItem('flousFlowAchats',JSON.stringify(achats));
   localStorage.setItem('flousFlowStock',JSON.stringify(stockItems));
   localStorage.setItem('flousFlowClients',JSON.stringify(clients));
+  localStorage.setItem('flousFlowCommandes',JSON.stringify(commandes));
   localStorage.setItem('flousFlowPartenaire',JSON.stringify(partenaireDeals));
   localStorage.setItem('flousFlowPartagePayments',JSON.stringify(partagePayments));
   localStorage.setItem('flousFlowTheme',theme);
@@ -2852,6 +2885,74 @@ function deleteClient(id){
   showToast('✅ Client supprimé!');
 }
 
+// ── COMMANDES (notes libres, sans lien avec clients/ventes) ────────────────
+function saveCommandes(){ localStorage.setItem('flousFlowCommandes', JSON.stringify(commandes)); localStorage.setItem('flousFlowLastSave', Date.now()); scheduleFirestoreSync(); }
+
+function addCommande(){
+  const nom=document.getElementById('ocNom').value.trim();
+  const tel=document.getElementById('ocTel').value.trim();
+  const ville=document.getElementById('ocVille').value.trim();
+  const model=document.getElementById('ocModel').value.trim();
+  const prixRaw=document.getElementById('ocPrix').value;
+  const prix=parseFloat(prixRaw)||0;
+  const notes=document.getElementById('ocNotes').value.trim();
+  if(!nom){showToast('⚠️ Nom obligatoire!',true);return;}
+  if(!model){showToast('⚠️ Modèle obligatoire!',true);return;}
+  commandes.push({id:uid(),nom,tel,ville,model,prix,notes,createdAt:new Date().toISOString().split('T')[0]});
+  saveCommandes();
+  ['ocNom','ocTel','ocVille','ocModel','ocPrix','ocNotes'].forEach(i=>document.getElementById(i).value='');
+  renderCommandes();
+  showToast(`✅ Commande pour ${nom} ajoutée!`);
+}
+
+function deleteCommande(id){
+  if(!confirm('Supprimer cette commande?')) return;
+  commandes=commandes.filter(c=>c.id!==id);
+  saveCommandes(); renderCommandes();
+  showToast('✅ Commande supprimée!');
+}
+
+function renderCommandes(){
+  const el=document.getElementById('commandesList');
+  if(!el) return;
+  const q=(document.getElementById('commandeSearch')?.value||'').toLowerCase().trim();
+
+  const filtered=commandes.filter(c=>
+    !q || (c.nom||'').toLowerCase().includes(q) ||
+    (c.tel||'').includes(q) ||
+    (c.ville||'').toLowerCase().includes(q) ||
+    (c.model||'').toLowerCase().includes(q)
+  );
+
+  if(!filtered.length){
+    el.innerHTML='<div class="empty"><span class="empty-icon">🛒</span><div class="empty-text">Aucune commande enregistrée</div><div class="empty-sub">Ajoute la demande d\'un client ci-dessus</div></div>';
+    return;
+  }
+
+  const sorted=[...filtered].sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+
+  el.innerHTML=sorted.map(c=>{
+    const telLink=c.tel?`<a href="tel:${c.tel}" style="color:var(--accent);text-decoration:none">${c.tel}</a>`:'';
+    const waLink=c.tel?`<a href="https://wa.me/${c.tel.replace(/[^0-9]/g,'')}" target="_blank" style="color:var(--green);text-decoration:none;margin-left:8px">💬</a>`:'';
+    return `<div class="sale-card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:15px;color:var(--text)">👤 ${c.nom}</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:2px">🛒 ${c.model}</div>
+          ${c.ville?`<div style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${c.ville}</div>`:''}
+          ${c.tel?`<div style="font-size:12px;margin-top:2px">📞 ${telLink}${waLink}</div>`:''}
+          ${c.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">📝 ${c.notes}</div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--accent)">${fmt(c.prix)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.createdAt||''}</div>
+          <button onclick="deleteCommande('${c.id}')" style="margin-top:8px;background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">🗑️ Supprimer</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function getClientSales(client){
   return sales.filter(s=>{
     if(client.ref && s.client && s.client.toLowerCase()===client.ref.toLowerCase()) return true;
@@ -3082,6 +3183,11 @@ function refreshStockModelList(){
   if(vdl){
     const villes=[...new Set(sales.map(s=>s.ville).filter(Boolean))].sort();
     vdl.innerHTML=villes.map(v=>`<option value="${v}">`).join('');
+  }
+  const ocvdl=document.getElementById('ocVilleList');
+  if(ocvdl){
+    const villes=[...new Set(sales.map(s=>s.ville).filter(Boolean))].sort();
+    ocvdl.innerHTML=villes.map(v=>`<option value="${v}">`).join('');
   }
   // fColorList: couleurs précédentes
   const cdl=document.getElementById('fColorList');
@@ -7156,6 +7262,7 @@ document.addEventListener('DOMContentLoaded',function(){
   attachSmartAutocomplete('fModel','fModelList',()=>checkStockForModel());
   attachSmartAutocomplete('fColor','fColorList');
   attachSmartAutocomplete('fVille','fVilleList');
+  attachSmartAutocomplete('ocVille','ocVilleList');
   attachSmartAutocomplete('fClient','fClientList',(v)=>autoFillClientPhone(v));
 });
 
