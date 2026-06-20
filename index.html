@@ -2210,8 +2210,10 @@ async function fsPushNow(){
   if(!fsReady) return;
   try{
     fsSetStatus('syncing');
-    await FS_DOC_REF().set(fsCollectPayload(), {merge:false});
+    const payload = fsCollectPayload();
+    await FS_DOC_REF().set(payload, {merge:false});
     localStorage.setItem('flousFlowFsLastPush', Date.now());
+    localStorage.setItem('flousFlowFsLastApplied', payload.updatedAt);
     fsSetStatus('synced');
   }catch(e){
     console.warn('Firestore push échoué:', e);
@@ -2259,6 +2261,10 @@ function fsApplyRemoteData(data){
 async function fsInitialSync(){
   if(!fsReady) return;
   const localTs = parseInt(localStorage.getItem('flousFlowLastSave')||'0', 10);
+  // Dernière version cloud qu'on a réellement déjà appliquée sur CET appareil.
+  // (Différent de localTs: localTs change à chaque modif locale, alors que
+  // celui-ci ne change que quand on applique des données venues du cloud.)
+  const lastAppliedTs = parseInt(localStorage.getItem('flousFlowFsLastApplied')||'0', 10);
   let remote;
   try{
     remote = await fsPullNow(true);
@@ -2276,10 +2282,16 @@ async function fsInitialSync(){
     return;
   }
   const remoteTs = remote.updatedAt||0;
-  if(remoteTs > localTs){
-    // Le cloud est plus récent (ou égal) → on l'applique localement, toujours.
+  if(remoteTs > localTs && remoteTs > lastAppliedTs){
+    // Le cloud a une version qu'on n'a jamais encore appliquée sur cet appareil.
     fsApplyRemoteData(remote);
+    localStorage.setItem('flousFlowFsLastApplied', remoteTs);
     if(typeof showToast==='function') showToast('☁️ Nouvelles données disponibles (actualisez pour les voir)');
+  } else if(remoteTs > lastAppliedTs){
+    // Le cloud a changé mais ce n'est pas "nouveau" pour nous (ex: on vient
+    // soi-même de pousser cette version) — on note juste qu'on est à jour,
+    // sans notification inutile.
+    localStorage.setItem('flousFlowFsLastApplied', remoteTs);
   }
   // Si le local semble "plus récent", on NE pousse PAS automatiquement.
   // L'utilisateur reste sur les données cloud (déjà appliquées via save()/etc
