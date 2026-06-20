@@ -917,12 +917,12 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       </div>
     </div>
     <div class="header-right">
+      <span id="fsSyncIndicator" title="Firestore: en attente" style="font-size:16px;cursor:default;display:flex;align-items:center;padding:0 4px">☁️</span>
       <div style="position:relative">
         <canvas id="totalCount" width="72" height="72" style="cursor:pointer" onclick="showTab('ventes',null)"></canvas>
         <button id="privacyBtn" onclick="togglePrivacyMode(event)" title="Masquer les montants" style="position:absolute;top:-6px;left:-6px;width:24px;height:24px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25)">👁️</button>
         </div>
       </div>
-      <span id="fsSyncIndicator" title="Firestore: en attente" style="font-size:16px;cursor:default;display:flex;align-items:center;padding:0 4px">☁️</span>
       <button class="theme-btn" id="gistBtn" onclick="openGistModal()" title="Sync Gist" style="display:none">☁️</button>
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" style="display:none"></button>
     </div>
@@ -1663,15 +1663,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   </div>
   <div class="backup-card">
     <div class="backup-title">&#x1F4E5; Importer</div>
-    <div class="backup-desc">Restaure ou fusionne tes donn&#xe9;es depuis un fichier JSON export&#xe9;.</div>
+    <div class="backup-desc">Restaure tes donn&#xe9;es depuis un fichier JSON export&#xe9;.</div>
     <div class="backup-btns">
       <button class="btn-imp" onclick="triggerImport('replace')">&#x1F504; Remplacer &#x2014; &#xe9;crase tout</button>
-      <button class="btn-imp" style="background:linear-gradient(135deg,rgba(255,122,0,.15),rgba(255,122,0,.05));border:1px solid rgba(255,122,0,.3);color:var(--accent)" onclick="triggerImport('merge')">&#x1F500; Fusionner &#x2014; ajoute sans &#xe9;craser</button>
       <input type="file" id="fileInput" accept=".json,application/json,text/plain,*/*" onchange="importData(event)">
-    </div>
-    <div style="margin-top:10px;font-size:12px;color:var(--muted);line-height:1.7">
-      <strong style="color:var(--text)">🔄 Remplacer</strong> — efface les données actuelles et importe tout.<br>
-      <span style="color:var(--yellow)">💡 Depuis Drive: télécharge d'abord le fichier sur ton appareil, puis importe-le ici.</span>
     </div>
   </div>
   <div class="backup-card" style="margin-top:10px">
