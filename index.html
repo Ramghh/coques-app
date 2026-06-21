@@ -524,11 +524,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 .wa-sheet-title{font-size:16px;font-weight:700;margin-bottom:14px;text-align:center}
 .wa-lang-btn{width:100%;padding:13px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:15px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;margin-bottom:8px;text-align:left}
 .wa-lang-btn:active{background:rgba(255,122,0,.12);border-color:var(--accent)}
-.wa-cancel{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:14px;font-family:'Outfit',sans-serif;cursor:pointer;margin-top:4px}border:1px solid rgba(255,122,0,.25);color:var(--accent);width:38px;height:38px;border-radius:9px;cursor:pointer;font-size:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.scan-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-.scan-overlay video{width:min(90vw,380px);border-radius:14px;border:2px solid var(--accent)}
-.scan-close{background:var(--accent);color:#fff;border:none;padding:12px 32px;border-radius:12px;font-size:16px;font-family:'Outfit',sans-serif;cursor:pointer;font-weight:600}
-.scan-hint{color:#fff;font-size:14px;opacity:.8}
+.wa-cancel{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:14px;font-family:'Outfit',sans-serif;cursor:pointer;margin-top:4px}
 
 /* ═══════════════════════════════════════════════════════
    📱 MOBILE OPTIMISATION — max-width: 768px
@@ -765,7 +761,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   .wall-grid-bottom{grid-template-columns:repeat(3,1fr)}
 }
 </style>
-<script src="https://unpkg.com/@zxing/library@0.19.3/umd/index.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
@@ -825,13 +820,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     </div>
     <button class="wa-cancel" onclick="document.getElementById('smsSheetOverlay').style.display='none'">Annuler</button>
   </div>
-</div>
-
-<!-- BARCODE SCANNER OVERLAY -->
-<div class="scan-overlay" id="scanOverlay" style="display:none">
-  <div class="scan-hint">📷 Pointez la caméra sur le code-barres</div>
-  <video id="scanVideo" autoplay playsinline muted></video>
-  <button class="scan-close" onclick="closeScanner()">✕ Fermer</button>
 </div>
 
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
@@ -1088,7 +1076,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
         <input type="text" id="stockModel" placeholder="ex: HTC, iPhone 15 Pro..." autocomplete="off" style="width:100%">
         <div class="sac-dropdown" id="stockModel-dd"></div>
         </div>
-        <button type="button" class="scan-btn" onclick="openScanner('stockModel')" title="Scanner">📷</button>
         </div>
         <datalist id="stockModelsList"></datalist>
       </div>
@@ -1144,7 +1131,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
         <input type="text" id="fModel" placeholder="iPhone 15 Pro" autocomplete="off" oninput="checkStockForModel()" style="width:100%">
         <div class="sac-dropdown" id="fModel-dd"></div>
         </div>
-        <button type="button" class="scan-btn" onclick="openScanner('fModel')" title="Scanner">📷</button>
         </div>
         <datalist id="fModelList"></datalist>
         <div id="stockIndicator" style="display:none;margin-top:5px;font-size:12px;padding:6px 10px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-weight:600"></div>
@@ -1217,8 +1203,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <div class="form-title">📦 Nouvel Achat</div>
     <div class="form-grid">
       <div><label>Date</label><input type="date" id="aDate"></div>
-      <div><label>Produit</label><div style="display:flex;gap:6px;align-items:center"><input type="text" id="aProduit" placeholder="Coque iPhone 15 Pro" style="flex:1"><button type="button" class="scan-btn" onclick="openScanner('aProduit')" title="Scanner">📷</button></div></div>
-      <div><label>Modèle Téléphone</label><div style="display:flex;gap:6px;align-items:center"><input type="text" id="aModel" placeholder="iPhone 15 Pro" style="flex:1"><button type="button" class="scan-btn" onclick="openScanner('aModel')" title="Scanner">📷</button></div></div>
+      <div><label>Produit</label><input type="text" id="aProduit" placeholder="Coque iPhone 15 Pro" style="width:100%"></div>
+      <div><label>Modèle Téléphone</label><input type="text" id="aModel" placeholder="iPhone 15 Pro" style="width:100%"></div>
       <div><label>Quantité</label><input type="number" id="aQty" placeholder="10" min="1"></div>
       <div><label>Prix unitaire (DT)</label><input type="number" id="aPrix" placeholder="11.450" step="0.001"></div>
       <div><label>Frais livraison (DT)</label><input type="number" id="aLivraison" placeholder="0" step="0.001"></div>
@@ -6678,38 +6664,6 @@ function updateGroupedChart(){
 }
 
 // ── TOAST ──────────────────────────────────────────────────────────────────
-// ── BARCODE SCANNER ────────────────────────────────────────────────────────
-let _scanTargetId = null;
-let _codeReader = null;
-
-async function openScanner(targetInputId) {
-  _scanTargetId = targetInputId;
-  document.getElementById('scanOverlay').style.display = 'flex';
-  try {
-    if (typeof ZXing === 'undefined') { showToast('⚠️ Scanner non disponible', true); closeScanner(); return; }
-    _codeReader = new ZXing.BrowserMultiFormatReader();
-    const devices = await _codeReader.listVideoInputDevices();
-    const backCam = devices.find(d => /back|rear|environment/i.test(d.label)) || devices[devices.length - 1];
-    const deviceId = backCam ? backCam.deviceId : undefined;
-    await _codeReader.decodeFromVideoDevice(deviceId, 'scanVideo', (result, err) => {
-      if (result) {
-        const el = document.getElementById(_scanTargetId);
-        if (el) { el.value = result.getText(); el.dispatchEvent(new Event('input')); }
-        showToast('✅ Code scanné: ' + result.getText());
-        closeScanner();
-      }
-    });
-  } catch(e) {
-    showToast('⚠️ Caméra inaccessible', true);
-    closeScanner();
-  }
-}
-
-function closeScanner() {
-  if (_codeReader) { try { _codeReader.reset(); } catch(e){} _codeReader = null; }
-  document.getElementById('scanOverlay').style.display = 'none';
-}
-// ──────────────────────────────────────────────────────────────────────────
 
 function showToast(msg,err=false){
   const t=document.getElementById('toast');
