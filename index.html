@@ -7676,7 +7676,7 @@ function closeWallMode(){
         <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:18px">🤖</div>
         <div>
           <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:16px">مساعد MegaStore</div>
-          <div style="font-size:11px;color:var(--muted)">مدعوم بـ Grok AI</div>
+          <div style="font-size:11px;color:var(--muted)">مدعوم بـ Groq AI ⚡</div>
         </div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
@@ -7687,9 +7687,9 @@ function closeWallMode(){
 
     <!-- API Key setup (shown when no key) -->
     <div id="aiSetupBox" style="display:none;padding:20px;border-bottom:1px solid var(--border);background:rgba(124,58,237,.06);flex-shrink:0">
-      <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:#a855f7">🔑 أدخل Grok API Key ديالك</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:#a855f7">🔑 أدخل Groq API Key ديالك</div>
       <div style="display:flex;gap:8px">
-        <input id="aiKeyInput" type="password" placeholder="xai-..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace">
+        <input id="aiKeyInput" type="password" placeholder="gsk_..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace">
         <button onclick="saveAIKey()" style="padding:10px 16px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap">حفظ</button>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:8px">🔒 يتحفظ في localStorage فقط — ما يظهرش في الكود</div>
@@ -7776,8 +7776,8 @@ function openAISettings(){
 
 function saveAIKey(){
   const val = document.getElementById('aiKeyInput').value.trim();
-  if(!val || !val.startsWith('xai-')){
-    alert('المفتاح لازم يبدأ بـ xai-');
+  if(!val || !val.startsWith('gsk_')){
+    alert('المفتاح لازم يبدأ بـ gsk_');
     return;
   }
   localStorage.setItem(AI_KEY_LS, val);
@@ -7874,14 +7874,14 @@ async function sendAIMessage(){
   aiChatHistory.push({role:'user', content: q});
 
   try {
-    const res = await fetch('https://api.x.ai/v1/chat/completions', {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${key}`
       },
       body: JSON.stringify({
-        model: 'grok-3-mini',
+        model: 'llama-3.3-70b-versatile',
         max_tokens: 600,
         messages: [
           {role:'system', content: getBusinessContext()},
