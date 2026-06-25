@@ -905,6 +905,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       </div>
     </div>
     <div class="header-right">
+      <button onclick="openAIModal()" title="مساعد ذكي" style="background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;color:#fff;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(124,58,237,.4);transition:transform .15s" onmouseenter="this.style.transform='scale(1.08)'" onmouseleave="this.style.transform='scale(1)'">🤖</button>
       <span id="fsSyncIndicator" title="Firestore: en attente" style="font-size:16px;cursor:default;display:flex;align-items:center;padding:0 4px">☁️</span>
       <div style="position:relative">
         <canvas id="totalCount" width="72" height="72" style="cursor:pointer" onclick="showTab('ventes',null)"></canvas>
@@ -7661,6 +7662,259 @@ function closeWallMode(){
 })();
 // ── FIRESTORE: synchronisation initiale — voir fsAuthInit() pour le déclenchement conditionné par la connexion ──
 
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     🤖 AI ASSISTANT MODAL — Grok API
+═══════════════════════════════════════════════════════════ -->
+<div id="aiModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);padding:16px;align-items:flex-end;justify-content:center">
+  <div style="background:var(--surface);border-radius:20px 20px 16px 16px;width:100%;max-width:520px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 -4px 40px rgba(0,0,0,.4);border:1px solid var(--border);overflow:hidden">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:18px">🤖</div>
+        <div>
+          <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:16px">مساعد MegaStore</div>
+          <div style="font-size:11px;color:var(--muted)">مدعوم بـ Grok AI</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="openAISettings()" title="إعدادات API" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:15px">⚙️</button>
+        <button onclick="closeAIModal()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;line-height:1">×</button>
+      </div>
+    </div>
+
+    <!-- API Key setup (shown when no key) -->
+    <div id="aiSetupBox" style="display:none;padding:20px;border-bottom:1px solid var(--border);background:rgba(124,58,237,.06);flex-shrink:0">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:#a855f7">🔑 أدخل Grok API Key ديالك</div>
+      <div style="display:flex;gap:8px">
+        <input id="aiKeyInput" type="password" placeholder="xai-..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace">
+        <button onclick="saveAIKey()" style="padding:10px 16px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap">حفظ</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">🔒 يتحفظ في localStorage فقط — ما يظهرش في الكود</div>
+    </div>
+
+    <!-- Quick suggestions -->
+    <div id="aiSuggestions" style="padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto">
+      <div style="display:flex;gap:7px;white-space:nowrap">
+        <button onclick="aiQuickAsk('أشحال ربحت هذا الشهر؟')" class="ai-chip">📅 ربح الشهر</button>
+        <button onclick="aiQuickAsk('أيا موديل باع أكثر؟')" class="ai-chip">🏆 أحسن موديل</button>
+        <button onclick="aiQuickAsk('كم عندي في الستوك؟')" class="ai-chip">📦 الستوك</button>
+        <button onclick="aiQuickAsk('عطيني ملخص كامل للأرباح')" class="ai-chip">💰 ملخص الأرباح</button>
+        <button onclick="aiQuickAsk('كم عندي من زبائن؟')" class="ai-chip">👤 الزبائن</button>
+        <button onclick="aiQuickAsk('نصحني واش نزيد في الستوك')" class="ai-chip">💡 نصيحة</button>
+      </div>
+    </div>
+
+    <!-- Chat messages -->
+    <div id="aiMessages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;min-height:180px">
+      <div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0">
+        <div style="font-size:32px;margin-bottom:8px">🤖</div>
+        <div style="font-weight:600">أهلاً! أنا مساعدك الذكي</div>
+        <div style="font-size:12px;margin-top:4px">اسألني على أرباحك، مبيعاتك، الستوك...</div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div style="padding:12px 14px;border-top:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <textarea id="aiInput" placeholder="اكتب سؤالك هنا..." rows="2"
+          style="flex:1;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;resize:none;line-height:1.5"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMessage()}"></textarea>
+        <button onclick="sendAIMessage()" id="aiSendBtn"
+          style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;color:#fff;font-size:20px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(124,58,237,.4)">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.ai-chip{
+  padding:7px 13px;border-radius:20px;border:1px solid rgba(124,58,237,.3);
+  background:rgba(124,58,237,.08);color:#a855f7;font-size:12px;font-weight:600;
+  cursor:pointer;white-space:nowrap;font-family:'Outfit',sans-serif;transition:all .15s
+}
+.ai-chip:active{transform:scale(.95);background:rgba(124,58,237,.18)}
+.ai-msg-user{
+  align-self:flex-end;max-width:82%;background:linear-gradient(135deg,#7c3aed,#a855f7);
+  color:#fff;padding:10px 14px;border-radius:16px 16px 4px 16px;font-size:14px;line-height:1.5
+}
+.ai-msg-bot{
+  align-self:flex-start;max-width:90%;background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);padding:10px 14px;border-radius:16px 16px 16px 4px;font-size:14px;line-height:1.6;
+  white-space:pre-wrap
+}
+.ai-msg-bot.loading{color:var(--muted);font-style:italic}
+</style>
+
+<script>
+// ── AI ASSISTANT ──────────────────────────────────────────
+const AI_KEY_LS = 'megastoreGrokKey';
+let aiChatHistory = [];
+
+function openAIModal(){
+  const modal = document.getElementById('aiModal');
+  modal.style.display = 'flex';
+  checkAIKey();
+}
+
+function closeAIModal(){
+  document.getElementById('aiModal').style.display = 'none';
+}
+
+function checkAIKey(){
+  const key = localStorage.getItem(AI_KEY_LS);
+  document.getElementById('aiSetupBox').style.display = key ? 'none' : 'block';
+}
+
+function openAISettings(){
+  document.getElementById('aiSetupBox').style.display = 'block';
+  const key = localStorage.getItem(AI_KEY_LS);
+  if(key) document.getElementById('aiKeyInput').value = key;
+}
+
+function saveAIKey(){
+  const val = document.getElementById('aiKeyInput').value.trim();
+  if(!val || !val.startsWith('xai-')){
+    alert('المفتاح لازم يبدأ بـ xai-');
+    return;
+  }
+  localStorage.setItem(AI_KEY_LS, val);
+  document.getElementById('aiSetupBox').style.display = 'none';
+  document.getElementById('aiKeyInput').value = '';
+  appendAIMsg('bot', '✅ تم حفظ المفتاح! كيفاش نخدمولك؟');
+}
+
+function getBusinessContext(){
+  // جمع بيانات المتجر
+  const now = new Date();
+  const thisMonth = now.toISOString().slice(0,7);
+  const todayStr = now.toISOString().slice(0,10);
+
+  const totalSales = (typeof sales !== 'undefined' ? sales : []).length;
+  const monthSales = (typeof sales !== 'undefined' ? sales : []).filter(s=>s.date&&s.date.startsWith(thisMonth));
+  const todaySales = (typeof sales !== 'undefined' ? sales : []).filter(s=>s.date===todayStr);
+
+  const monthBenef = monthSales.reduce((a,s)=>a+(typeof benefNet==='function'?benefNet(s):0),0);
+  const todayBenef = todaySales.reduce((a,s)=>a+(typeof benefNet==='function'?benefNet(s):0),0);
+  const totalBenef = (typeof sales !== 'undefined' ? sales : []).reduce((a,s)=>a+(typeof benefNet==='function'?benefNet(s):0),0);
+
+  // أحسن الموديلات
+  const modelCount = {};
+  (typeof sales !== 'undefined' ? sales : []).forEach(s=>{
+    if(s.model) modelCount[s.model] = (modelCount[s.model]||0)+1;
+  });
+  const topModels = Object.entries(modelCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([m,c])=>`${m}(${c})`).join(', ');
+
+  // الستوك
+  const stockCount = (typeof stockItems !== 'undefined' ? stockItems : []).length;
+  const stockTotal = (typeof stockItems !== 'undefined' ? stockItems : []).reduce((a,s)=>a+(s.qty||0),0);
+
+  // الزبائن
+  const clientsCount = (typeof clients !== 'undefined' ? clients : []).length;
+
+  // الفورنيسور
+  const fournsCount = (typeof fourns !== 'undefined' ? fourns : []).length;
+  const totalInv = typeof totalInvesti==='function' ? totalInvesti() : 0;
+
+  return `أنت مساعد ذكي لمتجر كوكيليبيا MegaStore CouvriTN لبيع coques التليفون في تونس.
+ردّ دائماً بالدارجة التونسية المختلطة بالفرنسية (مثل: "ربحت، ventes، stock").
+كن مختصراً وعملياً. استعمل الأرقام من البيانات مباشرة.
+
+📊 بيانات المتجر الحالية (${todayStr}):
+- إجمالي الventes: ${totalSales} بيعة
+- ربح اليوم: ${todayBenef.toFixed(2)} TND (${todaySales.length} ventes)
+- ربح هذا الشهر (${thisMonth}): ${monthBenef.toFixed(2)} TND (${monthSales.length} ventes)
+- ربح كامل: ${totalBenef.toFixed(2)} TND
+- أحسن الموديلات: ${topModels||'لا يوجد بعد'}
+- Stock: ${stockCount} نوع، ${stockTotal} قطعة إجمالاً
+- Clients: ${clientsCount}
+- Fournisseurs: ${fournsCount}، إجمالي investi: ${totalInv.toFixed(2)} TND`;
+}
+
+function aiQuickAsk(q){
+  document.getElementById('aiInput').value = q;
+  sendAIMessage();
+}
+
+function appendAIMsg(type, text){
+  const box = document.getElementById('aiMessages');
+  // إزالة رسالة الترحيب عند أول رسالة
+  const welcome = box.querySelector('div[style*="text-align:center"]');
+  if(welcome) welcome.remove();
+
+  const div = document.createElement('div');
+  div.className = type==='user' ? 'ai-msg-user' : 'ai-msg-bot';
+  div.textContent = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+  return div;
+}
+
+async function sendAIMessage(){
+  const key = localStorage.getItem(AI_KEY_LS);
+  if(!key){
+    document.getElementById('aiSetupBox').style.display = 'block';
+    return;
+  }
+
+  const input = document.getElementById('aiInput');
+  const q = input.value.trim();
+  if(!q) return;
+
+  input.value = '';
+  appendAIMsg('user', q);
+
+  // Loading indicator
+  const loadDiv = appendAIMsg('bot', '⏳ نفكّر...');
+  loadDiv.classList.add('loading');
+
+  // Build messages
+  aiChatHistory.push({role:'user', content: q});
+
+  try {
+    const res = await fetch('https://api.x.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`
+      },
+      body: JSON.stringify({
+        model: 'grok-3-mini',
+        max_tokens: 600,
+        messages: [
+          {role:'system', content: getBusinessContext()},
+          ...aiChatHistory.slice(-6) // آخر 6 رسايل فقط لتوفير tokens
+        ]
+      })
+    });
+
+    const data = await res.json();
+
+    if(!res.ok){
+      loadDiv.textContent = `❌ خطأ: ${data.error?.message || res.status}`;
+      loadDiv.classList.remove('loading');
+      aiChatHistory.pop();
+      return;
+    }
+
+    const answer = data.choices?.[0]?.message?.content || '...';
+    loadDiv.textContent = answer;
+    loadDiv.classList.remove('loading');
+    aiChatHistory.push({role:'assistant', content: answer});
+
+  } catch(e) {
+    loadDiv.textContent = '❌ مشكلة في الاتصال — تحقق من المفتاح والانترنت';
+    loadDiv.classList.remove('loading');
+    aiChatHistory.pop();
+  }
+}
+
+// Close modal on backdrop click
+document.getElementById('aiModal').addEventListener('click', function(e){
+  if(e.target === this) closeAIModal();
+});
 </script>
 </body>
 </html>
