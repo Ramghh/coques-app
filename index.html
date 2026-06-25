@@ -7677,8 +7677,8 @@ function closeWallMode(){
         <button onclick="closeAIModal()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center">←</button>
         <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:17px">🤖</div>
         <div>
-          <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:15px">مساعد MegaStore</div>
-          <div style="font-size:11px;color:var(--muted)">مدعوم بـ Groq AI ⚡</div>
+          <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:18px">🤖 Assistant <span style="color:#a855f7">IA</span></div>
+          <div style="font-size:11px;color:var(--muted)">Propulsé par Groq ⚡</div>
         </div>
       </div>
       <button onclick="openAISettings()" title="إعدادات API" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center">⚙️</button>
@@ -7716,7 +7716,7 @@ function closeWallMode(){
     </div>
 
     <!-- Input -->
-    <div style="padding:12px 14px;border-top:1px solid var(--border);flex-shrink:0">
+    <div style="padding:12px 14px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);position:sticky;bottom:0">
       <div style="display:flex;gap:8px;align-items:flex-end">
         <textarea id="aiInput" placeholder="اكتب سؤالك هنا..." rows="2"
           style="flex:1;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;resize:none;line-height:1.5"
@@ -7760,8 +7760,13 @@ function openAIModal(){
 }
 
 function closeAIModal(){
-  document.getElementById('aiModal').style.display = 'none';
+  const m=document.getElementById("aiModal");
+  m.style.display="none";
+  m.style.height="";
 }
+
+
+
 
 function checkAIKey(){
   const key = localStorage.getItem(AI_KEY_LS);
@@ -7912,6 +7917,18 @@ async function sendAIMessage(){
 }
 
 // ── END AI ASSISTANT ──
+
+// Mobile keyboard: keep input visible when keyboard opens
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize", ()=>{
+    const modal = document.getElementById("aiModal");
+    if(modal && modal.style.display !== "none"){
+      modal.style.height = window.visualViewport.height + "px";
+      const msgs = document.getElementById("aiMessages");
+      if(msgs) msgs.scrollTop = msgs.scrollHeight;
+    }
+  });
+}
 </script>
 </body>
 </html>
