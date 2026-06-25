@@ -7855,19 +7855,42 @@ function getBusinessContext(){
   const fournsCount = (typeof fourns !== 'undefined' ? fourns : []).length;
   const totalInv = typeof totalInvesti==='function' ? totalInvesti() : 0;
 
-  return `أنت مساعد ذكي لمتجر كوكيليبيا MegaStore CouvriTN لبيع coques التليفون في تونس.
-ردّ بنفس لغة المستخدم تلقائياً: فرنسية→فرنسية، إنجليزية→إنجليزية، عربية→عربية، دارجة تونسية→دارجة. لا تفرض لغة معينة.
-كن مختصراً وعملياً. استعمل الأرقام من البيانات مباشرة.
+  // تفاصيل كل موديل: عدد مبيعات + ربح إجمالي + متوسط ربح
+  const modelStats = {};
+  (typeof sales !== 'undefined' ? sales : []).forEach(s=>{
+    if(!s.model) return;
+    if(!modelStats[s.model]) modelStats[s.model] = {count:0, benef:0, revenu:0};
+    modelStats[s.model].count++;
+    modelStats[s.model].benef += (typeof benefNet==='function'?benefNet(s):0);
+    modelStats[s.model].revenu += s.revenu||0;
+  });
+  const modelDetails = Object.entries(modelStats)
+    .sort((a,b)=>b[1].count-a[1].count).slice(0,10)
+    .map(([m,d])=>`${m}: ${d.count} ventes, revenu=${d.revenu.toFixed(2)} TND, bénéf=${d.benef.toFixed(2)} TND, moy/vente=${d.count?(d.benef/d.count).toFixed(2):0} TND`)
+    .join('\n');
 
-📊 بيانات المتجر الحالية (${todayStr}):
-- إجمالي الventes: ${totalSales} بيعة
-- ربح اليوم: ${todayBenef.toFixed(2)} TND (${todaySales.length} ventes)
-- ربح هذا الشهر (${thisMonth}): ${monthBenef.toFixed(2)} TND (${monthSales.length} ventes)
-- ربح كامل: ${totalBenef.toFixed(2)} TND
-- أحسن الموديلات: ${topModels||'لا يوجد بعد'}
-- Stock: ${stockCount} نوع، ${stockTotal} قطعة إجمالاً
-- Clients: ${clientsCount}
-- Fournisseurs: ${fournsCount}، إجمالي investi: ${totalInv.toFixed(2)} TND`;
+  // آخر 20 vente مع التفاصيل
+  const recentSales = (typeof sales !== 'undefined' ? sales : [])
+    .slice().sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)).slice(0,20)
+    .map(s=>`${s.date||'?'} | ${s.model||'?'} | revenu:${(s.revenu||0).toFixed(2)} | bénéf:${(typeof benefNet==='function'?benefNet(s):0).toFixed(2)} | client:${s.client||'—'}`)
+    .join('\n');
+
+  return `أنت مساعد ذكي لمتجر MegaStore CouvriTN لبيع coques التليفون في تونس (Kélibia).
+ردّ بنفس لغة المستخدم تلقائياً: فرنسية→فرنسية، إنجليزية→إنجليزية، عربية→عربية، دارجة→دارجة. لا تفرض لغة.
+كن مختصراً وعملياً. استعمل الأرقام الموجودة مباشرة بدون تحفظات.
+
+📊 ملخص المتجر (${todayStr}):
+- إجمالي ventes: ${totalSales} | ربح كامل: ${totalBenef.toFixed(2)} TND
+- اليوم: ${todaySales.length} ventes، ربح: ${todayBenef.toFixed(2)} TND
+- هذا الشهر (${thisMonth}): ${monthSales.length} ventes، ربح: ${monthBenef.toFixed(2)} TND
+- Stock: ${stockCount} نوع، ${stockTotal} قطعة | Clients: ${clientsCount} | Fournisseurs: ${fournsCount}
+- إجمالي investi: ${totalInv.toFixed(2)} TND
+
+📦 تفاصيل الموديلات (أحسن 10):
+${modelDetails||'لا يوجد بعد'}
+
+🕐 آخر 20 vente:
+${recentSales||'لا يوجد بعد'}`;
 }
 
 function aiQuickAsk(q){
