@@ -852,6 +852,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <button class="drawer-btn" id="dbtn-cartes-rapport" onclick="drawerNav('cartes-rapport')"><span class="d-icon">💳</span><span class="d-label">Rentabilité Cartes</span></button>
     <button class="drawer-btn" id="dbtn-dashboard" onclick="drawerNav('dashboard')"><span class="d-icon">🗺️</span><span class="d-label">Dashboard</span></button>
     <div class="drawer-divider"></div>
+    <button class="drawer-btn" onclick="openAIModal();closeDrawer()" style="background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(168,85,247,.08));border:1px solid rgba(124,58,237,.25)"><span class="d-icon">🤖</span><span class="d-label" style="color:#a855f7;font-weight:700">مساعد ذكي</span><span style="font-size:10px;background:rgba(124,58,237,.2);color:#a855f7;padding:2px 7px;border-radius:20px;font-weight:700">AI</span></button>
+    <div class="drawer-divider"></div>
     <button class="drawer-btn" id="dbtn-backup" onclick="drawerNav('backup')"><span class="d-icon">💾</span><span class="d-label">Backup</span></button>
   </div>
   <div class="drawer-footer">
@@ -905,7 +907,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       </div>
     </div>
     <div class="header-right">
-      <button onclick="openAIModal()" title="مساعد ذكي" style="background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;color:#fff;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(124,58,237,.4);transition:transform .15s" onmouseenter="this.style.transform='scale(1.08)'" onmouseleave="this.style.transform='scale(1)'">🤖</button>
       <span id="fsSyncIndicator" title="Firestore: en attente" style="font-size:16px;cursor:default;display:flex;align-items:center;padding:0 4px">☁️</span>
       <div style="position:relative">
         <canvas id="totalCount" width="72" height="72" style="cursor:pointer" onclick="showTab('ventes',null)"></canvas>
@@ -7667,22 +7668,20 @@ function closeWallMode(){
 <!-- ═══════════════════════════════════════════════════════════
      🤖 AI ASSISTANT MODAL — Grok API
 ═══════════════════════════════════════════════════════════ -->
-<div id="aiModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);padding:16px;align-items:flex-end;justify-content:center">
-  <div style="background:var(--surface);border-radius:20px 20px 16px 16px;width:100%;max-width:520px;max-height:70vh;display:flex;flex-direction:column;box-shadow:0 -4px 40px rgba(0,0,0,.4);border:1px solid var(--border);overflow:hidden">
+<div id="aiModal" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--surface);flex-direction:column">
+  <div style="width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden">
 
     <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface2)">
       <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:18px">🤖</div>
+        <button onclick="closeAIModal()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center">←</button>
+        <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:17px">🤖</div>
         <div>
-          <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:16px">مساعد MegaStore</div>
+          <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:15px">مساعد MegaStore</div>
           <div style="font-size:11px;color:var(--muted)">مدعوم بـ Groq AI ⚡</div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button onclick="openAISettings()" title="إعدادات API" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:15px">⚙️</button>
-        <button onclick="closeAIModal()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;line-height:1">×</button>
-      </div>
+      <button onclick="openAISettings()" title="إعدادات API" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center">⚙️</button>
     </div>
 
     <!-- API Key setup (shown when no key) -->
@@ -7708,7 +7707,7 @@ function closeWallMode(){
     </div>
 
     <!-- Chat messages -->
-    <div id="aiMessages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;min-height:80px;max-height:200px">
+    <div id="aiMessages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;min-height:0">
       <div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0">
         <div style="font-size:32px;margin-bottom:8px">🤖</div>
         <div style="font-weight:600">أهلاً! أنا مساعدك الذكي</div>
@@ -7757,6 +7756,7 @@ function openAIModal(){
   const modal = document.getElementById('aiModal');
   modal.style.display = 'flex';
   checkAIKey();
+  setTimeout(()=>{ document.getElementById('aiInput').focus(); },200);
 }
 
 function closeAIModal(){
@@ -7911,10 +7911,7 @@ async function sendAIMessage(){
   }
 }
 
-// Close modal on backdrop click
-document.getElementById('aiModal').addEventListener('click', function(e){
-  if(e.target === this) closeAIModal();
-});
+// ── END AI ASSISTANT ──
 </script>
 </body>
 </html>
