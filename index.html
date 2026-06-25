@@ -3048,6 +3048,7 @@ function renderClients(){
       <div style="display:flex;gap:8px;margin-top:10px">
         <a href="tel:${client.tel.replace(/\s/g,'')}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);border-radius:11px;color:var(--green);font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;text-decoration:none">📞 Appeler</a>
         <a href="https://wa.me/216${client.tel.replace(/\D/g,'').replace(/^216/,'')}&text=${encodeURIComponent('Bonjour '+client.nom+' 👋')}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);border-radius:11px;color:#25d366;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;text-decoration:none">💬 WhatsApp</a>
+        <button onclick="openWAGenerator('${client.id||'auto-'+client.ref}','${client.nom}','${client.tel}')" style="display:flex;align-items:center;justify-content:center;gap:5px;padding:10px 12px;background:linear-gradient(135deg,rgba(255,122,0,.12),rgba(255,154,60,.08));border:1px solid rgba(255,122,0,.35);border-radius:11px;color:var(--accent);font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;white-space:nowrap">✨ IA</button>
       </div>`:''}
       ${!client.auto?`
       <div class="sale-actions" style="margin-top:10px">
@@ -6966,6 +6967,37 @@ function exportPDF(type){
   </div>
 </div>
 <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimer / Enregistrer PDF</button>
+
+<!-- WA MESSAGE GENERATOR MODAL -->
+<div id="waGenModal" style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:16px">
+  <div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px;border:2px solid #25d366;box-shadow:0 8px 40px rgba(37,211,102,.2);overflow:hidden">
+    <div style="padding:16px 18px;background:linear-gradient(135deg,rgba(37,211,102,.1),rgba(37,211,102,.04));border-bottom:1px solid rgba(37,211,102,.3);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:16px">💬 Message WhatsApp <span style="color:#25d366">IA</span></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Pour: <span id="waGenClientName" style="color:var(--text);font-weight:600"></span></div>
+      </div>
+      <button onclick="closeWAGen()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:18px">×</button>
+    </div>
+    <div style="padding:16px 18px">
+      <div style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Choisir le type de message :</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <button onclick="generateWAMessage('promo')" style="padding:10px;border-radius:11px;border:1px solid rgba(255,122,0,.3);background:rgba(255,122,0,.08);color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif">🎁 Promotion</button>
+        <button onclick="generateWAMessage('relance')" style="padding:10px;border-radius:11px;border:1px solid rgba(37,211,102,.3);background:rgba(37,211,102,.08);color:#25d366;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif">🔔 Relance</button>
+        <button onclick="generateWAMessage('merci')" style="padding:10px;border-radius:11px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.08);color:var(--yellow);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif">⭐ Merci fidélité</button>
+        <button onclick="generateWAMessage('darija')" style="padding:10px;border-radius:11px;border:1px solid rgba(99,102,241,.3);background:rgba(99,102,241,.08);color:#818cf8;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif">🇹🇳 دارجة</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+        <span>Message généré :</span>
+        <span id="waGenStatus" style="font-weight:600;color:var(--accent)"></span>
+      </div>
+      <textarea id="waGenResult" rows="5" placeholder="Le message apparaîtra ici..." style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;resize:none;line-height:1.6"></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button onclick="closeWAGen()" style="flex:1;padding:11px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer">Annuler</button>
+        <button onclick="sendGeneratedWA()" style="flex:2;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(37,211,102,.3)">💬 Envoyer sur WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>`;
 
@@ -7918,6 +7950,70 @@ async function sendAIMessage(){
 
 // ── END AI ASSISTANT ──
 
+// ── WA MESSAGE GENERATOR ─────────────────────────────────
+function openWAGenerator(clientId, clientNom, clientTel){
+  const cSales = sales.filter(s => s.client === clientNom || s.client === clientId);
+  const lastSales = cSales.sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)).slice(0,3);
+  const totalAchats = cSales.length;
+  const points = calcPoints(cSales);
+  const niveau = points>=500?'VIP':points>=200?'Fidèle':points>=50?'Régulier':'Nouveau';
+  window._waClient = { clientId, clientNom, clientTel, lastSales, totalAchats, points, niveau };
+  const modal = document.getElementById('waGenModal');
+  document.getElementById('waGenClientName').textContent = clientNom;
+  document.getElementById('waGenResult').value = '';
+  document.getElementById('waGenStatus').textContent = '';
+  modal.style.display = 'flex';
+}
+
+function closeWAGen(){
+  document.getElementById('waGenModal').style.display = 'none';
+}
+
+async function generateWAMessage(type){
+  const key = localStorage.getItem(AI_KEY_LS);
+  if(!key){ alert('أدخل Groq API Key أولاً من Assistant IA'); return; }
+  const { clientNom, lastSales, totalAchats, points, niveau } = window._waClient;
+  const statusEl = document.getElementById('waGenStatus');
+  const resultEl = document.getElementById('waGenResult');
+  const lastModels = lastSales.map(s=>s.model||'coque').join(', ') || 'coques';
+  const lastDate = lastSales[0]?.date || '—';
+  const prompts = {
+    promo: `Écris un message WhatsApp court et sympathique en français pour informer le client "${clientNom}" (niveau: ${niveau}, ${totalAchats} achats, dernière commande: ${lastDate} — ${lastModels}) d'une promotion spéciale sur les coques de téléphone. Max 3 lignes. Commence par Bonjour et son prénom.`,
+    relance: `Écris un message WhatsApp de relance court en français pour le client "${clientNom}" qui n'a pas commandé depuis ${lastDate}. Il a acheté ${lastModels}. Rappelle-lui nos nouveaux modèles. Max 3 lignes. Naturel et chaleureux.`,
+    merci: `Écris un message WhatsApp de remerciement court en français pour le client "${clientNom}" (${totalAchats} achats, niveau ${niveau}). Remercie-le pour sa fidélité et propose-lui une remise exclusive. Max 3 lignes.`,
+    darija: `اكتب رسالة واتساب قصيرة بالدارجة التونسية للزبون "${clientNom}" (${totalAchats} شراء، آخر طلبية: ${lastDate}، موديلات: ${lastModels}). رسالة تشجيعية باش يرجع يشري. Max 3 أسطر. طبيعية وودية.`
+  };
+  statusEl.textContent = '⏳ Génération...';
+  resultEl.value = '';
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+      body: JSON.stringify({
+        model:'llama-3.3-70b-versatile',
+        max_tokens:200,
+        messages:[{role:'user', content: prompts[type]}]
+      })
+    });
+    const data = await res.json();
+    const msg = data.choices?.[0]?.message?.content?.trim() || '';
+    resultEl.value = msg;
+    statusEl.textContent = '✅ Prêt!';
+  } catch(e) {
+    statusEl.textContent = '❌ Erreur connexion';
+  }
+}
+
+function sendGeneratedWA(){
+  const { clientTel, clientNom } = window._waClient;
+  const msg = document.getElementById('waGenResult').value.trim();
+  if(!msg){ alert("Génère un message d'abord"); return; }
+  const tel = clientTel.replace(/\D/g,'').replace(/^216/,'');
+  window.open(`https://wa.me/216${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+  closeWAGen();
+}
+// ── END WA GENERATOR ──
+
 // Mobile keyboard: keep input visible when keyboard opens
 if(window.visualViewport){
   window.visualViewport.addEventListener("resize", ()=>{
@@ -7930,5 +8026,36 @@ if(window.visualViewport){
   });
 }
 </script>
+
+<!-- WA MESSAGE GENERATOR MODAL -->
+<div id="waGenModal" style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:16px">
+  <div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px;border:2px solid #25d366;box-shadow:0 8px 40px rgba(37,211,102,.2);overflow:hidden">
+    <div style="padding:16px 18px;background:linear-gradient(135deg,rgba(37,211,102,.1),rgba(37,211,102,.04));border-bottom:1px solid rgba(37,211,102,.3);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:16px">💬 Message WhatsApp <span style="color:#25d366">IA</span></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Pour: <span id="waGenClientName" style="color:var(--text);font-weight:600"></span></div>
+      </div>
+      <button onclick="closeWAGen()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:18px">×</button>
+    </div>
+    <div style="padding:16px 18px">
+      <div style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Choisir le type de message :</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <button onclick="generateWAMessage('promo')" style="padding:10px;border-radius:11px;border:1px solid rgba(255,122,0,.3);background:rgba(255,122,0,.08);color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif">🎁 Promotion</button>
+        <button onclick="generateWAMessage('relance')" style="padding:10px;border-radius:11px;border:1px solid rgba(37,211,102,.3);background:rgba(37,211,102,.08);color:#25d366;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif">🔔 Relance</button>
+        <button onclick="generateWAMessage('merci')" style="padding:10px;border-radius:11px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.08);color:var(--yellow);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif">⭐ Merci fidélité</button>
+        <button onclick="generateWAMessage('darija')" style="padding:10px;border-radius:11px;border:1px solid rgba(99,102,241,.3);background:rgba(99,102,241,.08);color:#818cf8;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif">🇹🇳 دارجة</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+        <span>Message généré :</span>
+        <span id="waGenStatus" style="font-weight:600;color:var(--accent)"></span>
+      </div>
+      <textarea id="waGenResult" rows="5" placeholder="Le message apparaîtra ici..." style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;resize:none;line-height:1.6"></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button onclick="closeWAGen()" style="flex:1;padding:11px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer">Annuler</button>
+        <button onclick="sendGeneratedWA()" style="flex:2;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(37,211,102,.3)">💬 Envoyer sur WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
