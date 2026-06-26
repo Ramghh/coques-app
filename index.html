@@ -7871,7 +7871,7 @@ function getBusinessContext(){
 
   // آخر 20 vente مع التفاصيل
   const recentSales = (typeof sales !== 'undefined' ? sales : [])
-    .slice().sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)).slice(0,20)
+    .slice().sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)).slice(0,500)
     .map(s=>`${s.date||'?'} | ${s.model||'?'} | revenu:${(s.revenu||0).toFixed(2)} | bénéf:${(typeof benefNet==='function'?benefNet(s):0).toFixed(2)} | client:${s.client||'—'}`)
     .join('\n');
 
@@ -7889,7 +7889,7 @@ function getBusinessContext(){
 📦 تفاصيل الموديلات (أحسن 10):
 ${modelDetails||'لا يوجد بعد'}
 
-🕐 آخر 20 vente:
+🕐 آخر 500 vente:
 ${recentSales||'لا يوجد بعد'}`;
 }
 
