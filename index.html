@@ -801,6 +801,9 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <button class="wa-lang-btn" onclick="sendWaMsg('confirmation','fr')">🇫🇷 Français</button>
       <button class="wa-lang-btn" onclick="sendWaMsg('confirmation','ar')">🇹🇳 العربية</button>
     </div>
+    <div style="border-top:1px solid var(--border);margin:10px 0 6px"></div>
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px">✨ Générer avec IA</div>
+    <button class="wa-lang-btn" onclick="openVenteWAGen()" style="background:linear-gradient(135deg,rgba(255,122,0,.12),rgba(255,154,60,.08));border:1px solid rgba(255,122,0,.35);color:var(--accent);font-weight:700">🤖 Message IA (Français)</button>
     <button class="wa-cancel" onclick="closeWaSheet()">Annuler</button>
   </div>
 </div>
@@ -6998,6 +7001,36 @@ function exportPDF(type){
     </div>
   </div>
 </div>
+
+<!-- VENTE WA IA MODAL -->
+<div id="venteWAGenModal" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:16px">
+  <div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px;border:2px solid #25d366;box-shadow:0 8px 40px rgba(37,211,102,.2);overflow:hidden">
+    <div style="padding:16px 18px;background:linear-gradient(135deg,rgba(37,211,102,.1),rgba(37,211,102,.04));border-bottom:1px solid rgba(37,211,102,.3);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:16px">✨ Message WhatsApp <span style="color:#25d366">IA</span></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Pour: <span id="venteWAGenClient" style="color:var(--text);font-weight:600"></span></div>
+      </div>
+      <button onclick="closeVenteWAGen()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:18px">×</button>
+    </div>
+    <div style="padding:16px 18px">
+      <div style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Choisir le type :</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+        <button onclick="generateVenteWAMsg('livraison')" style="padding:11px;border-radius:11px;border:1px solid rgba(255,122,0,.3);background:rgba(255,122,0,.08);color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">🚚 Colis en cours de livraison</button>
+        <button onclick="generateVenteWAMsg('merci')" style="padding:11px;border-radius:11px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.08);color:var(--yellow);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">🙏 Remerciement après achat</button>
+        <button onclick="generateVenteWAMsg('suivi')" style="padding:11px;border-radius:11px;border:1px solid rgba(37,211,102,.3);background:rgba(37,211,102,.08);color:#25d366;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">⭐ Suivi satisfaction</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between">
+        <span>Message généré :</span>
+        <span id="venteWAGenStatus" style="font-weight:600;color:var(--accent)"></span>
+      </div>
+      <textarea id="venteWAGenResult" rows="5" placeholder="Le message apparaîtra ici..." style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;resize:none;line-height:1.6"></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button onclick="closeVenteWAGen()" style="flex:1;padding:11px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer">Annuler</button>
+        <button onclick="sendVenteWAMsg()" style="flex:2;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(37,211,102,.3)">💬 Envoyer sur WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>`;
 
@@ -8035,6 +8068,64 @@ function sendGeneratedWA(){
   window.open(`https://wa.me/216${tel}?text=${encodeURIComponent(msg)}`, '_blank');
   closeWAGen();
 }
+
+// ── VENTE WA IA GENERATOR ────────────────────────────────
+function openVenteWAGen(){
+  document.getElementById('waSheetOverlay').style.display='none';
+  document.getElementById('venteWAGenModal').style.display='flex';
+  document.getElementById('venteWAGenResult').value='';
+  document.getElementById('venteWAGenStatus').textContent='';
+  // pre-fill client name display
+  document.getElementById('venteWAGenClient').textContent = _waClient||'Client';
+}
+
+function closeVenteWAGen(){
+  document.getElementById('venteWAGenModal').style.display='none';
+}
+
+async function generateVenteWAMsg(type){
+  const key = localStorage.getItem(AI_KEY_LS);
+  if(!key){ alert('أدخل Groq API Key أولاً من Assistant IA'); return; }
+
+  const statusEl = document.getElementById('venteWAGenStatus');
+  const resultEl = document.getElementById('venteWAGenResult');
+
+  const prompts = {
+    livraison: `Écris un message WhatsApp professionnel et chaleureux en français pour informer le client "${_waClient||'client'}" que sa commande (${_waModel||'coque téléphone'}, montant: ${_waPrix||'—'} DT) est en cours de livraison. Demande-lui poliment de rester joignable. Max 4 lignes. Commence par Bonjour et son prénom. Utilise des emojis appropriés.`,
+    merci: `Écris un message WhatsApp de remerciement sincère en français pour le client "${_waClient||'client'}" qui vient d'acheter (${_waModel||'coque téléphone'}, ${_waPrix||'—'} DT). Remercie-le pour sa confiance et invite-le à revenir. Max 3 lignes. Chaleureux et personnel.`,
+    suivi: `Écris un message WhatsApp de suivi après livraison en français pour le client "${_waClient||'client'}" (commande: ${_waModel||'coque téléphone'}, ${_waPrix||'—'} DT). Demande-lui s'il est satisfait et propose-lui de l'aide. Max 3 lignes. Très cordial.`
+  };
+
+  statusEl.textContent = '⏳ Génération...';
+  resultEl.value = '';
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+      body: JSON.stringify({
+        model:'llama-3.3-70b-versatile',
+        max_tokens:200,
+        messages:[{role:'user', content: prompts[type]}]
+      })
+    });
+    const data = await res.json();
+    const msg = data.choices?.[0]?.message?.content?.trim() || '';
+    resultEl.value = msg;
+    statusEl.textContent = '✅ Prêt!';
+  } catch(e) {
+    statusEl.textContent = '❌ Erreur connexion';
+  }
+}
+
+function sendVenteWAMsg(){
+  const msg = document.getElementById('venteWAGenResult').value.trim();
+  if(!msg){ alert("Génère un message d'abord"); return; }
+  const num = '216' + _waPhone.replace(/\D/g,'').replace(/^216/,'');
+  window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
+  closeVenteWAGen();
+}
+// ── END VENTE WA IA ──
 // ── END WA GENERATOR ──
 
 // Mobile keyboard: keep input visible when keyboard opens
@@ -8076,6 +8167,36 @@ if(window.visualViewport){
       <div style="display:flex;gap:8px;margin-top:12px">
         <button onclick="closeWAGen()" style="flex:1;padding:11px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer">Annuler</button>
         <button onclick="sendGeneratedWA()" style="flex:2;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(37,211,102,.3)">💬 Envoyer sur WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VENTE WA IA MODAL -->
+<div id="venteWAGenModal" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:16px">
+  <div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px;border:2px solid #25d366;box-shadow:0 8px 40px rgba(37,211,102,.2);overflow:hidden">
+    <div style="padding:16px 18px;background:linear-gradient(135deg,rgba(37,211,102,.1),rgba(37,211,102,.04));border-bottom:1px solid rgba(37,211,102,.3);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:16px">✨ Message WhatsApp <span style="color:#25d366">IA</span></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Pour: <span id="venteWAGenClient" style="color:var(--text);font-weight:600"></span></div>
+      </div>
+      <button onclick="closeVenteWAGen()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:18px">×</button>
+    </div>
+    <div style="padding:16px 18px">
+      <div style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Choisir le type :</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+        <button onclick="generateVenteWAMsg('livraison')" style="padding:11px;border-radius:11px;border:1px solid rgba(255,122,0,.3);background:rgba(255,122,0,.08);color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">🚚 Colis en cours de livraison</button>
+        <button onclick="generateVenteWAMsg('merci')" style="padding:11px;border-radius:11px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.08);color:var(--yellow);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">🙏 Remerciement après achat</button>
+        <button onclick="generateVenteWAMsg('suivi')" style="padding:11px;border-radius:11px;border:1px solid rgba(37,211,102,.3);background:rgba(37,211,102,.08);color:#25d366;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">⭐ Suivi satisfaction</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between">
+        <span>Message généré :</span>
+        <span id="venteWAGenStatus" style="font-weight:600;color:var(--accent)"></span>
+      </div>
+      <textarea id="venteWAGenResult" rows="5" placeholder="Le message apparaîtra ici..." style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;resize:none;line-height:1.6"></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button onclick="closeVenteWAGen()" style="flex:1;padding:11px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer">Annuler</button>
+        <button onclick="sendVenteWAMsg()" style="flex:2;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(37,211,102,.3)">💬 Envoyer sur WhatsApp</button>
       </div>
     </div>
   </div>
