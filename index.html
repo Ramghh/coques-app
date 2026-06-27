@@ -802,6 +802,13 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <button class="wa-lang-btn" onclick="sendWaMsg('confirmation','fr')">🇫🇷 Français</button>
       <button class="wa-lang-btn" onclick="sendWaMsg('confirmation','ar')">🇹🇳 العربية</button>
     </div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:6px 0 2px">🤖 Message IA (Français)</div>
+      <button class="wa-lang-btn" style="color:#25d366;border-color:rgba(37,211,102,.4)" onclick="generateVenteIAMessage('colis')">🚚 Colis en cours de livraison</button>
+      <button class="wa-lang-btn" style="color:var(--yellow);border-color:rgba(245,158,11,.4)" onclick="generateVenteIAMessage('merci')">🙏 Remerciement après achat</button>
+      <button class="wa-lang-btn" style="color:#818cf8;border-color:rgba(99,102,241,.4)" onclick="generateVenteIAMessage('satisfaction')">⭐ Suivi satisfaction</button>
+      <div id="waVenteStatus" style="font-size:12px;color:var(--muted);text-align:center;min-height:16px"></div>
+      <textarea id="waVenteResult" rows="4" placeholder="Message IA..." style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;resize:none;display:none"></textarea>
+      <button id="waVenteSendBtn" onclick="sendVenteIAMessage()" style="display:none;width:100%;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif">💬 Envoyer sur WhatsApp</button>
     <button class="wa-cancel" onclick="closeWaSheet()">Annuler</button>
   </div>
 </div>
@@ -4090,7 +4097,7 @@ function cardHTML(s,q='',delay=0){
       ${s.color?`<span class="tag tag-sec">🎨 ${hl(s.color,q)}</span>`:''}
       ${s.ville?`<span class="tag city">📍 ${hl(s.ville,q)}</span>`:''}
       ${s.client?`<span class="tag client">👤 ${hl(s.client,q)}</span>`:''}
-      ${s.phone?`<a href="tel:${s.phone.replace(/\\s/g,'')}" class="tag tag-sec" style="color:var(--green);background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);text-decoration:none;display:inline-flex;align-items:center;gap:4px">📞 ${s.phone}</a><button onclick="openWaSheet('${s.phone}','${(s.client||'').replace(/'/g,"\\'")}','${(s.model||'').replace(/'/g,"\\'")}','${s.prix}')" class="tag tag-sec wa-icon-btn" style="color:#25d366;background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.3);cursor:pointer;border:1px solid rgba(37,211,102,.3);border-radius:7px;padding:2px 4px;display:inline-flex;align-items:center"><img src=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2325d366'%3E%3Cpath d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z'/%3E%3Cpath d='M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 0 0 .606.633l6.284-1.634A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.013-1.376l-.36-.214-3.732.97.999-3.63-.235-.374A9.818 9.818 0 1 1 12 21.818z'/%3E%3C/svg%3E\" width=\"15\" height=\"15\" style=\"display:block\"></button>`:''}
+      ${s.phone?`<a href="tel:${s.phone.replace(/\\s/g,'')}" class="tag tag-sec" style="color:var(--green);background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);text-decoration:none;display:inline-flex;align-items:center;gap:4px">📞 ${s.phone}</a><button onclick="openWaSheet('${s.phone}','${(s.client||'').replace(/'/g,"\\'")}','${(s.model||'').replace(/'/g,"\\'")}','${s.prix}',${s.id})" class="tag tag-sec wa-icon-btn" style="color:#25d366;background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.3);cursor:pointer;border:1px solid rgba(37,211,102,.3);border-radius:7px;padding:2px 4px;display:inline-flex;align-items:center"><img src=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2325d366'%3E%3Cpath d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z'/%3E%3Cpath d='M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 0 0 .606.633l6.284-1.634A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.013-1.376l-.36-.214-3.732.97.999-3.63-.235-.374A9.818 9.818 0 1 1 12 21.818z'/%3E%3C/svg%3E\" width=\"15\" height=\"15\" style=\"display:block\"></button>`:''}
       ${fNom?`<span class="tag fourn tag-sec">🧑‍💼 ${hl(fNom,q)}</span>`:''}
       ${carteObj?`<span class="tag carte tag-sec">💳 ${carteObj.label}</span>`:''}
       ${partageTag}
@@ -4108,7 +4115,6 @@ function cardHTML(s,q='',delay=0){
       <button class="btn-print-card" onclick="printInvoice(${s.id})">🖨️</button>
       ${!s.phone&&s.client?`<button class="btn-print-card" style="background:rgba(16,185,129,.15);color:var(--green)" onclick="fetchClientPhone(${s.id})">📞</button>`:''}
       ${s.phone?`<button class="btn-sms-card" onclick="openSmsSheet(this,'${s.phone}',${s.id})">💬 SMS</button>`:''}
-      ${s.phone?`<button class="btn-sms-card" onclick="openVenteIAModal(${s.id})" style="background:linear-gradient(135deg,rgba(37,211,102,.15),rgba(37,211,102,.08));border-color:rgba(37,211,102,.4);color:#25d366">🤖 IA</button>`:''}
       <button class="btn-del-card"   onclick="deleteSale(${s.id})">🗑️</button>
     </div>
   </div>`;
@@ -4254,8 +4260,14 @@ function _doRenderSales(){
 // ── WHATSAPP MESSAGE SHEET ─────────────────────────────────────────────────
 let _waPhone='', _waClient='', _waModel='', _waPrix='';
 
-function openWaSheet(phone, client, model, prix){
+function openWaSheet(phone, client, model, prix, saleId){
   _waPhone=phone; _waClient=client||''; _waModel=model||''; _waPrix=prix||'';
+  const s = sales.find(x=>x.id==saleId);
+  window._waVente = { sale: s || {phone, client, model, revenu: prix} };
+  document.getElementById('waVenteResult').value='';
+  document.getElementById('waVenteResult').style.display='none';
+  document.getElementById('waVenteSendBtn').style.display='none';
+  document.getElementById('waVenteStatus').textContent='';
   document.getElementById('waSheetOverlay').style.display='flex';
 }
 function closeWaSheet(e){
@@ -4288,11 +4300,17 @@ let _smsSaleId=null;
 
 function openSmsSheet(btn, phone, saleId){
   _smsSaleId=saleId;
+  const s = sales.find(x=>x.id==saleId);
+  window._waVente = { sale: s || {} };
+  document.getElementById('waVenteResult').value='';
+  document.getElementById('waVenteResult').style.display='none';
+  document.getElementById('waVenteSendBtn').style.display='none';
+  document.getElementById('waVenteStatus').textContent='';
   document.getElementById('smsSheetOverlay').style.display='flex';
 }
 function closeSmsSheet(e){
   if(e&&e.target!==document.getElementById('smsSheetOverlay')) return;
-  document.getElementById('smsSheetOverlay').style.display='none';
+  document.getElementById('waSheetOverlay').style.display='none';
 }
 function sendSmsMsg(type, lang){
   const s=sales.find(x=>x.id==_smsSaleId); if(!s) return;
@@ -8086,9 +8104,11 @@ function closeVenteIAModal(){
 async function generateVenteIAMessage(type){
   const key = localStorage.getItem(AI_KEY_LS);
   if(!key){ alert('أدخل Groq API Key أولاً من Assistant IA'); return; }
-  const { sale } = window._waVente;
+  const sale = window._waVente && window._waVente.sale;
+  if(!sale){ alert('Erreur: vente introuvable'); return; }
   const statusEl = document.getElementById('waVenteStatus');
   const resultEl = document.getElementById('waVenteResult');
+  const sendBtn = document.getElementById('waVenteSendBtn');
   const nom = sale.client || 'client';
   const model = sale.model || 'coque';
   const ville = sale.ville || '';
@@ -8099,7 +8119,8 @@ async function generateVenteIAMessage(type){
     satisfaction: `Écris un message WhatsApp court en français pour demander au client "${nom}" s'il est satisfait de son achat (${model}). Propose-lui de l'aide si nécessaire. Max 3 lignes. Amical et professionnel.`
   };
   statusEl.textContent = '⏳ Génération...';
-  resultEl.value = '';
+  resultEl.style.display = 'none';
+  sendBtn.style.display = 'none';
   try {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
@@ -8107,20 +8128,23 @@ async function generateVenteIAMessage(type){
       body: JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:200,messages:[{role:'user',content:prompts[type]}]})
     });
     const data = await res.json();
-    resultEl.value = data.choices?.[0]?.message?.content?.trim() || '';
+    const msg = data.choices?.[0]?.message?.content?.trim() || '';
+    resultEl.value = msg;
+    resultEl.style.display = 'block';
+    sendBtn.style.display = 'block';
     statusEl.textContent = '✅ Prêt!';
   } catch(e){
     statusEl.textContent = '❌ Erreur connexion';
   }
 }
 function sendVenteIAMessage(){
-  const { sale } = window._waVente;
+  const sale = window._waVente && window._waVente.sale;
   const msg = document.getElementById('waVenteResult').value.trim();
   if(!msg){ alert("Génère un message d'abord"); return; }
   const tel = (sale.phone||'').replace(/\D/g,'').replace(/^216/,'');
   if(!tel){ alert('Numéro introuvable'); return; }
   window.open(`https://wa.me/216${tel}?text=${encodeURIComponent(msg)}`,'_blank');
-  closeVenteIAModal();
+  document.getElementById('smsSheetOverlay').style.display='none';
 }
 // ── END WA VENTE IA ──────────────────────────────────────────────────────
 
