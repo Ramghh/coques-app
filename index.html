@@ -5927,7 +5927,7 @@ const KB_COLS = [
 ];
 
 function kbMoveStatus(saleId, newStatus){
-  const s = sales.find(x=>x.id===saleId);
+  const s = sales.find(x=>x.id==saleId);
   if(!s) return;
   s.status = newStatus;
   saveSales();
