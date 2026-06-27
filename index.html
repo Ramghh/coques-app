@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
-  <link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🏪 MegaStore</title>
@@ -802,7 +801,9 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <button class="wa-lang-btn" onclick="sendWaMsg('confirmation','fr')">🇫🇷 Français</button>
       <button class="wa-lang-btn" onclick="sendWaMsg('confirmation','ar')">🇹🇳 العربية</button>
     </div>
-      <button class="wa-lang-btn" onclick="openVenteIAPopup()" style="color:#a78bfa;border-color:rgba(167,139,250,.4);font-weight:700">🤖 Message IA</button>
+    <div style="border-top:1px solid var(--border);margin:10px 0 6px"></div>
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px">✨ Générer avec IA</div>
+    <button class="wa-lang-btn" onclick="openVenteWAGen()" style="background:linear-gradient(135deg,rgba(255,122,0,.12),rgba(255,154,60,.08));border:1px solid rgba(255,122,0,.35);color:var(--accent);font-weight:700">🤖 Message IA (Français)</button>
     <button class="wa-cancel" onclick="closeWaSheet()">Annuler</button>
   </div>
 </div>
@@ -4091,7 +4092,7 @@ function cardHTML(s,q='',delay=0){
       ${s.color?`<span class="tag tag-sec">🎨 ${hl(s.color,q)}</span>`:''}
       ${s.ville?`<span class="tag city">📍 ${hl(s.ville,q)}</span>`:''}
       ${s.client?`<span class="tag client">👤 ${hl(s.client,q)}</span>`:''}
-      ${s.phone?`<a href="tel:${s.phone.replace(/\\s/g,'')}" class="tag tag-sec" style="color:var(--green);background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);text-decoration:none;display:inline-flex;align-items:center;gap:4px">📞 ${s.phone}</a><button onclick="openWaSheet('${s.phone}','${(s.client||'').replace(/'/g,"\\'")}','${(s.model||'').replace(/'/g,"\\'")}','${s.prix}',${s.id})" class="tag tag-sec wa-icon-btn" style="color:#25d366;background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.3);cursor:pointer;border:1px solid rgba(37,211,102,.3);border-radius:7px;padding:2px 4px;display:inline-flex;align-items:center"><img src=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2325d366'%3E%3Cpath d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z'/%3E%3Cpath d='M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 0 0 .606.633l6.284-1.634A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.013-1.376l-.36-.214-3.732.97.999-3.63-.235-.374A9.818 9.818 0 1 1 12 21.818z'/%3E%3C/svg%3E\" width=\"15\" height=\"15\" style=\"display:block\"></button>`:''}
+      ${s.phone?`<a href="tel:${s.phone.replace(/\\s/g,'')}" class="tag tag-sec" style="color:var(--green);background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);text-decoration:none;display:inline-flex;align-items:center;gap:4px">📞 ${s.phone}</a><button onclick="openWaSheet('${s.phone}','${(s.client||'').replace(/'/g,"\\'")}','${(s.model||'').replace(/'/g,"\\'")}','${s.prix}')" class="tag tag-sec wa-icon-btn" style="color:#25d366;background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.3);cursor:pointer;border:1px solid rgba(37,211,102,.3);border-radius:7px;padding:2px 4px;display:inline-flex;align-items:center"><img src=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2325d366'%3E%3Cpath d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z'/%3E%3Cpath d='M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 0 0 .606.633l6.284-1.634A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.013-1.376l-.36-.214-3.732.97.999-3.63-.235-.374A9.818 9.818 0 1 1 12 21.818z'/%3E%3C/svg%3E\" width=\"15\" height=\"15\" style=\"display:block\"></button>`:''}
       ${fNom?`<span class="tag fourn tag-sec">🧑‍💼 ${hl(fNom,q)}</span>`:''}
       ${carteObj?`<span class="tag carte tag-sec">💳 ${carteObj.label}</span>`:''}
       ${partageTag}
@@ -4254,20 +4255,12 @@ function _doRenderSales(){
 // ── WHATSAPP MESSAGE SHEET ─────────────────────────────────────────────────
 let _waPhone='', _waClient='', _waModel='', _waPrix='';
 
-function openWaSheet(phone, client, model, prix, saleId){
+function openWaSheet(phone, client, model, prix){
   _waPhone=phone; _waClient=client||''; _waModel=model||''; _waPrix=prix||'';
-  const s = sales.find(x=>x.id==saleId);
-  window._waVente = { sale: s || {phone, client, model, revenu: prix} };
-  document.getElementById('waIAOptions').style.display='none';
-  document.getElementById('waVenteResult').value='';
-  document.getElementById('waVenteResult').style.display='none';
-  document.getElementById('waVenteSendBtn').style.display='none';
-  document.getElementById('waVenteStatus').textContent='';
   document.getElementById('waSheetOverlay').style.display='flex';
 }
 function closeWaSheet(e){
   if(e&&e.target!==document.getElementById('waSheetOverlay')) return;
-  document.getElementById('waVentePopup').style.display='none';
   document.getElementById('waSheetOverlay').style.display='none';
 }
 function sendWaMsg(type, lang){
@@ -4296,17 +4289,11 @@ let _smsSaleId=null;
 
 function openSmsSheet(btn, phone, saleId){
   _smsSaleId=saleId;
-  const s = sales.find(x=>x.id==saleId);
-  window._waVente = { sale: s || {} };
-  document.getElementById('waVenteResult').value='';
-  document.getElementById('waVenteResult').style.display='none';
-  document.getElementById('waVenteSendBtn').style.display='none';
-  document.getElementById('waVenteStatus').textContent='';
   document.getElementById('smsSheetOverlay').style.display='flex';
 }
 function closeSmsSheet(e){
   if(e&&e.target!==document.getElementById('smsSheetOverlay')) return;
-  document.getElementById('waSheetOverlay').style.display='none';
+  document.getElementById('smsSheetOverlay').style.display='none';
 }
 function sendSmsMsg(type, lang){
   const s=sales.find(x=>x.id==_smsSaleId); if(!s) return;
@@ -5941,7 +5928,7 @@ const KB_COLS = [
 ];
 
 function kbMoveStatus(saleId, newStatus){
-  const s = sales.find(x=>x.id==saleId);
+  const s = sales.find(x=>x.id===saleId);
   if(!s) return;
   s.status = newStatus;
   saveSales();
@@ -7015,58 +7002,35 @@ function exportPDF(type){
   </div>
 </div>
 
-<!-- WA VENTE IA MODAL -->
-<div id="waVenteModal" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.65);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:16px">
+<!-- VENTE WA IA MODAL -->
+<div id="venteWAGenModal" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:16px">
   <div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px;border:2px solid #25d366;box-shadow:0 8px 40px rgba(37,211,102,.2);overflow:hidden">
     <div style="padding:16px 18px;background:linear-gradient(135deg,rgba(37,211,102,.1),rgba(37,211,102,.04));border-bottom:1px solid rgba(37,211,102,.3);display:flex;align-items:center;justify-content:space-between">
       <div>
-        <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:16px">🤖 Message WhatsApp <span style="color:#25d366">IA</span></div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">Pour: <span id="waVenteClientName" style="color:var(--text);font-weight:600"></span></div>
+        <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:16px">✨ Message WhatsApp <span style="color:#25d366">IA</span></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Pour: <span id="venteWAGenClient" style="color:var(--text);font-weight:600"></span></div>
       </div>
-      <button onclick="closeVenteIAModal()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:18px">×</button>
+      <button onclick="closeVenteWAGen()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:18px">×</button>
     </div>
     <div style="padding:16px 18px">
       <div style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Choisir le type :</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
-        <button onclick="generateVenteIAMessage('colis')" style="padding:11px;border-radius:11px;border:1px solid rgba(37,211,102,.3);background:rgba(37,211,102,.08);color:#25d366;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">🚚 Colis en cours de livraison</button>
-        <button onclick="generateVenteIAMessage('merci')" style="padding:11px;border-radius:11px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.08);color:var(--yellow);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">🙏 Remerciement après achat</button>
-        <button onclick="generateVenteIAMessage('satisfaction')" style="padding:11px;border-radius:11px;border:1px solid rgba(99,102,241,.3);background:rgba(99,102,241,.08);color:#818cf8;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">⭐ Suivi satisfaction</button>
+        <button onclick="generateVenteWAMsg('livraison')" style="padding:11px;border-radius:11px;border:1px solid rgba(255,122,0,.3);background:rgba(255,122,0,.08);color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">🚚 Colis en cours de livraison</button>
+        <button onclick="generateVenteWAMsg('merci')" style="padding:11px;border-radius:11px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.08);color:var(--yellow);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">🙏 Remerciement après achat</button>
+        <button onclick="generateVenteWAMsg('suivi')" style="padding:11px;border-radius:11px;border:1px solid rgba(37,211,102,.3);background:rgba(37,211,102,.08);color:#25d366;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">⭐ Suivi satisfaction</button>
       </div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between">
         <span>Message généré :</span>
-        <span id="waVenteStatus" style="font-weight:600;color:#25d366"></span>
+        <span id="venteWAGenStatus" style="font-weight:600;color:var(--accent)"></span>
       </div>
-      <textarea id="waVenteResult" rows="5" placeholder="Le message apparaîtra ici..." style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;resize:none;line-height:1.6"></textarea>
+      <textarea id="venteWAGenResult" rows="5" placeholder="Le message apparaîtra ici..." style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;resize:none;line-height:1.6"></textarea>
       <div style="display:flex;gap:8px;margin-top:12px">
-        <button onclick="closeVenteIAModal()" style="flex:1;padding:11px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer">Annuler</button>
-        <button onclick="sendVenteIAMessage()" style="flex:2;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(37,211,102,.3)">💬 Envoyer sur WhatsApp</button>
+        <button onclick="closeVenteWAGen()" style="flex:1;padding:11px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer">Annuler</button>
+        <button onclick="sendVenteWAMsg()" style="flex:2;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(37,211,102,.3)">💬 Envoyer sur WhatsApp</button>
       </div>
     </div>
   </div>
 </div>
-
-
-<!-- WA VENTE IA POPUP -->
-<div id="waVentePopup" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.7);align-items:center;justify-content:center;padding:20px">
-  <div style="width:100%;max-width:420px;background:var(--surface);border-radius:20px;border:1px solid rgba(167,139,250,.3);box-shadow:0 8px 40px rgba(0,0,0,.4);overflow:hidden">
-    <div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <div style="font-weight:800;font-size:16px">🤖 Message IA</div>
-      <button onclick="closeVenteIAPopup()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;line-height:1">×</button>
-    </div>
-    <div style="padding:16px 18px;display:flex;flex-direction:column;gap:10px">
-      <div id="waIAChoices" style="display:flex;flex-direction:column;gap:8px">
-        <button class="wa-lang-btn" style="color:#25d366;border-color:rgba(37,211,102,.4)" onclick="generateVenteIAMessage('colis')">🚚 Colis en cours de livraison</button>
-        <button class="wa-lang-btn" style="color:var(--yellow);border-color:rgba(245,158,11,.4)" onclick="generateVenteIAMessage('merci')">🙏 Remerciement après achat</button>
-        <button class="wa-lang-btn" style="color:#818cf8;border-color:rgba(99,102,241,.4)" onclick="generateVenteIAMessage('satisfaction')">⭐ Suivi satisfaction</button>
-      </div>
-      <div id="waVenteStatus" style="font-size:12px;color:var(--muted);text-align:center;min-height:16px"></div>
-      <textarea id="waVenteResult" rows="4" placeholder="Le message apparaîtra ici..." style="display:none;width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;resize:none;line-height:1.6"></textarea>
-      <button id="waVenteSendBtn" onclick="sendVenteIAMessage()" style="display:none;width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(37,211,102,.3)">💬 Envoyer sur WhatsApp</button>
-      <button onclick="closeVenteIAPopup()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:14px;cursor:pointer">Annuler</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>`;
 
@@ -8104,82 +8068,65 @@ function sendGeneratedWA(){
   window.open(`https://wa.me/216${tel}?text=${encodeURIComponent(msg)}`, '_blank');
   closeWAGen();
 }
-// ── END WA GENERATOR ──
 
-// ── WA VENTE IA ──────────────────────────────────────────────────────────
-function openVenteIAModal(saleId){
-  const s = sales.find(x=>x.id===saleId);
-  if(!s){ return; }
-  window._waVente = { sale: s };
-  document.getElementById('waVenteClientName').textContent = s.client || '—';
-  document.getElementById('waVenteResult').value = '';
-  document.getElementById('waVenteStatus').textContent = '';
-  document.getElementById('waVenteModal').style.display = 'flex';
+// ── VENTE WA IA GENERATOR ────────────────────────────────
+function openVenteWAGen(){
+  document.getElementById('waSheetOverlay').style.display='none';
+  document.getElementById('venteWAGenModal').style.display='flex';
+  document.getElementById('venteWAGenResult').value='';
+  document.getElementById('venteWAGenStatus').textContent='';
+  // pre-fill client name display
+  document.getElementById('venteWAGenClient').textContent = _waClient||'Client';
 }
-function closeVenteIAModal(){
-  document.getElementById('waVenteModal').style.display = 'none';
+
+function closeVenteWAGen(){
+  document.getElementById('venteWAGenModal').style.display='none';
 }
-async function generateVenteIAMessage(type){
+
+async function generateVenteWAMsg(type){
   const key = localStorage.getItem(AI_KEY_LS);
   if(!key){ alert('أدخل Groq API Key أولاً من Assistant IA'); return; }
-  const sale = window._waVente && window._waVente.sale;
-  if(!sale){ alert('Erreur: vente introuvable'); return; }
-  const statusEl = document.getElementById('waVenteStatus');
-  const resultEl = document.getElementById('waVenteResult');
-  const sendBtn = document.getElementById('waVenteSendBtn');
-  const nom = sale.client || 'client';
-  const model = sale.model || 'coque';
-  const ville = sale.ville || '';
-  const prix = sale.revenu || '';
+
+  const statusEl = document.getElementById('venteWAGenStatus');
+  const resultEl = document.getElementById('venteWAGenResult');
+
   const prompts = {
-    colis: `Écris un message WhatsApp élégant et chaleureux en français pour informer le client "${nom}" que sa commande (${model}${prix?' — '+prix+' DT':''}) est en cours de livraison. Mentionne le produit et le prix naturellement. Demande-lui poliment de rester joignable pour la réception. Commence par "Bonjour ${nom} 😊". 3-4 lignes maximum. Ton professionnel mais humain, pas robotique. Pas de formules creuses.`,
-    merci: `Écris un message WhatsApp élégant en français pour remercier "${nom}" de son achat (${model}${prix?' — '+prix+' DT':''}). Mentionne le produit et le prix. Exprime une vraie gratitude, invite-le à revenir et à recommander. Commence par "Bonjour ${nom} 🙏". 3-4 lignes. Chaleureux et sincère.`,
-    satisfaction: `Écris un message WhatsApp élégant en français pour demander à "${nom}" s'il est satisfait de son achat (${model}${prix?' — '+prix+' DT':''}). Mentionne le produit. Propose ton aide si besoin et invite-le à laisser un avis. Commence par "Bonjour ${nom} ⭐". 3-4 lignes. Amical et professionnel.`
+    livraison: `Écris un message WhatsApp professionnel et chaleureux en français pour informer le client "${_waClient||'client'}" que sa commande (${_waModel||'coque téléphone'}, montant: ${_waPrix||'—'} DT) est en cours de livraison. Demande-lui poliment de rester joignable. Max 4 lignes. Commence par Bonjour et son prénom. Utilise des emojis appropriés.`,
+    merci: `Écris un message WhatsApp de remerciement sincère en français pour le client "${_waClient||'client'}" qui vient d'acheter (${_waModel||'coque téléphone'}, ${_waPrix||'—'} DT). Remercie-le pour sa confiance et invite-le à revenir. Max 3 lignes. Chaleureux et personnel.`,
+    suivi: `Écris un message WhatsApp de suivi après livraison en français pour le client "${_waClient||'client'}" (commande: ${_waModel||'coque téléphone'}, ${_waPrix||'—'} DT). Demande-lui s'il est satisfait et propose-lui de l'aide. Max 3 lignes. Très cordial.`
   };
+
   statusEl.textContent = '⏳ Génération...';
-  resultEl.style.display = 'none';
-  sendBtn.style.display = 'none';
+  resultEl.value = '';
+
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-      body: JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:200,messages:[{role:'user',content:prompts[type]}]})
+      body: JSON.stringify({
+        model:'llama-3.3-70b-versatile',
+        max_tokens:200,
+        messages:[{role:'user', content: prompts[type]}]
+      })
     });
     const data = await res.json();
     const msg = data.choices?.[0]?.message?.content?.trim() || '';
     resultEl.value = msg;
-    resultEl.style.display = 'block';
-    sendBtn.style.display = 'block';
     statusEl.textContent = '✅ Prêt!';
-  } catch(e){
+  } catch(e) {
     statusEl.textContent = '❌ Erreur connexion';
   }
 }
-function sendVenteIAMessage(){
-  const sale = window._waVente && window._waVente.sale;
-  const msg = document.getElementById('waVenteResult').value.trim();
-  if(!msg){ alert("Génère un message d'abord"); return; }
-  const tel = (sale.phone||'').replace(/\D/g,'').replace(/^216/,'');
-  if(!tel){ alert('Numéro introuvable'); return; }
-  window.open(`https://wa.me/216${tel}?text=${encodeURIComponent(msg)}`,'_blank');
-  document.getElementById('smsSheetOverlay').style.display='none';
-}
-function openVenteIAPopup(){
-  document.getElementById('waVenteResult').value='';
-  document.getElementById('waVenteResult').style.display='none';
-  document.getElementById('waVenteSendBtn').style.display='none';
-  document.getElementById('waVenteStatus').textContent='';
-  document.getElementById('waVentePopup').style.display='flex';
-}
-function closeVenteIAPopup(){
-  document.getElementById('waVentePopup').style.display='none';
-}
-function toggleIAOptions(){
-  const el = document.getElementById('waIAOptions');
-  el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
-}
-// ── END WA VENTE IA ──────────────────────────────────────────────────────
 
+function sendVenteWAMsg(){
+  const msg = document.getElementById('venteWAGenResult').value.trim();
+  if(!msg){ alert("Génère un message d'abord"); return; }
+  const num = '216' + _waPhone.replace(/\D/g,'').replace(/^216/,'');
+  window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
+  closeVenteWAGen();
+}
+// ── END VENTE WA IA ──
+// ── END WA GENERATOR ──
 
 // Mobile keyboard: keep input visible when keyboard opens
 if(window.visualViewport){
@@ -8220,6 +8167,36 @@ if(window.visualViewport){
       <div style="display:flex;gap:8px;margin-top:12px">
         <button onclick="closeWAGen()" style="flex:1;padding:11px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer">Annuler</button>
         <button onclick="sendGeneratedWA()" style="flex:2;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(37,211,102,.3)">💬 Envoyer sur WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VENTE WA IA MODAL -->
+<div id="venteWAGenModal" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:16px">
+  <div style="width:100%;max-width:480px;background:var(--surface);border-radius:18px;border:2px solid #25d366;box-shadow:0 8px 40px rgba(37,211,102,.2);overflow:hidden">
+    <div style="padding:16px 18px;background:linear-gradient(135deg,rgba(37,211,102,.1),rgba(37,211,102,.04));border-bottom:1px solid rgba(37,211,102,.3);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:16px">✨ Message WhatsApp <span style="color:#25d366">IA</span></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Pour: <span id="venteWAGenClient" style="color:var(--text);font-weight:600"></span></div>
+      </div>
+      <button onclick="closeVenteWAGen()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:18px">×</button>
+    </div>
+    <div style="padding:16px 18px">
+      <div style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Choisir le type :</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+        <button onclick="generateVenteWAMsg('livraison')" style="padding:11px;border-radius:11px;border:1px solid rgba(255,122,0,.3);background:rgba(255,122,0,.08);color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">🚚 Colis en cours de livraison</button>
+        <button onclick="generateVenteWAMsg('merci')" style="padding:11px;border-radius:11px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.08);color:var(--yellow);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">🙏 Remerciement après achat</button>
+        <button onclick="generateVenteWAMsg('suivi')" style="padding:11px;border-radius:11px;border:1px solid rgba(37,211,102,.3);background:rgba(37,211,102,.08);color:#25d366;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">⭐ Suivi satisfaction</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between">
+        <span>Message généré :</span>
+        <span id="venteWAGenStatus" style="font-weight:600;color:var(--accent)"></span>
+      </div>
+      <textarea id="venteWAGenResult" rows="5" placeholder="Le message apparaîtra ici..." style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;resize:none;line-height:1.6"></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button onclick="closeVenteWAGen()" style="flex:1;padding:11px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer">Annuler</button>
+        <button onclick="sendVenteWAMsg()" style="flex:2;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(37,211,102,.3)">💬 Envoyer sur WhatsApp</button>
       </div>
     </div>
   </div>
