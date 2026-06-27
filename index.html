@@ -802,13 +802,15 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <button class="wa-lang-btn" onclick="sendWaMsg('confirmation','fr')">🇫🇷 Français</button>
       <button class="wa-lang-btn" onclick="sendWaMsg('confirmation','ar')">🇹🇳 العربية</button>
     </div>
-      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:6px 0 2px">🤖 Message IA (Français)</div>
-      <button class="wa-lang-btn" style="color:#25d366;border-color:rgba(37,211,102,.4)" onclick="generateVenteIAMessage('colis')">🚚 Colis en cours de livraison</button>
-      <button class="wa-lang-btn" style="color:var(--yellow);border-color:rgba(245,158,11,.4)" onclick="generateVenteIAMessage('merci')">🙏 Remerciement après achat</button>
-      <button class="wa-lang-btn" style="color:#818cf8;border-color:rgba(99,102,241,.4)" onclick="generateVenteIAMessage('satisfaction')">⭐ Suivi satisfaction</button>
-      <div id="waVenteStatus" style="font-size:12px;color:var(--muted);text-align:center;min-height:16px"></div>
-      <textarea id="waVenteResult" rows="4" placeholder="Message IA..." style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;resize:none;display:none"></textarea>
-      <button id="waVenteSendBtn" onclick="sendVenteIAMessage()" style="display:none;width:100%;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif">💬 Envoyer sur WhatsApp</button>
+      <button class="wa-lang-btn" onclick="toggleIAOptions()" id="waIAToggleBtn" style="color:#a78bfa;border-color:rgba(167,139,250,.4);font-weight:700">🤖 Message IA</button>
+      <div id="waIAOptions" style="display:none;flex-direction:column;gap:8px">
+        <button class="wa-lang-btn" style="color:#25d366;border-color:rgba(37,211,102,.4)" onclick="generateVenteIAMessage('colis')">🚚 Colis en cours de livraison</button>
+        <button class="wa-lang-btn" style="color:var(--yellow);border-color:rgba(245,158,11,.4)" onclick="generateVenteIAMessage('merci')">🙏 Remerciement après achat</button>
+        <button class="wa-lang-btn" style="color:#818cf8;border-color:rgba(99,102,241,.4)" onclick="generateVenteIAMessage('satisfaction')">⭐ Suivi satisfaction</button>
+        <div id="waVenteStatus" style="font-size:12px;color:var(--muted);text-align:center;min-height:16px"></div>
+        <textarea id="waVenteResult" rows="4" placeholder="Message IA..." style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;resize:none;display:none"></textarea>
+        <button id="waVenteSendBtn" onclick="sendVenteIAMessage()" style="display:none;width:100%;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif">💬 Envoyer sur WhatsApp</button>
+      </div>
     <button class="wa-cancel" onclick="closeWaSheet()">Annuler</button>
   </div>
 </div>
@@ -4264,6 +4266,7 @@ function openWaSheet(phone, client, model, prix, saleId){
   _waPhone=phone; _waClient=client||''; _waModel=model||''; _waPrix=prix||'';
   const s = sales.find(x=>x.id==saleId);
   window._waVente = { sale: s || {phone, client, model, revenu: prix} };
+  document.getElementById('waIAOptions').style.display='none';
   document.getElementById('waVenteResult').value='';
   document.getElementById('waVenteResult').style.display='none';
   document.getElementById('waVenteSendBtn').style.display='none';
@@ -8114,9 +8117,9 @@ async function generateVenteIAMessage(type){
   const ville = sale.ville || '';
   const prix = sale.revenu || '';
   const prompts = {
-    colis: `Écris un message WhatsApp court en français pour informer le client "${nom}" que son colis (${model}${ville?' — '+ville:''}) est en cours de livraison. Demande-lui de rester disponible. Max 3 lignes. Commence par Bonjour et son prénom. Naturel et professionnel.`,
-    merci: `Écris un message WhatsApp de remerciement court en français pour le client "${nom}" qui vient d'acheter ${model}${prix?' à '+prix+' DT':''}. Remercie-le pour sa confiance et invite-le à revenir. Max 3 lignes. Chaleureux.`,
-    satisfaction: `Écris un message WhatsApp court en français pour demander au client "${nom}" s'il est satisfait de son achat (${model}). Propose-lui de l'aide si nécessaire. Max 3 lignes. Amical et professionnel.`
+    colis: `Écris un message WhatsApp élégant et chaleureux en français pour informer le client "${nom}" que sa commande (${model}${prix?' — '+prix+' DT':''}) est en cours de livraison. Mentionne le produit et le prix naturellement. Demande-lui poliment de rester joignable pour la réception. Commence par "Bonjour ${nom} 😊". 3-4 lignes maximum. Ton professionnel mais humain, pas robotique. Pas de formules creuses.`,
+    merci: `Écris un message WhatsApp élégant en français pour remercier "${nom}" de son achat (${model}${prix?' — '+prix+' DT':''}). Mentionne le produit et le prix. Exprime une vraie gratitude, invite-le à revenir et à recommander. Commence par "Bonjour ${nom} 🙏". 3-4 lignes. Chaleureux et sincère.`,
+    satisfaction: `Écris un message WhatsApp élégant en français pour demander à "${nom}" s'il est satisfait de son achat (${model}${prix?' — '+prix+' DT':''}). Mentionne le produit. Propose ton aide si besoin et invite-le à laisser un avis. Commence par "Bonjour ${nom} ⭐". 3-4 lignes. Amical et professionnel.`
   };
   statusEl.textContent = '⏳ Génération...';
   resultEl.style.display = 'none';
@@ -8145,6 +8148,10 @@ function sendVenteIAMessage(){
   if(!tel){ alert('Numéro introuvable'); return; }
   window.open(`https://wa.me/216${tel}?text=${encodeURIComponent(msg)}`,'_blank');
   document.getElementById('smsSheetOverlay').style.display='none';
+}
+function toggleIAOptions(){
+  const el = document.getElementById('waIAOptions');
+  el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
 }
 // ── END WA VENTE IA ──────────────────────────────────────────────────────
 
