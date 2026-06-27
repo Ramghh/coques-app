@@ -7744,7 +7744,7 @@ function closeWallMode(){
         <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ff7a00,#ff9a3c);display:flex;align-items:center;justify-content:center;font-size:17px">🤖</div>
         <div>
           <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:18px">🤖 Assistant <span style="color:var(--accent)">IA</span></div>
-          <div style="font-size:11px;color:var(--muted)">Propulsé par Groq ⚡</div>
+          <div style="font-size:11px;color:var(--muted)">Propulsé par OpenRouter ⚡</div>
         </div>
       </div>
       <button onclick="openAISettings()" title="إعدادات API" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center">⚙️</button>
@@ -7752,9 +7752,9 @@ function closeWallMode(){
 
     <!-- API Key setup (shown when no key) -->
     <div id="aiSetupBox" style="display:none;padding:20px;border-bottom:1px solid var(--border);background:rgba(255,122,0,.06);flex-shrink:0">
-      <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--accent)">🔑 أدخل Groq API Key ديالك</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--accent)">🔑 أدخل OpenRouter API Key ديالك</div>
       <div style="display:flex;gap:8px">
-        <input id="aiKeyInput" type="password" placeholder="gsk_..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace">
+        <input id="aiKeyInput" type="password" placeholder="sk-or-v1-..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace">
         <button onclick="saveAIKey()" style="padding:10px 16px;background:linear-gradient(135deg,#ff7a00,#ff9a3c);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap">حفظ</button>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:8px">🔒 يتحفظ في localStorage فقط — ما يظهرش في الكود</div>
@@ -7847,8 +7847,8 @@ function openAISettings(){
 
 function saveAIKey(){
   const val = document.getElementById('aiKeyInput').value.trim();
-  if(!val || !val.startsWith('gsk_')){
-    alert('المفتاح لازم يبدأ بـ gsk_');
+  if(!val || !val.startsWith('sk-or-')){
+    alert('المفتاح لازم يبدأ بـ sk-or-');
     return;
   }
   localStorage.setItem(AI_KEY_LS, val);
@@ -7968,7 +7968,7 @@ async function sendAIMessage(){
   aiChatHistory.push({role:'user', content: q});
 
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -8043,11 +8043,11 @@ async function generateWAMessage(type){
   statusEl.textContent = '⏳ Génération...';
   resultEl.value = '';
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
       body: JSON.stringify({
-        model:'llama-3.3-70b-versatile',
+        model:'meta-llama/llama-3.3-70b-instruct:free',
         max_tokens:200,
         messages:[{role:'user', content: prompts[type]}]
       })
@@ -8101,11 +8101,11 @@ async function generateVenteWAMsg(type){
   resultEl.value = '';
 
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
       body: JSON.stringify({
-        model:'llama-3.3-70b-versatile',
+        model:'meta-llama/llama-3.3-70b-instruct:free',
         max_tokens:200,
         messages:[{role:'user', content: prompts[type]}]
       })
