@@ -802,15 +802,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <button class="wa-lang-btn" onclick="sendWaMsg('confirmation','fr')">🇫🇷 Français</button>
       <button class="wa-lang-btn" onclick="sendWaMsg('confirmation','ar')">🇹🇳 العربية</button>
     </div>
-      <button class="wa-lang-btn" onclick="toggleIAOptions()" id="waIAToggleBtn" style="color:#a78bfa;border-color:rgba(167,139,250,.4);font-weight:700">🤖 Message IA</button>
-      <div id="waIAOptions" style="display:none;flex-direction:column;gap:8px">
-        <button class="wa-lang-btn" style="color:#25d366;border-color:rgba(37,211,102,.4)" onclick="generateVenteIAMessage('colis')">🚚 Colis en cours de livraison</button>
-        <button class="wa-lang-btn" style="color:var(--yellow);border-color:rgba(245,158,11,.4)" onclick="generateVenteIAMessage('merci')">🙏 Remerciement après achat</button>
-        <button class="wa-lang-btn" style="color:#818cf8;border-color:rgba(99,102,241,.4)" onclick="generateVenteIAMessage('satisfaction')">⭐ Suivi satisfaction</button>
-        <div id="waVenteStatus" style="font-size:12px;color:var(--muted);text-align:center;min-height:16px"></div>
-        <textarea id="waVenteResult" rows="4" placeholder="Message IA..." style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;resize:none;display:none"></textarea>
-        <button id="waVenteSendBtn" onclick="sendVenteIAMessage()" style="display:none;width:100%;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif">💬 Envoyer sur WhatsApp</button>
-      </div>
+      <button class="wa-lang-btn" onclick="openVenteIAPopup()" style="color:#a78bfa;border-color:rgba(167,139,250,.4);font-weight:700">🤖 Message IA</button>
     <button class="wa-cancel" onclick="closeWaSheet()">Annuler</button>
   </div>
 </div>
@@ -4275,6 +4267,7 @@ function openWaSheet(phone, client, model, prix, saleId){
 }
 function closeWaSheet(e){
   if(e&&e.target!==document.getElementById('waSheetOverlay')) return;
+  document.getElementById('waVentePopup').style.display='none';
   document.getElementById('waSheetOverlay').style.display='none';
 }
 function sendWaMsg(type, lang){
@@ -7052,6 +7045,28 @@ function exportPDF(type){
   </div>
 </div>
 
+
+<!-- WA VENTE IA POPUP -->
+<div id="waVentePopup" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.7);align-items:center;justify-content:center;padding:20px">
+  <div style="width:100%;max-width:420px;background:var(--surface);border-radius:20px;border:1px solid rgba(167,139,250,.3);box-shadow:0 8px 40px rgba(0,0,0,.4);overflow:hidden">
+    <div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-weight:800;font-size:16px">🤖 Message IA</div>
+      <button onclick="closeVenteIAPopup()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;line-height:1">×</button>
+    </div>
+    <div style="padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+      <div id="waIAChoices" style="display:flex;flex-direction:column;gap:8px">
+        <button class="wa-lang-btn" style="color:#25d366;border-color:rgba(37,211,102,.4)" onclick="generateVenteIAMessage('colis')">🚚 Colis en cours de livraison</button>
+        <button class="wa-lang-btn" style="color:var(--yellow);border-color:rgba(245,158,11,.4)" onclick="generateVenteIAMessage('merci')">🙏 Remerciement après achat</button>
+        <button class="wa-lang-btn" style="color:#818cf8;border-color:rgba(99,102,241,.4)" onclick="generateVenteIAMessage('satisfaction')">⭐ Suivi satisfaction</button>
+      </div>
+      <div id="waVenteStatus" style="font-size:12px;color:var(--muted);text-align:center;min-height:16px"></div>
+      <textarea id="waVenteResult" rows="4" placeholder="Le message apparaîtra ici..." style="display:none;width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;resize:none;line-height:1.6"></textarea>
+      <button id="waVenteSendBtn" onclick="sendVenteIAMessage()" style="display:none;width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(37,211,102,.3)">💬 Envoyer sur WhatsApp</button>
+      <button onclick="closeVenteIAPopup()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:14px;cursor:pointer">Annuler</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>`;
 
@@ -8148,6 +8163,16 @@ function sendVenteIAMessage(){
   if(!tel){ alert('Numéro introuvable'); return; }
   window.open(`https://wa.me/216${tel}?text=${encodeURIComponent(msg)}`,'_blank');
   document.getElementById('smsSheetOverlay').style.display='none';
+}
+function openVenteIAPopup(){
+  document.getElementById('waVenteResult').value='';
+  document.getElementById('waVenteResult').style.display='none';
+  document.getElementById('waVenteSendBtn').style.display='none';
+  document.getElementById('waVenteStatus').textContent='';
+  document.getElementById('waVentePopup').style.display='flex';
+}
+function closeVenteIAPopup(){
+  document.getElementById('waVentePopup').style.display='none';
 }
 function toggleIAOptions(){
   const el = document.getElementById('waIAOptions');
