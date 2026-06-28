@@ -7792,6 +7792,7 @@ function closeWallMode(){
         <button onclick="aiQuickAsk('عطيني ملخص كامل للأرباح')" class="ai-chip">💰 ملخص الأرباح</button>
         <button onclick="aiQuickAsk('كم عندي من زبائن؟')" class="ai-chip">👤 الزبائن</button>
         <button onclick="aiQuickAsk('نصحني واش نزيد في الستوك')" class="ai-chip">💡 نصيحة</button>
+        <button onclick="aiStockAlert()" class="ai-chip" style="background:linear-gradient(135deg,#ff4444,#ff7a00);color:#fff;border:none">🚨 تنبيه الستوك</button>
       </div>
     </div>
 
@@ -8013,7 +8014,85 @@ function appendAIMsg(type, text){
   return div;
 }
 
-async function sendAIMessage(){
+async function aiStockAlert(){
+  const p = getAIProvider();
+  const key = p === 'cerebras'
+    ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
+    : localStorage.getItem(AI_KEY_LS);
+  if(!key){ document.getElementById('aiSetupBox').style.display='block'; updateProviderUI(p); return; }
+
+  // حساب معدل المبيعات الأسبوعي لكل موديل
+  const now = new Date();
+  const last30 = new Date(now - 30*24*60*60*1000).toISOString().slice(0,10);
+  const recentSales = (typeof sales !== 'undefined' ? sales : [])
+    .filter(s => s.date >= last30);
+
+  const modelSalesRate = {};
+  recentSales.forEach(s => {
+    if(!s.model) return;
+    modelSalesRate[s.model] = (modelSalesRate[s.model]||0) + 1;
+  });
+
+  // الستوك الحالي
+  const stockMap = {};
+  (typeof stockItems !== 'undefined' ? stockItems : []).forEach(s => {
+    if(s.model) stockMap[s.model] = (stockMap[s.model]||0) + (s.qty||0);
+  });
+
+  // بناء التقرير
+  const lines = [];
+  Object.entries(modelSalesRate).sort((a,b)=>b[1]-a[1]).forEach(([model, sold30]) => {
+    const weeklyRate = (sold30/4).toFixed(1);
+    const stock = stockMap[model] || 0;
+    const weeksLeft = stock > 0 ? (stock/weeklyRate).toFixed(1) : 0;
+    lines.push(`${model}: ستوك=${stock} قطعة، معدل=${weeklyRate}/أسبوع، يكفي=${weeksLeft} أسابيع`);
+  });
+
+  // موديلات في الستوك ما فيهاش مبيعات
+  Object.entries(stockMap).forEach(([model, qty]) => {
+    if(!modelSalesRate[model] && qty > 0)
+      lines.push(`${model}: ستوك=${qty} قطعة، ما باعش في 30 يوم ⚠️`);
+  });
+
+  const stockReport = lines.join('\n') || 'ما فيش بيانات كافية';
+
+  const prompt = `أنت مساعد متجر CouvriTN (coques تليفون، تونس).
+بناءً على هذا التقرير — حلل الستوك وقلي:
+1. شنوا الموديلات اللي لازم نطلبها الدورا (ستوك ناقص مقارنة بالمبيعات)
+2. شنوا الموديلات اللي عندها ستوك زايد
+3. توصيتك العملية
+
+تقرير الستوك (آخر 30 يوم):
+${stockReport}
+
+ردّ بالدارجة التونسية، مختصر وعملي، استعمل ✅❌⚠️`;
+
+  appendAIMsg('user', '🚨 تحليل تنبيه الستوك...');
+  const loadDiv = appendAIMsg('bot', '⏳ نحلل الستوك...');
+
+  const apiUrl = p === 'cerebras'
+    ? 'https://api.cerebras.ai/v1/chat/completions'
+    : 'https://api.groq.com/openai/v1/chat/completions';
+  const model = p === 'cerebras' ? 'gpt-oss-120b' : 'llama-3.3-70b-versatile';
+
+  try {
+    const res = await fetch(apiUrl, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+      body: JSON.stringify({ model, max_tokens:600, messages:[{role:'user', content: prompt}] })
+    });
+    const data = await res.json();
+    if(!res.ok){
+      loadDiv.textContent = `❌ ${res.status}: ${JSON.stringify(data.error)||''}`;
+      return;
+    }
+    loadDiv.textContent = data.choices?.[0]?.message?.content || '...';
+  } catch(e) {
+    loadDiv.textContent = '❌ مشكلة في الاتصال';
+  }
+}
+
+
   const p = getAIProvider();
   const key = p === 'cerebras'
     ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
