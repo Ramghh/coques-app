@@ -7793,6 +7793,7 @@ function closeWallMode(){
         <button onclick="aiQuickAsk('كم عندي من زبائن؟')" class="ai-chip">👤 الزبائن</button>
         <button onclick="aiQuickAsk('نصحني واش نزيد في الستوك')" class="ai-chip">💡 نصيحة</button>
         <button onclick="aiStockAlert()" class="ai-chip" style="background:linear-gradient(135deg,#ff4444,#ff7a00);color:#fff;border:none">🚨 تنبيه الستوك</button>
+        <button onclick="aiMonthComparison()" class="ai-chip" style="background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;border:none">📊 مقارنة الشهر</button>
       </div>
     </div>
 
@@ -8158,6 +8159,65 @@ ${stockReport}
     loadDiv.textContent = data.choices?.[0]?.message?.content || '...';
   } catch(e) {
     loadDiv.textContent = '❌ مشكلة في الاتصال';
+  }
+}
+
+async function aiMonthComparison(){
+  const p = getAIProvider();
+  const key = p === 'cerebras'
+    ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
+    : localStorage.getItem(AI_KEY_LS);
+  if(!key){ document.getElementById('aiSetupBox').style.display='block'; updateProviderUI(p); return; }
+
+  const now = new Date();
+  const thisMonth = now.toISOString().slice(0,7);
+  const prevDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const prevMonth = prevDate.toISOString().slice(0,7);
+
+  const allSales = typeof sales !== 'undefined' ? sales : [];
+  const thisSales = allSales.filter(s => s.date && s.date.startsWith(thisMonth));
+  const prevSales = allSales.filter(s => s.date && s.date.startsWith(prevMonth));
+
+  const calcStats = (list) => {
+    const benef = list.reduce((a,s) => a + (typeof benefNet==='function' ? benefNet(s) : 0), 0);
+    const revenu = list.reduce((a,s) => a + (s.revenu||0), 0);
+    const modelCount = {};
+    list.forEach(s => { if(s.model) modelCount[s.model] = (modelCount[s.model]||0)+1; });
+    const topModel = Object.entries(modelCount).sort((a,b)=>b[1]-a[1])[0];
+    return { count: list.length, benef, revenu, topModel: topModel ? topModel[0]+'('+topModel[1]+' ventes)' : 'aucun', modelCount };
+  };
+
+  const t = calcStats(thisSales);
+  const pr = calcStats(prevSales);
+
+  const diffCount = t.count - pr.count;
+  const diffBenef = t.benef - pr.benef;
+  const pctBenef = pr.benef > 0 ? ((diffBenef/pr.benef)*100).toFixed(1) : 'N/A';
+  const pctCount = pr.count > 0 ? ((diffCount/pr.count)*100).toFixed(1) : 'N/A';
+  const newModels = Object.keys(t.modelCount).filter(m => !pr.modelCount[m]);
+  const goneModels = Object.keys(pr.modelCount).filter(m => !t.modelCount[m]);
+
+  const prompt = "Tu es l'assistant du magasin CouvriTN (coques telephone, Tunisie).\nFais une comparaison intelligente entre ce mois et le mois dernier. Sois precis, concis et utilise des emojis.\nExplique les differences et donne une recommandation pratique.\nReponds UNIQUEMENT en francais.\n\nDONNEES:\nMois actuel ("+thisMonth+"):\n- Ventes: "+t.count+" | Benefice: "+t.benef.toFixed(2)+" TND | CA: "+t.revenu.toFixed(2)+" TND\n- Meilleur modele: "+t.topModel+"\n\nMois precedent ("+prevMonth+"):\n- Ventes: "+pr.count+" | Benefice: "+pr.benef.toFixed(2)+" TND | CA: "+pr.revenu.toFixed(2)+" TND\n- Meilleur modele: "+pr.topModel+"\n\nEvolution:\n- Ventes: "+(diffCount>0?'+':'')+diffCount+" ("+pctCount+"%)\n- Benefice: "+(diffBenef>0?'+':'')+diffBenef.toFixed(2)+" TND ("+pctBenef+"%)\n- Nouveaux modeles: "+(newModels.join(', ')||'aucun')+"\n- Modeles disparus: "+(goneModels.join(', ')||'aucun');
+
+  appendAIMsg('user', 'Comparaison mois actuel vs mois precedent');
+  const loadDiv = appendAIMsg('bot', 'Analyse en cours...');
+
+  const apiUrl = p === 'cerebras'
+    ? 'https://api.cerebras.ai/v1/chat/completions'
+    : 'https://api.groq.com/openai/v1/chat/completions';
+  const model = p === 'cerebras' ? 'gpt-oss-120b' : 'llama-3.3-70b-versatile';
+
+  try {
+    const res = await fetch(apiUrl, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body: JSON.stringify({ model, max_tokens:600, messages:[{role:'user', content: prompt}] })
+    });
+    const data = await res.json();
+    if(!res.ok){ loadDiv.textContent = 'Erreur '+res.status; return; }
+    loadDiv.textContent = data.choices?.[0]?.message?.content || '...';
+  } catch(e) {
+    loadDiv.textContent = 'Erreur de connexion';
   }
 }
 
