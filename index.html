@@ -8042,7 +8042,7 @@ async function sendAIMessage(){
     ? 'https://api.cerebras.ai/v1/chat/completions'
     : 'https://api.groq.com/openai/v1/chat/completions';
   const model = p === 'cerebras'
-    ? 'llama3.3-70b'
+    ? 'llama-3.3-70b'
     : 'llama-3.3-70b-versatile';
 
   try {
@@ -8122,7 +8122,7 @@ async function generateWAMessage(type){
   statusEl.textContent = '⏳ Génération...';
   resultEl.value = '';
   const apiUrl = p === 'cerebras' ? 'https://api.cerebras.ai/v1/chat/completions' : 'https://api.groq.com/openai/v1/chat/completions';
-  const model = p === 'cerebras' ? 'llama3.3-70b' : 'llama-3.3-70b-versatile';
+  const model = p === 'cerebras' ? 'llama-3.3-70b' : 'llama-3.3-70b-versatile';
   try {
     const res = await fetch(apiUrl, {
       method:'POST',
@@ -8178,7 +8178,7 @@ async function generateVenteWAMsg(type){
   statusEl.textContent = '⏳ Génération...';
   resultEl.value = '';
   const apiUrl = p === 'cerebras' ? 'https://api.cerebras.ai/v1/chat/completions' : 'https://api.groq.com/openai/v1/chat/completions';
-  const model = p === 'cerebras' ? 'llama3.3-70b' : 'llama-3.3-70b-versatile';
+  const model = p === 'cerebras' ? 'llama-3.3-70b' : 'llama-3.3-70b-versatile';
 
   try {
     const res = await fetch(apiUrl, {
