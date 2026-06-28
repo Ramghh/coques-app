@@ -7744,18 +7744,41 @@ function closeWallMode(){
         <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ff7a00,#ff9a3c);display:flex;align-items:center;justify-content:center;font-size:17px">🤖</div>
         <div>
           <div style="font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:18px">🤖 Assistant <span style="color:var(--accent)">IA</span></div>
-          <div style="font-size:11px;color:var(--muted)">Propulsé par Groq ⚡</div>
+          <div id="aiProviderLabel" style="font-size:11px;color:var(--muted)">Propulsé par Groq ⚡</div>
         </div>
       </div>
       <button onclick="openAISettings()" title="إعدادات API" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center">⚙️</button>
     </div>
 
     <!-- API Key setup (shown when no key) -->
-    <div id="aiSetupBox" style="display:none;padding:20px;border-bottom:1px solid var(--border);background:rgba(255,122,0,.06);flex-shrink:0">
-      <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--accent)">🔑 أدخل Groq API Key ديالك</div>
-      <div style="display:flex;gap:8px">
-        <input id="aiKeyInput" type="password" placeholder="gsk_..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace">
-        <button onclick="saveAIKey()" style="padding:10px 16px;background:linear-gradient(135deg,#ff7a00,#ff9a3c);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap">حفظ</button>
+    <div id="aiSetupBox" style="display:none;padding:16px 20px;border-bottom:1px solid var(--border);background:rgba(255,122,0,.06);flex-shrink:0">
+      <!-- Provider selector -->
+      <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">🤖 مزود الذكاء الاصطناعي</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button id="providerGroqBtn" onclick="selectAIProvider('groq')"
+          style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--accent);background:rgba(255,122,0,.15);color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;transition:all .2s">
+          ⚡ Groq
+        </button>
+        <button id="providerCerebrasBtn" onclick="selectAIProvider('cerebras')"
+          style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;transition:all .2s">
+          🧠 Cerebras
+        </button>
+      </div>
+      <!-- Groq key -->
+      <div id="groqKeySection">
+        <div style="font-size:12px;font-weight:600;margin-bottom:7px;color:var(--accent)">🔑 Groq API Key</div>
+        <div style="display:flex;gap:8px">
+          <input id="aiKeyInput" type="password" placeholder="gsk_..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace">
+          <button onclick="saveAIKey('groq')" style="padding:10px 16px;background:linear-gradient(135deg,#ff7a00,#ff9a3c);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap">حفظ</button>
+        </div>
+      </div>
+      <!-- Cerebras key -->
+      <div id="cerebrasKeySection" style="display:none">
+        <div style="font-size:12px;font-weight:600;margin-bottom:7px;color:#6c63ff">🔑 Cerebras API Key</div>
+        <div style="display:flex;gap:8px">
+          <input id="aiCerebrasKeyInput" type="password" placeholder="csk_..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace">
+          <button onclick="saveAIKey('cerebras')" style="padding:10px 16px;background:linear-gradient(135deg,#6c63ff,#9b59b6);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap">حفظ</button>
+        </div>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:8px">🔒 يتحفظ في localStorage فقط — ما يظهرش في الكود</div>
     </div>
@@ -7816,11 +7839,35 @@ function closeWallMode(){
 <script>
 // ── AI ASSISTANT ──────────────────────────────────────────
 const AI_KEY_LS = 'megastoreGrokKey';
+const AI_CEREBRAS_KEY_LS = 'megastoreCerebrasKey';
+const AI_PROVIDER_LS = 'megastoreAIProvider';
 let aiChatHistory = [];
+
+function getAIProvider(){
+  return localStorage.getItem(AI_PROVIDER_LS) || 'groq';
+}
+
+function selectAIProvider(p){
+  localStorage.setItem(AI_PROVIDER_LS, p);
+  updateProviderUI(p);
+}
+
+function updateProviderUI(p){
+  const isGroq = p === 'groq';
+  document.getElementById('providerGroqBtn').style.cssText =
+    `flex:1;padding:9px;border-radius:10px;border:2px solid ${isGroq?'var(--accent)':'var(--border)'};background:${isGroq?'rgba(255,122,0,.15)':'var(--surface2)'};color:${isGroq?'var(--accent)':'var(--muted)'};font-weight:700;font-size:13px;cursor:pointer;transition:all .2s`;
+  document.getElementById('providerCerebrasBtn').style.cssText =
+    `flex:1;padding:9px;border-radius:10px;border:2px solid ${!isGroq?'#6c63ff':'var(--border)'};background:${!isGroq?'rgba(108,99,255,.15)':'var(--surface2)'};color:${!isGroq?'#6c63ff':'var(--muted)'};font-weight:700;font-size:13px;cursor:pointer;transition:all .2s`;
+  document.getElementById('groqKeySection').style.display = isGroq ? 'block' : 'none';
+  document.getElementById('cerebrasKeySection').style.display = isGroq ? 'none' : 'block';
+  const label = document.getElementById('aiProviderLabel');
+  if(label) label.textContent = isGroq ? 'Propulsé par Groq ⚡' : 'Propulsé par Cerebras 🧠';
+}
 
 function openAIModal(){
   const modal = document.getElementById('aiModal');
   modal.style.display = 'flex';
+  updateProviderUI(getAIProvider());
   checkAIKey();
   setTimeout(()=>{ document.getElementById('aiInput').focus(); },200);
 }
@@ -7835,25 +7882,45 @@ function closeAIModal(){
 
 
 function checkAIKey(){
-  const key = localStorage.getItem(AI_KEY_LS);
+  const p = getAIProvider();
+  const key = p === 'cerebras'
+    ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
+    : localStorage.getItem(AI_KEY_LS);
   document.getElementById('aiSetupBox').style.display = key ? 'none' : 'block';
 }
 
 function openAISettings(){
+  const p = getAIProvider();
+  updateProviderUI(p);
   document.getElementById('aiSetupBox').style.display = 'block';
-  const key = localStorage.getItem(AI_KEY_LS);
-  if(key) document.getElementById('aiKeyInput').value = key;
+  const groqKey = localStorage.getItem(AI_KEY_LS);
+  const cerebrasKey = localStorage.getItem(AI_CEREBRAS_KEY_LS);
+  if(groqKey) document.getElementById('aiKeyInput').value = groqKey;
+  if(cerebrasKey) document.getElementById('aiCerebrasKeyInput').value = cerebrasKey;
 }
 
-function saveAIKey(){
-  const val = document.getElementById('aiKeyInput').value.trim();
-  if(!val || !val.startsWith('gsk_')){
-    alert('المفتاح لازم يبدأ بـ gsk_');
-    return;
+function saveAIKey(provider){
+  if(provider === 'cerebras'){
+    const val = document.getElementById('aiCerebrasKeyInput').value.trim();
+    if(!val || !val.startsWith('csk_')){
+      alert('المفتاح لازم يبدأ بـ csk_');
+      return;
+    }
+    localStorage.setItem(AI_CEREBRAS_KEY_LS, val);
+    localStorage.setItem(AI_PROVIDER_LS, 'cerebras');
+    document.getElementById('aiCerebrasKeyInput').value = '';
+  } else {
+    const val = document.getElementById('aiKeyInput').value.trim();
+    if(!val || !val.startsWith('gsk_')){
+      alert('المفتاح لازم يبدأ بـ gsk_');
+      return;
+    }
+    localStorage.setItem(AI_KEY_LS, val);
+    localStorage.setItem(AI_PROVIDER_LS, 'groq');
+    document.getElementById('aiKeyInput').value = '';
   }
-  localStorage.setItem(AI_KEY_LS, val);
   document.getElementById('aiSetupBox').style.display = 'none';
-  document.getElementById('aiKeyInput').value = '';
+  updateProviderUI(getAIProvider());
   appendAIMsg('bot', '✅ تم حفظ المفتاح! كيفاش نخدمولك؟');
 }
 
@@ -7947,9 +8014,13 @@ function appendAIMsg(type, text){
 }
 
 async function sendAIMessage(){
-  const key = localStorage.getItem(AI_KEY_LS);
+  const p = getAIProvider();
+  const key = p === 'cerebras'
+    ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
+    : localStorage.getItem(AI_KEY_LS);
   if(!key){
     document.getElementById('aiSetupBox').style.display = 'block';
+    updateProviderUI(p);
     return;
   }
 
@@ -7967,19 +8038,26 @@ async function sendAIMessage(){
   // Build messages
   aiChatHistory.push({role:'user', content: q});
 
+  const apiUrl = p === 'cerebras'
+    ? 'https://api.cerebras.ai/v1/chat/completions'
+    : 'https://api.groq.com/openai/v1/chat/completions';
+  const model = p === 'cerebras'
+    ? 'llama-3.3-70b'
+    : 'llama-3.3-70b-versatile';
+
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const res = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${key}`
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model,
         max_tokens: 600,
         messages: [
           {role:'system', content: getBusinessContext()},
-          ...aiChatHistory.slice(-6) // آخر 6 رسايل فقط لتوفير tokens
+          ...aiChatHistory.slice(-6)
         ]
       })
     });
@@ -8027,8 +8105,9 @@ function closeWAGen(){
 }
 
 async function generateWAMessage(type){
-  const key = localStorage.getItem(AI_KEY_LS);
-  if(!key){ alert('أدخل Groq API Key أولاً من Assistant IA'); return; }
+  const p = getAIProvider();
+  const key = p === 'cerebras' ? localStorage.getItem(AI_CEREBRAS_KEY_LS) : localStorage.getItem(AI_KEY_LS);
+  if(!key){ alert('أدخل API Key أولاً من Assistant IA'); return; }
   const { clientNom, lastSales, totalAchats, points, niveau } = window._waClient;
   const statusEl = document.getElementById('waGenStatus');
   const resultEl = document.getElementById('waGenResult');
@@ -8042,15 +8121,13 @@ async function generateWAMessage(type){
   };
   statusEl.textContent = '⏳ Génération...';
   resultEl.value = '';
+  const apiUrl = p === 'cerebras' ? 'https://api.cerebras.ai/v1/chat/completions' : 'https://api.groq.com/openai/v1/chat/completions';
+  const model = p === 'cerebras' ? 'llama-3.3-70b' : 'llama-3.3-70b-versatile';
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const res = await fetch(apiUrl, {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-      body: JSON.stringify({
-        model:'llama-3.3-70b-versatile',
-        max_tokens:200,
-        messages:[{role:'user', content: prompts[type]}]
-      })
+      body: JSON.stringify({ model, max_tokens:200, messages:[{role:'user', content: prompts[type]}] })
     });
     const data = await res.json();
     const msg = data.choices?.[0]?.message?.content?.trim() || '';
@@ -8085,8 +8162,9 @@ function closeVenteWAGen(){
 }
 
 async function generateVenteWAMsg(type){
-  const key = localStorage.getItem(AI_KEY_LS);
-  if(!key){ alert('أدخل Groq API Key أولاً من Assistant IA'); return; }
+  const p = getAIProvider();
+  const key = p === 'cerebras' ? localStorage.getItem(AI_CEREBRAS_KEY_LS) : localStorage.getItem(AI_KEY_LS);
+  if(!key){ alert('أدخل API Key أولاً من Assistant IA'); return; }
 
   const statusEl = document.getElementById('venteWAGenStatus');
   const resultEl = document.getElementById('venteWAGenResult');
@@ -8099,16 +8177,14 @@ async function generateVenteWAMsg(type){
 
   statusEl.textContent = '⏳ Génération...';
   resultEl.value = '';
+  const apiUrl = p === 'cerebras' ? 'https://api.cerebras.ai/v1/chat/completions' : 'https://api.groq.com/openai/v1/chat/completions';
+  const model = p === 'cerebras' ? 'llama-3.3-70b' : 'llama-3.3-70b-versatile';
 
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const res = await fetch(apiUrl, {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-      body: JSON.stringify({
-        model:'llama-3.3-70b-versatile',
-        max_tokens:200,
-        messages:[{role:'user', content: prompts[type]}]
-      })
+      body: JSON.stringify({ model, max_tokens:200, messages:[{role:'user', content: prompts[type]}] })
     });
     const data = await res.json();
     const msg = data.choices?.[0]?.message?.content?.trim() || '';
