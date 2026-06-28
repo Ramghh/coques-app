@@ -8065,7 +8065,8 @@ async function sendAIMessage(){
     const data = await res.json();
 
     if(!res.ok){
-      loadDiv.textContent = `❌ خطأ: ${data.error?.message || res.status}`;
+      const errMsg = data.error?.message || data.error?.code || JSON.stringify(data.error) || res.status;
+      loadDiv.textContent = `❌ ${res.status}: ${errMsg}`;
       loadDiv.classList.remove('loading');
       aiChatHistory.pop();
       return;
