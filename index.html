@@ -8128,7 +8128,7 @@ async function generateWAMessage(type){
     const res = await fetch(apiUrl, {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-      body: JSON.stringify({ model, max_tokens:200, messages:[{role:'user', content: prompts[type]}] })
+      body: JSON.stringify({ model, max_tokens:500, messages:[{role:'user', content: prompts[type]}] })
     });
     const data = await res.json();
     const msg = data.choices?.[0]?.message?.content?.trim() || '';
@@ -8185,7 +8185,7 @@ async function generateVenteWAMsg(type){
     const res = await fetch(apiUrl, {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-      body: JSON.stringify({ model, max_tokens:200, messages:[{role:'user', content: prompts[type]}] })
+      body: JSON.stringify({ model, max_tokens:500, messages:[{role:'user', content: prompts[type]}] })
     });
     const data = await res.json();
     const msg = data.choices?.[0]?.message?.content?.trim() || '';
