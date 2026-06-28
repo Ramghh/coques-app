@@ -7776,7 +7776,7 @@ function closeWallMode(){
       <div id="cerebrasKeySection" style="display:none">
         <div style="font-size:12px;font-weight:600;margin-bottom:7px;color:#6c63ff">🔑 Cerebras API Key</div>
         <div style="display:flex;gap:8px">
-          <input id="aiCerebrasKeyInput" type="password" placeholder="csk_..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace">
+          <input id="aiCerebrasKeyInput" type="password" placeholder="csk-..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace">
           <button onclick="saveAIKey('cerebras')" style="padding:10px 16px;background:linear-gradient(135deg,#6c63ff,#9b59b6);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap">حفظ</button>
         </div>
       </div>
@@ -7902,8 +7902,8 @@ function openAISettings(){
 function saveAIKey(provider){
   if(provider === 'cerebras'){
     const val = document.getElementById('aiCerebrasKeyInput').value.trim();
-    if(!val || !val.startsWith('csk_')){
-      alert('المفتاح لازم يبدأ بـ csk_');
+    if(!val || !val.startsWith('csk')){
+      alert('المفتاح لازم يبدأ بـ csk');
       return;
     }
     localStorage.setItem(AI_CEREBRAS_KEY_LS, val);
