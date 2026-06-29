@@ -7763,6 +7763,10 @@ function closeWallMode(){
           style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;transition:all .2s">
           🧠 Cerebras
         </button>
+        <button id="providerGeminiBtn" onclick="selectAIProvider('gemini')"
+          style="flex:1;padding:9px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;transition:all .2s">
+          ✨ Gemini
+        </button>
       </div>
       <!-- Groq key -->
       <div id="groqKeySection">
@@ -7778,6 +7782,14 @@ function closeWallMode(){
         <div style="display:flex;gap:8px">
           <input id="aiCerebrasKeyInput" type="password" placeholder="csk-..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace">
           <button onclick="saveAIKey('cerebras')" style="padding:10px 16px;background:linear-gradient(135deg,#6c63ff,#9b59b6);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap">حفظ</button>
+        </div>
+      </div>
+      <!-- Gemini key -->
+      <div id="geminiKeySection" style="display:none">
+        <div style="font-size:12px;font-weight:600;margin-bottom:7px;color:#4285f4">🔑 Gemini API Key</div>
+        <div style="display:flex;gap:8px">
+          <input id="aiGeminiKeyInput" type="password" placeholder="AQ..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace">
+          <button onclick="saveAIKey('gemini')" style="padding:10px 16px;background:linear-gradient(135deg,#4285f4,#0d47a1);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap">حفظ</button>
         </div>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:8px">🔒 يتحفظ في localStorage فقط — ما يظهرش في الكود</div>
@@ -7842,6 +7854,7 @@ function closeWallMode(){
 // ── AI ASSISTANT ──────────────────────────────────────────
 const AI_KEY_LS = 'megastoreGrokKey';
 const AI_CEREBRAS_KEY_LS = 'megastoreCerebrasKey';
+const AI_GEMINI_KEY_LS = 'megastoreGeminiKey';
 const AI_PROVIDER_LS = 'megastoreAIProvider';
 let aiChatHistory = [];
 
@@ -7856,14 +7869,19 @@ function selectAIProvider(p){
 
 function updateProviderUI(p){
   const isGroq = p === 'groq';
+  const isCerebras = p === 'cerebras';
+  const isGemini = p === 'gemini';
   document.getElementById('providerGroqBtn').style.cssText =
-    `flex:1;padding:9px;border-radius:10px;border:2px solid ${isGroq?'var(--accent)':'var(--border)'};background:${isGroq?'rgba(255,122,0,.15)':'var(--surface2)'};color:${isGroq?'var(--accent)':'var(--muted)'};font-weight:700;font-size:13px;cursor:pointer;transition:all .2s`;
+    'flex:1;padding:9px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;transition:all .2s;border:2px solid '+(isGroq?'var(--accent)':'var(--border)')+';background:'+(isGroq?'rgba(255,122,0,.15)':'var(--surface2)')+';color:'+(isGroq?'var(--accent)':'var(--muted)');
   document.getElementById('providerCerebrasBtn').style.cssText =
-    `flex:1;padding:9px;border-radius:10px;border:2px solid ${!isGroq?'#6c63ff':'var(--border)'};background:${!isGroq?'rgba(108,99,255,.15)':'var(--surface2)'};color:${!isGroq?'#6c63ff':'var(--muted)'};font-weight:700;font-size:13px;cursor:pointer;transition:all .2s`;
+    'flex:1;padding:9px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;transition:all .2s;border:2px solid '+(isCerebras?'#6c63ff':'var(--border)')+';background:'+(isCerebras?'rgba(108,99,255,.15)':'var(--surface2)')+';color:'+(isCerebras?'#6c63ff':'var(--muted)');
+  document.getElementById('providerGeminiBtn').style.cssText =
+    'flex:1;padding:9px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;transition:all .2s;border:2px solid '+(isGemini?'#4285f4':'var(--border)')+';background:'+(isGemini?'rgba(66,133,244,.15)':'var(--surface2)')+';color:'+(isGemini?'#4285f4':'var(--muted)');
   document.getElementById('groqKeySection').style.display = isGroq ? 'block' : 'none';
-  document.getElementById('cerebrasKeySection').style.display = isGroq ? 'none' : 'block';
+  document.getElementById('cerebrasKeySection').style.display = isCerebras ? 'block' : 'none';
+  document.getElementById('geminiKeySection').style.display = isGemini ? 'block' : 'none';
   const label = document.getElementById('aiProviderLabel');
-  if(label) label.textContent = isGroq ? 'Propulsé par Groq ⚡' : 'Propulsé par Cerebras 🧠';
+  if(label) label.textContent = isGroq ? 'Propulsé par Groq ⚡' : isCerebras ? 'Propulsé par Cerebras 🧠' : 'Propulsé par Gemini ✨';
 }
 
 function openAIModal(){
@@ -7885,8 +7903,8 @@ function closeAIModal(){
 
 function checkAIKey(){
   const p = getAIProvider();
-  const key = p === 'cerebras'
-    ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
+  const key = p === 'cerebras' ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
+    : p === 'gemini' ? localStorage.getItem(AI_GEMINI_KEY_LS)
     : localStorage.getItem(AI_KEY_LS);
   document.getElementById('aiSetupBox').style.display = key ? 'none' : 'block';
 }
@@ -7897,26 +7915,28 @@ function openAISettings(){
   document.getElementById('aiSetupBox').style.display = 'block';
   const groqKey = localStorage.getItem(AI_KEY_LS);
   const cerebrasKey = localStorage.getItem(AI_CEREBRAS_KEY_LS);
+  const geminiKey = localStorage.getItem(AI_GEMINI_KEY_LS);
   if(groqKey) document.getElementById('aiKeyInput').value = groqKey;
   if(cerebrasKey) document.getElementById('aiCerebrasKeyInput').value = cerebrasKey;
+  if(geminiKey) document.getElementById('aiGeminiKeyInput').value = geminiKey;
 }
 
 function saveAIKey(provider){
   if(provider === 'cerebras'){
     const val = document.getElementById('aiCerebrasKeyInput').value.trim();
-    if(!val || !val.startsWith('csk')){
-      alert('المفتاح لازم يبدأ بـ csk');
-      return;
-    }
+    if(!val || !val.startsWith('csk')){ alert('المفتاح لازم يبدأ بـ csk'); return; }
     localStorage.setItem(AI_CEREBRAS_KEY_LS, val);
     localStorage.setItem(AI_PROVIDER_LS, 'cerebras');
     document.getElementById('aiCerebrasKeyInput').value = '';
+  } else if(provider === 'gemini'){
+    const val = document.getElementById('aiGeminiKeyInput').value.trim();
+    if(!val || !val.startsWith('AQ')){ alert('المفتاح لازم يبدأ بـ AQ'); return; }
+    localStorage.setItem(AI_GEMINI_KEY_LS, val);
+    localStorage.setItem(AI_PROVIDER_LS, 'gemini');
+    document.getElementById('aiGeminiKeyInput').value = '';
   } else {
     const val = document.getElementById('aiKeyInput').value.trim();
-    if(!val || !val.startsWith('gsk_')){
-      alert('المفتاح لازم يبدأ بـ gsk_');
-      return;
-    }
+    if(!val || !val.startsWith('gsk_')){ alert('المفتاح لازم يبدأ بـ gsk_'); return; }
     localStorage.setItem(AI_KEY_LS, val);
     localStorage.setItem(AI_PROVIDER_LS, 'groq');
     document.getElementById('aiKeyInput').value = '';
@@ -8003,8 +8023,8 @@ function aiQuickAsk(q){
 
 async function sendAIMessage(){
   const p = getAIProvider();
-  const key = p === 'cerebras'
-    ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
+  const key = p === 'cerebras' ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
+    : p === 'gemini' ? localStorage.getItem(AI_GEMINI_KEY_LS)
     : localStorage.getItem(AI_KEY_LS);
   if(!key){
     document.getElementById('aiSetupBox').style.display = 'block';
@@ -8024,6 +8044,30 @@ async function sendAIMessage(){
 
   aiChatHistory.push({role:'user', content: q});
 
+  // ── Gemini via SDK ──
+  if(p === 'gemini'){
+    try {
+      const { GoogleGenAI } = await import('https://esm.run/@google/genai');
+      const ai = new GoogleGenAI({ apiKey: key });
+      const fullContext = getBusinessContext();
+      const history = aiChatHistory.slice(-10);
+      const prompt = fullContext + '\n\nConversation:\n' +
+        history.slice(0,-1).map(m => (m.role==='user'?'User: ':'Assistant: ')+m.content).join('\n') +
+        '\nUser: ' + q;
+      const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+      const answer = response.text || '...';
+      loadDiv.textContent = answer;
+      loadDiv.classList.remove('loading');
+      aiChatHistory.push({role:'assistant', content: answer});
+    } catch(e) {
+      loadDiv.textContent = '❌ Gemini: ' + (e.message || e);
+      loadDiv.classList.remove('loading');
+      aiChatHistory.pop();
+    }
+    return;
+  }
+
+  // ── Groq / Cerebras via fetch ──
   const apiUrl = p === 'cerebras'
     ? 'https://api.cerebras.ai/v1/chat/completions'
     : 'https://api.groq.com/openai/v1/chat/completions';
@@ -8084,10 +8128,32 @@ function appendAIMsg(type, text){
   return div;
 }
 
+
+async function callAI(key, p, prompt, max_tokens=600){
+  if(p === 'gemini'){
+    const { GoogleGenAI } = await import('https://esm.run/@google/genai');
+    const ai = new GoogleGenAI({ apiKey: key });
+    const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+    return response.text || '...';
+  }
+  const apiUrl = p === 'cerebras'
+    ? 'https://api.cerebras.ai/v1/chat/completions'
+    : 'https://api.groq.com/openai/v1/chat/completions';
+  const model = p === 'cerebras' ? 'gpt-oss-120b' : 'llama-3.3-70b-versatile';
+  const res = await fetch(apiUrl, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body: JSON.stringify({ model, max_tokens, messages:[{role:'user', content: prompt}] })
+  });
+  const data = await res.json();
+  if(!res.ok) throw new Error(res.status + ': ' + (data.error?.message||JSON.stringify(data)));
+  return data.choices?.[0]?.message?.content || '...';
+}
+
 async function aiStockAlert(){
   const p = getAIProvider();
-  const key = p === 'cerebras'
-    ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
+  const key = p === 'cerebras' ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
+    : p === 'gemini' ? localStorage.getItem(AI_GEMINI_KEY_LS)
     : localStorage.getItem(AI_KEY_LS);
   if(!key){ document.getElementById('aiSetupBox').style.display='block'; updateProviderUI(p); return; }
 
@@ -8140,32 +8206,18 @@ ${stockReport}
   appendAIMsg('user', '🚨 تحليل تنبيه الستوك...');
   const loadDiv = appendAIMsg('bot', '⏳ نحلل الستوك...');
 
-  const apiUrl = p === 'cerebras'
-    ? 'https://api.cerebras.ai/v1/chat/completions'
-    : 'https://api.groq.com/openai/v1/chat/completions';
-  const model = p === 'cerebras' ? 'gpt-oss-120b' : 'llama-3.3-70b-versatile';
-
   try {
-    const res = await fetch(apiUrl, {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-      body: JSON.stringify({ model, max_tokens:600, messages:[{role:'user', content: prompt}] })
-    });
-    const data = await res.json();
-    if(!res.ok){
-      loadDiv.textContent = `❌ ${res.status}: ${JSON.stringify(data.error)||''}`;
-      return;
-    }
-    loadDiv.textContent = data.choices?.[0]?.message?.content || '...';
+    const answer = await callAI(key, p, prompt, 600);
+    loadDiv.textContent = answer;
   } catch(e) {
-    loadDiv.textContent = '❌ مشكلة في الاتصال';
+    loadDiv.textContent = '❌ ' + (e.message||e);
   }
 }
 
 async function aiMonthComparison(){
   const p = getAIProvider();
-  const key = p === 'cerebras'
-    ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
+  const key = p === 'cerebras' ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
+    : p === 'gemini' ? localStorage.getItem(AI_GEMINI_KEY_LS)
     : localStorage.getItem(AI_KEY_LS);
   if(!key){ document.getElementById('aiSetupBox').style.display='block'; updateProviderUI(p); return; }
 
@@ -8202,22 +8254,11 @@ async function aiMonthComparison(){
   appendAIMsg('user', 'Comparaison mois actuel vs mois precedent');
   const loadDiv = appendAIMsg('bot', 'Analyse en cours...');
 
-  const apiUrl = p === 'cerebras'
-    ? 'https://api.cerebras.ai/v1/chat/completions'
-    : 'https://api.groq.com/openai/v1/chat/completions';
-  const model = p === 'cerebras' ? 'gpt-oss-120b' : 'llama-3.3-70b-versatile';
-
   try {
-    const res = await fetch(apiUrl, {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body: JSON.stringify({ model, max_tokens:600, messages:[{role:'user', content: prompt}] })
-    });
-    const data = await res.json();
-    if(!res.ok){ loadDiv.textContent = 'Erreur '+res.status; return; }
-    loadDiv.textContent = data.choices?.[0]?.message?.content || '...';
+    const answer = await callAI(key, p, prompt, 600);
+    loadDiv.textContent = answer;
   } catch(e) {
-    loadDiv.textContent = 'Erreur de connexion';
+    loadDiv.textContent = '❌ ' + (e.message||e);
   }
 }
 
@@ -8244,7 +8285,9 @@ function closeWAGen(){
 
 async function generateWAMessage(type){
   const p = getAIProvider();
-  const key = p === 'cerebras' ? localStorage.getItem(AI_CEREBRAS_KEY_LS) : localStorage.getItem(AI_KEY_LS);
+  const key = p === 'cerebras' ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
+    : p === 'gemini' ? localStorage.getItem(AI_GEMINI_KEY_LS)
+    : localStorage.getItem(AI_KEY_LS);
   if(!key){ alert('أدخل API Key أولاً من Assistant IA'); return; }
   const { clientNom, lastSales, totalAchats, points, niveau } = window._waClient;
   const statusEl = document.getElementById('waGenStatus');
@@ -8259,17 +8302,9 @@ async function generateWAMessage(type){
   };
   statusEl.textContent = '⏳ Génération...';
   resultEl.value = '';
-  const apiUrl = p === 'cerebras' ? 'https://api.cerebras.ai/v1/chat/completions' : 'https://api.groq.com/openai/v1/chat/completions';
-  const model = p === 'cerebras' ? 'gpt-oss-120b' : 'llama-3.3-70b-versatile';
   try {
-    const res = await fetch(apiUrl, {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-      body: JSON.stringify({ model, max_tokens:500, messages:[{role:'user', content: prompts[type]}] })
-    });
-    const data = await res.json();
-    const msg = data.choices?.[0]?.message?.content?.trim() || '';
-    resultEl.value = msg;
+    const msg = await callAI(key, p, prompts[type], 500);
+    resultEl.value = msg.trim();
     statusEl.textContent = '✅ Prêt!';
   } catch(e) {
     statusEl.textContent = '❌ Erreur connexion';
@@ -8301,7 +8336,9 @@ function closeVenteWAGen(){
 
 async function generateVenteWAMsg(type){
   const p = getAIProvider();
-  const key = p === 'cerebras' ? localStorage.getItem(AI_CEREBRAS_KEY_LS) : localStorage.getItem(AI_KEY_LS);
+  const key = p === 'cerebras' ? localStorage.getItem(AI_CEREBRAS_KEY_LS)
+    : p === 'gemini' ? localStorage.getItem(AI_GEMINI_KEY_LS)
+    : localStorage.getItem(AI_KEY_LS);
   if(!key){ alert('أدخل API Key أولاً من Assistant IA'); return; }
 
   const statusEl = document.getElementById('venteWAGenStatus');
@@ -8315,21 +8352,12 @@ async function generateVenteWAMsg(type){
 
   statusEl.textContent = '⏳ Génération...';
   resultEl.value = '';
-  const apiUrl = p === 'cerebras' ? 'https://api.cerebras.ai/v1/chat/completions' : 'https://api.groq.com/openai/v1/chat/completions';
-  const model = p === 'cerebras' ? 'gpt-oss-120b' : 'llama-3.3-70b-versatile';
-
   try {
-    const res = await fetch(apiUrl, {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
-      body: JSON.stringify({ model, max_tokens:500, messages:[{role:'user', content: prompts[type]}] })
-    });
-    const data = await res.json();
-    const msg = data.choices?.[0]?.message?.content?.trim() || '';
-    resultEl.value = msg;
+    const msg = await callAI(key, p, prompts[type], 500);
+    resultEl.value = msg.trim();
     statusEl.textContent = '✅ Prêt!';
   } catch(e) {
-    statusEl.textContent = '❌ Erreur connexion';
+    statusEl.textContent = '❌ ' + (e.message||e);
   }
 }
 
