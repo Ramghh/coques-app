@@ -7992,9 +7992,9 @@ function getBusinessContext(){
     .map(([m,d])=>`${m}: ${d.count} ventes, revenu=${d.revenu.toFixed(2)} TND, bénéf=${d.benef.toFixed(2)} TND, moy/vente=${d.count?(d.benef/d.count).toFixed(2):0} TND`)
     .join('\n');
 
-  // آخر 20 vente مع التفاصيل
+  // آخر 500 vente مع التفاصيل
   const recentSales = (typeof sales !== 'undefined' ? sales : [])
-    .slice().sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)).slice(0,50)
+    .slice().sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)).slice(0,500)
     .map(s=>`${s.date||'?'} | ${s.model||'?'} | revenu:${(s.revenu||0).toFixed(2)} | bénéf:${(typeof benefNet==='function'?benefNet(s):0).toFixed(2)} | client:${s.client||'—'}`)
     .join('\n');
 
