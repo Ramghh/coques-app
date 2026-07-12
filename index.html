@@ -7036,6 +7036,7 @@ function exportPDF(type){
     <div style="padding:16px 18px">
       <div style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Choisir le type :</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+        <button onclick="generateVenteWAMsg('confirmation')" style="padding:11px;border-radius:11px;border:1px solid rgba(37,211,102,.3);background:rgba(37,211,102,.08);color:#25d366;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">✅ Confirmation de commande</button>
         <button onclick="generateVenteWAMsg('livraison')" style="padding:11px;border-radius:11px;border:1px solid rgba(255,122,0,.3);background:rgba(255,122,0,.08);color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">🚚 Colis en cours de livraison</button>
         <button onclick="generateVenteWAMsg('merci')" style="padding:11px;border-radius:11px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.08);color:var(--yellow);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">🙏 Remerciement après achat</button>
         <button onclick="generateVenteWAMsg('suivi')" style="padding:11px;border-radius:11px;border:1px solid rgba(37,211,102,.3);background:rgba(37,211,102,.08);color:#25d366;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">⭐ Suivi satisfaction</button>
@@ -8367,6 +8368,7 @@ async function generateVenteWAMsg(type){
   const resultEl = document.getElementById('venteWAGenResult');
 
   const prompts = {
+    confirmation: `Écris un message WhatsApp chaleureux et professionnel en français pour confirmer une nouvelle commande au client "${_waClient||'client'}". Salue-le, dis-lui que sa commande (${_waModel||'coque téléphone'}) est bien confirmée, précise le montant ${_waPrix||'—'} DT, et indique qu'elle est en cours de préparation. Max 4 lignes. Commence par Bonjour et son prénom. Utilise des emojis mignons et chaleureux (ex: 🎉✨📦💚).`,
     livraison: `Écris un message WhatsApp professionnel et chaleureux en français pour informer le client "${_waClient||'client'}" que sa commande (${_waModel||'coque téléphone'}, montant: ${_waPrix||'—'} DT) est en cours de livraison. Demande-lui poliment de rester joignable. Max 4 lignes. Commence par Bonjour et son prénom. Utilise des emojis appropriés.`,
     merci: `Écris un message WhatsApp de remerciement sincère en français pour le client "${_waClient||'client'}" qui vient d'acheter (${_waModel||'coque téléphone'}, ${_waPrix||'—'} DT). Remercie-le pour sa confiance et invite-le à revenir. Max 3 lignes. Chaleureux et personnel.`,
     suivi: `Écris un message WhatsApp de suivi après livraison en français pour le client "${_waClient||'client'}" (commande: ${_waModel||'coque téléphone'}, ${_waPrix||'—'} DT). Demande-lui s'il est satisfait et propose-lui de l'aide. Max 3 lignes. Très cordial.`
@@ -8450,6 +8452,7 @@ if(window.visualViewport){
     <div style="padding:16px 18px">
       <div style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Choisir le type :</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+        <button onclick="generateVenteWAMsg('confirmation')" style="padding:11px;border-radius:11px;border:1px solid rgba(37,211,102,.3);background:rgba(37,211,102,.08);color:#25d366;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">✅ Confirmation de commande</button>
         <button onclick="generateVenteWAMsg('livraison')" style="padding:11px;border-radius:11px;border:1px solid rgba(255,122,0,.3);background:rgba(255,122,0,.08);color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">🚚 Colis en cours de livraison</button>
         <button onclick="generateVenteWAMsg('merci')" style="padding:11px;border-radius:11px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.08);color:var(--yellow);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">🙏 Remerciement après achat</button>
         <button onclick="generateVenteWAMsg('suivi')" style="padding:11px;border-radius:11px;border:1px solid rgba(37,211,102,.3);background:rgba(37,211,102,.08);color:#25d366;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left">⭐ Suivi satisfaction</button>
