@@ -1577,7 +1577,13 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     </div>
   </div>
   <div class="dash-section">
-    <div class="dash-title">🏙️ Par Ville</div>
+    <div class="dash-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <span>🏙️ Par Ville</span>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer">
+        <input type="checkbox" id="groupGrandTunis" onchange="localStorage.setItem('flousFlowGroupGT',this.checked?'1':'0');renderDash()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+        Grouper Tunis Ariana Ben Arous
+      </label>
+    </div>
     <div id="dashVilleChart"></div>
     <div class="city-list" id="cityList"></div>
   </div>
@@ -5821,9 +5827,13 @@ function getMarque(model){
 }
 
 function renderDash(){
+  const gtChk=document.getElementById('groupGrandTunis');
+  const groupGT=localStorage.getItem('flousFlowGroupGT')==='1';
+  if(gtChk) gtChk.checked=groupGT;
   const cm={},mm={},mq={};
   sales.forEach(s=>{
-    const v=s.ville||'Non spécifié';
+    const vRaw=s.ville||'Non spécifié';
+    const v=(groupGT && isGreaterTunis(vRaw))?GT_LABEL:vRaw;
     const m=s.model||'Autre';
     const q=getMarque(s.model);
     if(!cm[v]) cm[v]={count:0,revenu:0,benef:0};
@@ -5836,7 +5846,7 @@ function renderDash(){
   const rg=map=>{
     const mx=Math.max(...Object.values(map).map(c=>c.benef),1);
     return Object.entries(map).sort((a,b)=>b[1].benef-a[1].benef).map(([n,d])=>`
-      <div class="city-row" onclick="showCitySales('${n.replace(/'/g, "\\'")}')">
+      <div class="city-row"${n===GT_LABEL?'':` onclick="showCitySales('${n.replace(/'/g, "\\'")}')"`}>
         <div>
           <div class="city-name">${n}</div>
           <div class="city-stats">${d.count} vente${d.count>1?'s':''} · ${fmt(d.revenu)}</div>
@@ -6536,6 +6546,16 @@ const CITY_COORDS={
   'Smar':[32.7167,10.8833],'Dehiba':[32.0000,10.7167],'Bir Lahmar':[33.1787,10.4421],
   'Ksar Ouled Soltane':[32.7500,10.5500]
 };
+
+// ── GREATER TUNIS (تونس الكبرى) — Tunis + Ariana + Ben Arous governorates ──
+// (Manouba, Douar Hicher et Tebourba appartiennent au gouvernorat de Manouba, donc exclus)
+const GREATER_TUNIS_CITIES=new Set([
+  'Tunis','Ariana','Ben Arous','La Marsa','Sidi Bou Said','Carthage','Gammarth',
+  'Rades','Megrine','Hammam Chott','Hammam Lif','Borj Cedria','Boumhal','Bir El Bey',
+  'Ettadhamen','Fouchana','Mohamedia','El Mourouj','El Aouina','Djebel Jelloud'
+].map(c=>c.toLowerCase()));
+const GT_LABEL='🏙️ Tunis (Grand Tunis)';
+function isGreaterTunis(city){ return GREATER_TUNIS_CITIES.has((city||'').trim().toLowerCase()); }
 
 // ── LEAFLET MAP ────────────────────────────────────────────────────────────
 let tunisiaMap=null, groupedChartObj=null;
