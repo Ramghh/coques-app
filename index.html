@@ -721,9 +721,26 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   box-shadow:0 -4px 20px rgba(0,0,0,.15);
 }
 .bottom-nav-inner{
-  display:grid;grid-template-columns:repeat(4,1fr);
+  display:grid;grid-template-columns:repeat(5,1fr);
   height:100%;
 }
+.bnav-fab{
+  display:flex;align-items:flex-start;justify-content:center;
+  border:none;background:transparent;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  padding:0;
+}
+.bnav-fab-icon{
+  width:54px;height:54px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;font-size:24px;font-weight:700;line-height:1;
+  box-shadow:0 8px 22px rgba(255,122,0,.5),0 0 0 6px var(--surface);
+  transform:translateY(-20px);
+  transition:transform .15s;
+}
+.bnav-fab:active .bnav-fab-icon{transform:translateY(-20px) scale(.9)}
 .bnav-btn{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:3px;border:none;background:transparent;color:var(--muted);
@@ -877,10 +894,6 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 <!-- BOTTOM NAV (mobile only) -->
 <nav class="bottom-nav" id="bottomNav">
   <div class="bottom-nav-inner">
-    <button class="bnav-btn active" id="bnav-ajouter" onclick="bnavGo('ajouter')">
-      <span class="bnav-icon">➕</span>
-      <span class="bnav-label">Ajouter</span>
-    </button>
     <button class="bnav-btn" id="bnav-ventes" onclick="bnavGo('ventes')">
       <span class="bnav-icon">📋</span>
       <span class="bnav-label">Ventes</span>
@@ -888,6 +901,13 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <button class="bnav-btn" id="bnav-clients" onclick="bnavGo('clients')">
       <span class="bnav-icon">👤</span>
       <span class="bnav-label">Clients</span>
+    </button>
+    <button class="bnav-fab" id="bnav-ajouter" onclick="bnavGo('ajouter')">
+      <span class="bnav-fab-icon">➕</span>
+    </button>
+    <button class="bnav-btn" id="bnav-calendrier" onclick="bnavGo('calendrier')">
+      <span class="bnav-icon">🗓️</span>
+      <span class="bnav-label">Calendrier</span>
     </button>
     <button class="bnav-btn" id="bnav-menu" onclick="openDrawer()">
       <span class="bnav-icon">☰</span>
