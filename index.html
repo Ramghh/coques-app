@@ -7,6 +7,8 @@
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -3415,6 +3417,43 @@ function checkoutPanier(){
 // ── FACTURE MULTI-PRODUITS ───────────────────────────────────────────────
 let _printSaleIds=null;
 
+function invHeaderBlock(nom,color){
+  const logo=localStorage.getItem('flousFlowLogo');
+  const logoImg=logo?`<img src="${logo}" style="max-height:46px;max-width:130px;object-fit:contain;margin-bottom:4px">`:'';
+  return `<div style="text-align:center;border-bottom:2px solid ${color};padding-bottom:8px;margin-bottom:10px">
+      ${logoImg}
+      <div style="font-size:20px;font-weight:900;letter-spacing:1px;color:${color}">${nom}</div>
+      <div style="font-size:11px;color:#555;margin-top:2px">📍 Kélibia, Tunisie &nbsp;|&nbsp; 📞 28 562 177</div>
+    </div>`;
+}
+function handleInvLogoUpload(e){
+  const file=e.target.files&&e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    localStorage.setItem('flousFlowLogo', reader.result);
+    const prev=document.getElementById('invLogoPreview');
+    if(prev) prev.innerHTML=`<img src="${reader.result}" style="width:100%;height:100%;object-fit:contain">`;
+    const rm=document.getElementById('invLogoRemoveBtn'); if(rm) rm.style.display='inline-block';
+    updateInvoicePreview();
+  };
+  reader.readAsDataURL(file);
+}
+function removeInvLogo(){
+  localStorage.removeItem('flousFlowLogo');
+  const prev=document.getElementById('invLogoPreview');
+  if(prev) prev.innerHTML='🏪';
+  const rm=document.getElementById('invLogoRemoveBtn'); if(rm) rm.style.display='none';
+  const inp=document.getElementById('invLogoInput'); if(inp) inp.value='';
+  updateInvoicePreview();
+}
+function loadInvLogoPreview(){
+  const logo=localStorage.getItem('flousFlowLogo');
+  const prev=document.getElementById('invLogoPreview');
+  const rm=document.getElementById('invLogoRemoveBtn');
+  if(logo){ if(prev) prev.innerHTML=`<img src="${logo}" style="width:100%;height:100%;object-fit:contain">`; if(rm) rm.style.display='inline-block'; }
+  else { if(prev) prev.innerHTML='🏪'; if(rm) rm.style.display='none'; }
+}
+
 function printInvoiceMulti(salesArr, invNum){
   _printSaleId=null;
   _printSaleIds=salesArr.map(s=>s.id);
@@ -3429,6 +3468,7 @@ function printInvoiceMulti(salesArr, invNum){
       updateInvoicePreview();
     };
   });
+  loadInvLogoPreview();
   document.getElementById('invoicePreviewModal').classList.add('open');
 }
 
@@ -3453,10 +3493,7 @@ function buildInvoiceHTMLMulti(salesArr,color,accent,merci,nom,remise=0,tva=0){
   const total=subtotal+tvaAmount;
   const invNum=s0.invNum||('INV-'+(s0.date||'').slice(0,4)+'-???');
   return `<div style="font-family:'Segoe UI',Arial,sans-serif;width:100%;box-sizing:border-box;color:#111;padding:14px 20px;page-break-after:avoid">
-    <div style="text-align:center;border-bottom:2px solid ${color};padding-bottom:8px;margin-bottom:10px">
-      <div style="font-size:20px;font-weight:900;letter-spacing:1px;color:${color}">${nom}</div>
-      <div style="font-size:11px;color:#555;margin-top:2px">📍 Kélibia, Tunisie &nbsp;|&nbsp; 📞 28 562 177</div>
-    </div>
+    ${invHeaderBlock(nom,color)}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:14px;font-weight:700;color:${color}">🧾 Facture</div>
       <div style="text-align:right">
@@ -4404,6 +4441,7 @@ function printInvoice(id){
       updateInvoicePreview();
     };
   });
+  loadInvLogoPreview();
   document.getElementById('invoicePreviewModal').classList.add('open');
 }
 
@@ -4462,6 +4500,98 @@ function doPrint(){
   closeInvoicePreview();
 }
 
+// ── FACTURE PDF + ENVOI WHATSAPP ────────────────────────────────────────
+async function renderInvoiceCanvas(html){
+  const container=document.createElement('div');
+  container.style.cssText='position:fixed;left:-9999px;top:0;width:480px;background:#fff';
+  container.innerHTML=html;
+  document.body.appendChild(container);
+  try{
+    const canvas=await html2canvas(container,{scale:2,backgroundColor:'#ffffff',useCORS:true});
+    return canvas;
+  } finally {
+    document.body.removeChild(container);
+  }
+}
+
+async function buildInvoicePDFBlob(){
+  const color=document.getElementById('invColor').value||'#111111';
+  const accent=document.getElementById('invAccent').value||'#ff7a00';
+  const merci=document.getElementById('invMerci').value||'Merci pour votre confiance 🙏';
+  const nom=(document.getElementById('invNomEntreprise').value.trim())||localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
+  const remise=parseFloat(document.getElementById('invRemise')?.value)||0;
+  const tva=parseFloat(document.getElementById('invTVA')?.value)||0;
+  let html, invNum, phone='';
+  if(_printSaleIds){
+    const arr=sales.filter(s=>_printSaleIds.includes(s.id));
+    if(!arr.length) return null;
+    html=buildInvoiceHTMLMulti(arr,color,accent,merci,nom,remise,tva);
+    invNum=arr[0].invNum||'Facture';
+    phone=arr[0].phone||'';
+  } else {
+    const s=sales.find(x=>x.id===_printSaleId); if(!s) return null;
+    html=buildInvoiceHTML(s,color,accent,merci,nom,remise,tva);
+    invNum=s.invNum||'Facture';
+    phone=s.phone||'';
+  }
+  const canvas=await renderInvoiceCanvas(html);
+  const imgData=canvas.toDataURL('image/jpeg',0.92);
+  const { jsPDF }=window.jspdf;
+  const pdf=new jsPDF({unit:'mm',format:'a5'});
+  const pageW=pdf.internal.pageSize.getWidth();
+  const pageH=pdf.internal.pageSize.getHeight();
+  const imgW=pageW;
+  const imgH=canvas.height*imgW/canvas.width;
+  if(imgH<=pageH){
+    pdf.addImage(imgData,'JPEG',0,0,imgW,imgH);
+  } else {
+    let heightLeft=imgH, position=0;
+    pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
+    heightLeft-=pageH;
+    while(heightLeft>0){
+      position=heightLeft-imgH;
+      pdf.addPage();
+      pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
+      heightLeft-=pageH;
+    }
+  }
+  return { blob: pdf.output('blob'), invNum, phone, pdf };
+}
+
+async function downloadInvoicePDF(){
+  const btn=document.getElementById('invPdfBtn'); const orig=btn.textContent;
+  btn.textContent='⏳ ...'; btn.disabled=true;
+  try{
+    const res=await buildInvoicePDFBlob();
+    if(!res){ showToast('❌ Erreur facture'); return; }
+    res.pdf.save(`${res.invNum}.pdf`);
+  } catch(err){ console.error(err); showToast('❌ Erreur génération PDF'); }
+  finally { btn.textContent=orig; btn.disabled=false; }
+}
+
+async function sendInvoiceWhatsApp(){
+  const btn=document.getElementById('invWaBtn'); const orig=btn.textContent;
+  btn.textContent='⏳ ...'; btn.disabled=true;
+  try{
+    const res=await buildInvoicePDFBlob();
+    if(!res){ showToast('❌ Erreur facture'); return; }
+    const fileName=`${res.invNum}.pdf`;
+    const file=new File([res.blob], fileName, {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:fileName, text:'Voici votre facture 🧾'});
+    } else {
+      res.pdf.save(fileName);
+      let phone=(res.phone||'').replace(/\D/g,'');
+      if(phone && !phone.startsWith('216')) phone='216'+phone;
+      const text=encodeURIComponent(`Bonjour, voici votre facture ${res.invNum} 🧾 (PDF téléchargé — merci de le joindre ici)`);
+      const waUrl=phone?`https://wa.me/${phone}?text=${text}`:`https://wa.me/?text=${text}`;
+      window.open(waUrl,'_blank');
+      showToast('📥 PDF téléchargé — joignez-le sur WhatsApp');
+    }
+  } catch(err){ console.error(err); showToast('❌ Erreur envoi WhatsApp'); }
+  finally { btn.textContent=orig; btn.disabled=false; }
+}
+
 function buildInvoiceHTML(s,color,accent,merci,nom,remise=0,tva=0){
   nom=nom||localStorage.getItem('flousFlowNomEntreprise')||'MegaStore';
   const ds=s.date?new Date(s.date+'T00:00:00').toLocaleDateString('fr-TN',{day:'2-digit',month:'long',year:'numeric'}):'—';
@@ -4477,10 +4607,7 @@ function buildInvoiceHTML(s,color,accent,merci,nom,remise=0,tva=0){
   const total=subtotal+tvaAmount;
   const invNum=s.invNum||('INV-'+(s.date||'').slice(0,4)+'-???');
   return `<div style="font-family:'Segoe UI',Arial,sans-serif;width:100%;box-sizing:border-box;color:#111;padding:14px 20px;page-break-after:avoid">
-    <div style="text-align:center;border-bottom:2px solid ${color};padding-bottom:8px;margin-bottom:10px">
-      <div style="font-size:20px;font-weight:900;letter-spacing:1px;color:${color}">${nom}</div>
-      <div style="font-size:11px;color:#555;margin-top:2px">📍 Kélibia, Tunisie &nbsp;|&nbsp; 📞 28 562 177</div>
-    </div>
+    ${invHeaderBlock(nom,color)}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:14px;font-weight:700;color:${color}">🧾 Facture</div>
       <div style="text-align:right">
@@ -7460,6 +7587,15 @@ window.addEventListener('focus', ()=>{
   <div class="modal-box" style="max-width:480px;width:100%">
     <div class="modal-title">🖨️ Aperçu Facture</div>
     <div style="margin-bottom:14px">
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">🖼️ Logo</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+        <div id="invLogoPreview" style="width:44px;height:44px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;font-size:18px">🏪</div>
+        <input type="file" id="invLogoInput" accept="image/*" onchange="handleInvLogoUpload(event)" style="display:none">
+        <button type="button" onclick="document.getElementById('invLogoInput').click()" style="padding:8px 14px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif">Choisir une image</button>
+        <button type="button" onclick="removeInvLogo()" id="invLogoRemoveBtn" style="display:none;padding:8px 12px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif">Retirer</button>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
       <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">🏪 Nom de l'entreprise</label>
       <input type="text" id="invNomEntreprise" placeholder="ex: CouvriTN" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;margin-top:4px;box-sizing:border-box">
     </div>
@@ -7488,9 +7624,11 @@ window.addEventListener('focus', ()=>{
       </div>
     </div>
     <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:14px;max-height:300px;overflow-y:auto" id="invoicePreviewContent"></div>
-    <div class="modal-btns">
-      <button class="btn-cancel" onclick="closeInvoicePreview()">Annuler</button>
-      <button class="btn-save" onclick="doPrint()">🖨️ Imprimer</button>
+    <div class="modal-btns" style="flex-wrap:wrap;gap:8px">
+      <button class="btn-cancel" onclick="closeInvoicePreview()" style="flex:1 1 auto;min-width:80px">Annuler</button>
+      <button class="btn-save" onclick="doPrint()" style="flex:1 1 auto;min-width:100px">🖨️ Imprimer</button>
+      <button onclick="downloadInvoicePDF()" id="invPdfBtn" style="flex:1 1 auto;min-width:100px;padding:11px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif">📄 PDF</button>
+      <button onclick="sendInvoiceWhatsApp()" id="invWaBtn" style="flex:1 1 auto;min-width:140px;padding:11px;border-radius:11px;border:none;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 14px rgba(37,211,102,.3)">💬 Envoyer WhatsApp</button>
     </div>
   </div>
 </div>
