@@ -2082,11 +2082,18 @@ try{
   fsDb = firebase.firestore();
   fsAuth = firebase.auth();
   fsReady = true;
+  // Active le cache local IndexedDB: les lectures/écritures faites hors-ligne
+  // sont mises en file d'attente et envoyées automatiquement au retour du réseau,
+  // même après avoir fermé et rouvert l'app.
+  fsDb.enablePersistence({synchronizeTabs:true}).catch(e=>{
+    console.warn('Firestore persistence non activée:', e.code);
+  });
 }catch(e){ console.warn('Firestore init échoué:', e); }
 
 const FS_DOC_REF = ()=> fsDb.collection('megastore').doc('data');
 let fsSyncTimer = null;
 let fsSyncState = 'idle'; // idle | syncing | synced | error | offline
+let fsDirty = false; // true si des changements locaux n'ont pas encore été confirmés synchronisés
 
 function fsSetStatus(state){
   fsSyncState = state;
@@ -2217,24 +2224,35 @@ function scheduleFirestoreSync(){
   if(!fsReady) return;
   // ne pas synchroniser tant que l'utilisateur n'est pas authentifié
   if(!fsIsLoggedIn()) return;
+  fsDirty = true;
   if(fsSyncTimer) clearTimeout(fsSyncTimer);
-  fsSetStatus('syncing');
+  fsSetStatus(navigator.onLine===false?'offline':'syncing');
   fsSyncTimer = setTimeout(fsPushNow, 2500);
 }
 
 async function fsPushNow(){
   if(!fsReady) return;
+  if(navigator.onLine===false){
+    // Pas la peine d'essayer: on attendra l'événement 'online' pour réessayer.
+    fsSetStatus('offline');
+    return;
+  }
   try{
     fsSetStatus('syncing');
     const payload = fsCollectPayload();
     await FS_DOC_REF().set(payload, {merge:false});
     localStorage.setItem('flousFlowFsLastPush', Date.now());
     localStorage.setItem('flousFlowFsLastApplied', payload.updatedAt);
+    fsDirty = false;
     fsSetStatus('synced');
   }catch(e){
     console.warn('Firestore push échoué:', e);
     fsSetStatus('error');
     if(typeof showToast==='function') showToast('⚠️ Pas de connexion: vos données sont enregistrées localement, mais pas encore sauvegardées en ligne.', true);
+    // Réessaie automatiquement dans 15s (au cas où l'événement 'online' ne se déclenche pas,
+    // ce qui arrive parfois dans les WebView Android).
+    if(fsSyncTimer) clearTimeout(fsSyncTimer);
+    fsSyncTimer = setTimeout(fsPushNow, 15000);
   }
 }
 
@@ -2312,9 +2330,24 @@ async function fsInitialSync(){
   // Si le local semble "plus récent", on NE pousse PAS automatiquement.
   // L'utilisateur reste sur les données cloud (déjà appliquées via save()/etc
   // au fil de son utilisation normale, qui déclenchera un push légitime).
+  // Si le local a des changements plus récents que le dernier push confirmé
+  // (ex: modifs faites hors-ligne avant de fermer l'app), on les renvoie maintenant.
+  const lastPush = parseInt(localStorage.getItem('flousFlowFsLastPush')||'0', 10);
+  if(localTs > lastPush){
+    fsDirty = true;
+    fsPushNow();
+  }
 }
 
-window.addEventListener('online', ()=>{ if(fsSyncState==='offline') fsSetStatus('idle'); });
+window.addEventListener('online', ()=>{
+  if(fsSyncTimer) clearTimeout(fsSyncTimer);
+  if(fsDirty){
+    // Des changements locaux attendent d'être envoyés: on réessaie tout de suite.
+    fsPushNow();
+  } else {
+    fsSetStatus('idle');
+  }
+});
 window.addEventListener('offline', ()=> fsSetStatus('offline'));
 
 // Migration: si anciens fourns étaient des strings
@@ -5802,20 +5835,29 @@ function renderCategories(){
 
   // Build catégorie data (toutes les catégories, même sans ventes — sauf si aucune vente du tout)
   const cq={};
-  CAT_LIST.forEach(c=>{ cq[c]={count:0,revenu:0,benef:0,first:'',last:''}; });
-  cq['__none__']={count:0,revenu:0,benef:0,first:'',last:''};
+  CAT_LIST.forEach(c=>{ cq[c]={count:0,revenu:0,benef:0,cout:0,first:'',last:''}; });
+  cq['__none__']={count:0,revenu:0,benef:0,cout:0,first:'',last:''};
   sales.forEach(s=>{
     const c=s.categorie&&CAT_LIST.includes(s.categorie)?s.categorie:'__none__';
     const d=s.date||'';
     cq[c].count++;
     cq[c].revenu+=(s.revenu||0);
     cq[c].benef+=benefNet(s);
+    cq[c].cout+=(s.coutTotal||0);
     if(d&&(!cq[c].first||d<cq[c].first)) cq[c].first=d;
     if(d&&(!cq[c].last ||d>cq[c].last))  cq[c].last=d;
   });
 
   // Garder uniquement les catégories qui ont au moins une vente, triées par bénéfice
-  const sorted=Object.entries(cq).filter(([,d])=>d.count>0).sort((a,b)=>b[1].benef-a[1].benef);
+  const sortByRoi=localStorage.getItem('flousFlowCatSortRoi')==='1';
+  const sorted=Object.entries(cq).filter(([,d])=>d.count>0).sort((a,b)=>{
+    if(sortByRoi){
+      const roiA=a[1].cout>0?a[1].benef/a[1].cout:-Infinity;
+      const roiB=b[1].cout>0?b[1].benef/b[1].cout:-Infinity;
+      return roiB-roiA;
+    }
+    return b[1].benef-a[1].benef;
+  });
   if(!sorted.length){
     wrap.innerHTML='';
     list.innerHTML='<div class="empty"><div class="empty-icon">🗂️</div><div class="empty-text">Aucune vente catégorisée.</div></div>';
@@ -5835,7 +5877,13 @@ function renderCategories(){
     </div>
     <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:20px">Appuyer sur une barre pour filtrer les ventes</div>
     <div style="height:1px;background:var(--border);margin-bottom:18px"></div>
-    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">🗂️ Détail par catégorie</div>`;
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <span style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">🗂️ Détail par catégorie</span>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer">
+        <input type="checkbox" id="catSortRoi" ${sortByRoi?'checked':''} onchange="localStorage.setItem('flousFlowCatSortRoi',this.checked?'1':'0');renderCategories()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+        Trier par ROI
+      </label>
+    </div>`;
 
   const canvas=document.getElementById('catCanvas');
   const dpr=window.devicePixelRatio||1;
@@ -5911,6 +5959,9 @@ function renderCategories(){
     const c1=info.color;
     const pct=Math.max(3,(Math.abs(d.benef)/maxBenef)*100);
     const marge=d.revenu>0?((d.benef/d.revenu)*100).toFixed(1):'0.0';
+    const roi=d.cout>0?((d.benef/d.cout)*100):0;
+    const roiFmt=(roi>=0?'+':'')+roi.toFixed(1)+'%';
+    const roiColor=roi>0?'var(--green)':roi<0?'var(--red)':'var(--muted)';
     return `<div class="form-card" style="margin-bottom:12px;border-left:3px solid ${c1};cursor:pointer" onclick="filterByCategorie('${name.replace(/'/g,"\\'")}')">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <div style="font-size:17px;font-weight:800">${info.icon} ${catLabel(name)}</div>
@@ -5918,6 +5969,13 @@ function renderCategories(){
       </div>
       <div style="height:7px;background:var(--border);border-radius:6px;overflow:hidden;margin-bottom:10px">
         <div style="height:100%;width:${pct}%;background:${c1};border-radius:6px"></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:9px;padding:9px 12px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:13px">📈</span>
+          <span style="font-size:11px;color:var(--muted);font-weight:600">ROI (retour sur investissement)</span>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:800;color:${roiColor}">${roiFmt}</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
         <div style="background:var(--surface2);border-radius:9px;padding:9px">
