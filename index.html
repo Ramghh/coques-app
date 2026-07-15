@@ -6,7 +6,6 @@
 <title>🏪 MegaStore</title>
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -6913,7 +6912,28 @@ function exportJSON(){
 }
 
 // ── EXPORT EXCEL ───────────────────────────────────────────────────────────
-function exportExcel(){
+let _xlsxLoading=null;
+function ensureXLSX(){
+  if(typeof XLSX!=='undefined') return Promise.resolve();
+  if(_xlsxLoading) return _xlsxLoading;
+  _xlsxLoading=new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=()=>resolve();
+    s.onerror=()=>{ _xlsxLoading=null; reject(new Error('Échec chargement XLSX')); };
+    document.head.appendChild(s);
+  });
+  return _xlsxLoading;
+}
+
+async function exportExcel(){
+  try{
+    showToast('⏳ Préparation Excel...');
+    await ensureXLSX();
+  }catch(e){
+    showToast('❌ Erreur: impossible de charger le module Excel (vérifiez votre connexion)', true);
+    return;
+  }
   if(!sales.length){showToast('⚠️ Aucune vente!',true);return;}
   const rows=sales.map((s,i)=>{
     const fObj=fourns.find(x=>x.id===s.fourn||x.nom===s.fourn);
