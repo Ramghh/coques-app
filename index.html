@@ -151,6 +151,11 @@ button{-webkit-tap-highlight-color:transparent}
 .sale-card{transition:transform .18s ease,box-shadow .18s ease}
 .sale-card:hover{transform:scale(1.02);box-shadow:0 6px 20px rgba(0,0,0,.18)}
 .sale-card:active{transform:scale(.985);box-shadow:none}
+.oc-call-btn{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#10b981,#0ea86f);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;box-shadow:0 4px 12px rgba(16,185,129,.4);transition:transform .15s ease,box-shadow .15s ease}
+.oc-call-btn:hover{transform:scale(1.08);box-shadow:0 6px 16px rgba(16,185,129,.55)}
+.oc-call-btn:active{transform:scale(.95)}
+.oc-icon-btn{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;text-decoration:none;border:1px solid transparent;margin-left:6px;vertical-align:middle}
+.oc-statut-select{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;appearance:none;-webkit-appearance:none}
 /* KPI cards pulse on load */
 .kpi{transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s ease}
 .kpi:hover{transform:scale(1.03);box-shadow:0 6px 20px rgba(0,0,0,.18)}
@@ -1069,10 +1074,19 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Téléphone</label><input type="tel" id="ocTel" placeholder="+216 XX XXX XXX"></div>
       <div><label>Ville</label><div class="sac-wrap"><input type="text" id="ocVille" placeholder="Tunis" autocomplete="off" style="width:100%"><div class="sac-dropdown" id="ocVille-dd"></div></div><datalist id="ocVilleList"></datalist></div>
       <div><label>Modèle demandé</label><input type="text" id="ocModel" placeholder="iPhone 15 Pro Max"></div>
+      <div><label>Prix d'achat (DT)</label><input type="number" id="ocPrixAchat" placeholder="380.000" step="0.001"></div>
       <div><label>Prix de vente (DT)</label><input type="number" id="ocPrix" placeholder="450.000" step="0.001"></div>
+      <div><label>Statut</label>
+        <select id="ocStatut">
+          <option value="attente">🟡 En attente</option>
+          <option value="cours">🟠 En cours</option>
+          <option value="livre">🟢 Livré</option>
+        </select>
+      </div>
       <div class="form-full"><label>Notes (optionnel)</label><input type="text" id="ocNotes" placeholder="Couleur, capacité, préférences..."></div>
     </div>
-    <button class="btn-add" onclick="addCommande()" style="background:linear-gradient(135deg,#ff7a00,#ff9a3c)">🛒 Enregistrer la commande</button>
+    <button class="btn-add" id="ocSaveBtn" onclick="addCommande()" style="background:linear-gradient(135deg,#ff7a00,#ff9a3c)">🛒 Enregistrer la commande</button>
+    <button class="btn-add" id="ocCancelBtn" onclick="cancelEditCommande()" style="display:none;margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--muted)">✖️ Annuler la modification</button>
   </div>
 
   <!-- Recherche commandes -->
@@ -2063,6 +2077,7 @@ let achats = JSON.parse(localStorage.getItem('flousFlowAchats') || '[]');
 let stockItems = JSON.parse(localStorage.getItem('flousFlowStock') || '[]');
 let clients = JSON.parse(localStorage.getItem('flousFlowClients') || '[]');
 let commandes = JSON.parse(localStorage.getItem('flousFlowCommandes') || '[]');
+let editingCommandeId = null;
 let partenaireDeals = JSON.parse(localStorage.getItem('flousFlowPartenaire') || '[]');
 let theme  = localStorage.getItem('flousFlowTheme') || localStorage.getItem('coquesTheme') || 'light';
 
@@ -2948,21 +2963,75 @@ function deleteClient(id){
 // ── COMMANDES (notes libres, sans lien avec clients/ventes) ────────────────
 function saveCommandes(){ localStorage.setItem('flousFlowCommandes', JSON.stringify(commandes)); localStorage.setItem('flousFlowLastSave', Date.now()); scheduleFirestoreSync(); }
 
+const COMMANDE_STATUTS={
+  attente:{label:'En attente',emoji:'🟡',color:'#f59e0b'},
+  cours:{label:'En cours',emoji:'🟠',color:'#ff7a00'},
+  livre:{label:'Livré',emoji:'🟢',color:'#10b981'}
+};
+
 function addCommande(){
   const nom=document.getElementById('ocNom').value.trim();
   const tel=document.getElementById('ocTel').value.trim();
   const ville=document.getElementById('ocVille').value.trim();
   const model=document.getElementById('ocModel').value.trim();
-  const prixRaw=document.getElementById('ocPrix').value;
-  const prix=parseFloat(prixRaw)||0;
+  const prixAchat=parseFloat(document.getElementById('ocPrixAchat').value)||0;
+  const prix=parseFloat(document.getElementById('ocPrix').value)||0;
+  const statut=document.getElementById('ocStatut').value||'attente';
   const notes=document.getElementById('ocNotes').value.trim();
   if(!nom){showToast('⚠️ Nom obligatoire!',true);return;}
   if(!model){showToast('⚠️ Modèle obligatoire!',true);return;}
-  commandes.push({id:uid(),nom,tel,ville,model,prix,notes,createdAt:new Date().toISOString().split('T')[0]});
-  saveCommandes();
-  ['ocNom','ocTel','ocVille','ocModel','ocPrix','ocNotes'].forEach(i=>document.getElementById(i).value='');
+
+  if(editingCommandeId){
+    const c=commandes.find(x=>x.id===editingCommandeId);
+    if(c){
+      Object.assign(c,{nom,tel,ville,model,prixAchat,prix,statut,notes});
+      saveCommandes();
+      showToast(`✅ Commande de ${nom} modifiée!`);
+    }
+    cancelEditCommande();
+  } else {
+    commandes.push({id:uid(),nom,tel,ville,model,prixAchat,prix,statut,notes,createdAt:new Date().toISOString().split('T')[0]});
+    saveCommandes();
+    showToast(`✅ Commande pour ${nom} ajoutée!`);
+  }
+  ['ocNom','ocTel','ocVille','ocModel','ocPrixAchat','ocPrix','ocNotes'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('ocStatut').value='attente';
   renderCommandes();
-  showToast(`✅ Commande pour ${nom} ajoutée!`);
+}
+
+function editCommande(id){
+  const c=commandes.find(x=>x.id===id);
+  if(!c) return;
+  editingCommandeId=id;
+  document.getElementById('ocNom').value=c.nom||'';
+  document.getElementById('ocTel').value=c.tel||'';
+  document.getElementById('ocVille').value=c.ville||'';
+  document.getElementById('ocModel').value=c.model||'';
+  document.getElementById('ocPrixAchat').value=c.prixAchat||'';
+  document.getElementById('ocPrix').value=c.prix||'';
+  document.getElementById('ocStatut').value=c.statut||'attente';
+  document.getElementById('ocNotes').value=c.notes||'';
+  document.getElementById('ocSaveBtn').innerHTML='💾 Modifier la commande';
+  document.getElementById('ocCancelBtn').style.display='block';
+  document.querySelector('#tab-commandes .form-card').scrollIntoView({behavior:'smooth',block:'start'});
+  showToast('✏️ Mode modification activé');
+}
+
+function cancelEditCommande(){
+  editingCommandeId=null;
+  ['ocNom','ocTel','ocVille','ocModel','ocPrixAchat','ocPrix','ocNotes'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('ocStatut').value='attente';
+  document.getElementById('ocSaveBtn').innerHTML='🛒 Enregistrer la commande';
+  document.getElementById('ocCancelBtn').style.display='none';
+}
+
+function updateCommandeStatut(id,statut){
+  const c=commandes.find(x=>x.id===id);
+  if(!c) return;
+  c.statut=statut;
+  saveCommandes();
+  renderCommandes();
+  showToast(`✅ Statut mis à jour: ${COMMANDE_STATUTS[statut]?.label||statut}`);
 }
 
 function deleteCommande(id){
@@ -2992,21 +3061,40 @@ function renderCommandes(){
   const sorted=[...filtered].sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
 
   el.innerHTML=sorted.map(c=>{
-    const telLink=c.tel?`<a href="tel:${c.tel}" style="color:var(--accent);text-decoration:none">${c.tel}</a>`:'';
-    const waLink=c.tel?`<a href="https://wa.me/${c.tel.replace(/[^0-9]/g,'')}" target="_blank" style="color:var(--green);text-decoration:none;margin-left:8px">💬</a>`:'';
+    const telClean=c.tel?c.tel.replace(/[^0-9+]/g,''):'';
+    const waLink=c.tel?`<a href="https://wa.me/${c.tel.replace(/[^0-9]/g,'')}" target="_blank" class="oc-icon-btn" style="background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.3);color:#25d366">💬</a>`:'';
+    const callBtn=c.tel?`<a href="tel:${telClean}" class="oc-call-btn" title="Appeler ${c.nom}">📞</a>`:'';
+    const st=COMMANDE_STATUTS[c.statut||'attente']||COMMANDE_STATUTS.attente;
+    const prixAchat=c.prixAchat||0;
+    const marge=(c.prix||0)-prixAchat;
     return `<div class="sale-card" style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:15px;color:var(--text)">👤 ${c.nom}</div>
-          <div style="font-size:13px;color:var(--muted);margin-top:2px">🛒 ${c.model}</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div style="font-weight:700;font-size:15px;color:var(--text)">👤 ${c.nom}</div>
+            <select onchange="updateCommandeStatut('${c.id}',this.value)" class="oc-statut-select" style="background:${st.color}22;color:${st.color};border:1px solid ${st.color}55">
+              ${Object.entries(COMMANDE_STATUTS).map(([k,v])=>`<option value="${k}" ${k===(c.statut||'attente')?'selected':''}>${v.emoji} ${v.label}</option>`).join('')}
+            </select>
+          </div>
+          <div style="font-size:13px;color:var(--muted);margin-top:4px">🛒 ${c.model}</div>
           ${c.ville?`<div style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${c.ville}</div>`:''}
-          ${c.tel?`<div style="font-size:12px;margin-top:2px">📞 ${telLink}${waLink}</div>`:''}
+          ${c.tel?`<div style="font-size:12px;margin-top:2px;color:var(--muted)">📱 ${c.tel}${waLink}</div>`:''}
           ${c.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">📝 ${c.notes}</div>`:''}
+          <div style="display:flex;gap:12px;margin-top:6px;font-size:12px;color:var(--muted)">
+            ${prixAchat?`<span>Achat: <b style="color:var(--text)">${fmt(prixAchat)}</b></span>`:''}
+            ${prixAchat?`<span>Marge: <b style="color:${marge>=0?'var(--green)':'var(--red)'}">${fmt(marge)}</b></span>`:''}
+          </div>
         </div>
-        <div style="text-align:right;flex-shrink:0">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--accent)">${fmt(c.prix)}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.createdAt||''}</div>
-          <button onclick="deleteCommande('${c.id}')" style="margin-top:8px;background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">🗑️ Supprimer</button>
+        <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+          ${callBtn}
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--accent)">${fmt(c.prix)}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.createdAt||''}</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button onclick="editCommande('${c.id}')" style="background:transparent;border:1px solid rgba(255,122,0,.4);color:var(--accent);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">✏️ Modifier</button>
+            <button onclick="deleteCommande('${c.id}')" style="background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">🗑️</button>
+          </div>
         </div>
       </div>
     </div>`;
