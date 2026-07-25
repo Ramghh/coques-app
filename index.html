@@ -2280,6 +2280,20 @@ async function fsPullNow(silent){
   return data;
 }
 
+// Redessine l'entête (KPIs, cartes, mini-graphe) + l'onglet actuellement ouvert.
+// Appelée après application de données distantes (Firestore) pour éviter
+// d'avoir à faire un refresh manuel de la page.
+function refreshAllViews(){
+  try{ if(typeof updateKPIs==='function') updateKPIs(); }catch(e){ console.warn('refreshAllViews/updateKPIs:',e); }
+  try{
+    const active=document.querySelector('.section.active');
+    if(active && typeof showTab==='function'){
+      const id=active.id.replace('tab-','');
+      showTab(id, null, false);
+    }
+  }catch(e){ console.warn('refreshAllViews/showTab:',e); }
+}
+
 function fsApplyRemoteData(data){
   if(!data) return;
   sales = data.sales||[];
@@ -2334,7 +2348,8 @@ async function fsInitialSync(){
     // Le cloud a une version qu'on n'a jamais encore appliquée sur cet appareil.
     fsApplyRemoteData(remote);
     localStorage.setItem('flousFlowFsLastApplied', remoteTs);
-    if(typeof showToast==='function') showToast('☁️ Nouvelles données disponibles (actualisez pour les voir)');
+    if(typeof refreshAllViews==='function') refreshAllViews();
+    if(typeof showToast==='function') showToast('☁️ Données synchronisées');
   } else if(remoteTs > lastAppliedTs){
     // Le cloud a changé mais ce n'est pas "nouveau" pour nous (ex: on vient
     // soi-même de pousser cette version) — on note juste qu'on est à jour,
@@ -7723,6 +7738,7 @@ function _redrawActiveTab(){
   if(id==='rapport')   setTimeout(()=>renderRapport(), 100);
   if(id==='annuel')    setTimeout(()=>renderAnnuel(), 100);
   if(id==='calendrier') setTimeout(()=>renderCalendrier(), 100);
+  if(id==='commandes') setTimeout(()=>renderCommandes(), 100);
   if(id==='marques')   setTimeout(()=>renderMarques(), 100);
   if(id==='cartes-rapport') setTimeout(()=>renderCartesRapport(), 100);
 }
