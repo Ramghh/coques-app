@@ -1070,9 +1070,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Ville</label><div class="sac-wrap"><input type="text" id="ocVille" placeholder="Tunis" autocomplete="off" style="width:100%"><div class="sac-dropdown" id="ocVille-dd"></div></div><datalist id="ocVilleList"></datalist></div>
       <div><label>Modèle demandé</label><input type="text" id="ocModel" placeholder="iPhone 15 Pro Max"></div>
       <div><label>Prix de vente (DT)</label><input type="number" id="ocPrix" placeholder="450.000" step="0.001"></div>
+      <div><label>Prix d'achat (DT)</label><input type="number" id="ocPrixAchat" placeholder="380.000" step="0.001"></div>
       <div class="form-full"><label>Notes (optionnel)</label><input type="text" id="ocNotes" placeholder="Couleur, capacité, préférences..."></div>
     </div>
-    <button class="btn-add" onclick="addCommande()" style="background:linear-gradient(135deg,#ff7a00,#ff9a3c)">🛒 Enregistrer la commande</button>
+    <button class="btn-add" id="ocSubmitBtn" onclick="addCommande()" style="background:linear-gradient(135deg,#ff7a00,#ff9a3c)">🛒 Enregistrer la commande</button>
   </div>
 
   <!-- Recherche commandes -->
@@ -2948,6 +2949,8 @@ function deleteClient(id){
 // ── COMMANDES (notes libres, sans lien avec clients/ventes) ────────────────
 function saveCommandes(){ localStorage.setItem('flousFlowCommandes', JSON.stringify(commandes)); localStorage.setItem('flousFlowLastSave', Date.now()); scheduleFirestoreSync(); }
 
+let editingCommandeId=null;
+
 function addCommande(){
   const nom=document.getElementById('ocNom').value.trim();
   const tel=document.getElementById('ocTel').value.trim();
@@ -2955,14 +2958,50 @@ function addCommande(){
   const model=document.getElementById('ocModel').value.trim();
   const prixRaw=document.getElementById('ocPrix').value;
   const prix=parseFloat(prixRaw)||0;
+  const prixAchatRaw=document.getElementById('ocPrixAchat').value;
+  const prixAchat=parseFloat(prixAchatRaw)||0;
   const notes=document.getElementById('ocNotes').value.trim();
   if(!nom){showToast('⚠️ Nom obligatoire!',true);return;}
   if(!model){showToast('⚠️ Modèle obligatoire!',true);return;}
-  commandes.push({id:uid(),nom,tel,ville,model,prix,notes,createdAt:new Date().toISOString().split('T')[0]});
+
+  if(editingCommandeId){
+    const c=commandes.find(x=>x.id===editingCommandeId);
+    if(c){ Object.assign(c,{nom,tel,ville,model,prix,prixAchat,notes}); }
+    saveCommandes();
+    cancelEditCommande();
+    renderCommandes();
+    showToast(`✅ Commande pour ${nom} mise à jour!`);
+    return;
+  }
+
+  commandes.push({id:uid(),nom,tel,ville,model,prix,prixAchat,notes,createdAt:new Date().toISOString().split('T')[0]});
   saveCommandes();
-  ['ocNom','ocTel','ocVille','ocModel','ocPrix','ocNotes'].forEach(i=>document.getElementById(i).value='');
+  ['ocNom','ocTel','ocVille','ocModel','ocPrix','ocPrixAchat','ocNotes'].forEach(i=>document.getElementById(i).value='');
   renderCommandes();
   showToast(`✅ Commande pour ${nom} ajoutée!`);
+}
+
+function editCommande(id){
+  const c=commandes.find(x=>x.id===id);
+  if(!c) return;
+  editingCommandeId=id;
+  document.getElementById('ocNom').value=c.nom||'';
+  document.getElementById('ocTel').value=c.tel||'';
+  document.getElementById('ocVille').value=c.ville||'';
+  document.getElementById('ocModel').value=c.model||'';
+  document.getElementById('ocPrix').value=c.prix||'';
+  document.getElementById('ocPrixAchat').value=c.prixAchat||'';
+  document.getElementById('ocNotes').value=c.notes||'';
+  const btn=document.getElementById('ocSubmitBtn');
+  if(btn){ btn.innerHTML='✏️ Mettre à jour la commande'; btn.style.background='linear-gradient(135deg,#3b82f6,#60a5fa)'; }
+  document.getElementById('tab-commandes').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function cancelEditCommande(){
+  editingCommandeId=null;
+  ['ocNom','ocTel','ocVille','ocModel','ocPrix','ocPrixAchat','ocNotes'].forEach(i=>document.getElementById(i).value='');
+  const btn=document.getElementById('ocSubmitBtn');
+  if(btn){ btn.innerHTML='🛒 Enregistrer la commande'; btn.style.background='linear-gradient(135deg,#ff7a00,#ff9a3c)'; }
 }
 
 function deleteCommande(id){
@@ -2992,21 +3031,29 @@ function renderCommandes(){
   const sorted=[...filtered].sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
 
   el.innerHTML=sorted.map(c=>{
-    const telLink=c.tel?`<a href="tel:${c.tel}" style="color:var(--accent);text-decoration:none">${c.tel}</a>`:'';
-    const waLink=c.tel?`<a href="https://wa.me/${c.tel.replace(/[^0-9]/g,'')}" target="_blank" style="color:var(--green);text-decoration:none;margin-left:8px">💬</a>`:'';
+    const circleBtnBase='display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;text-decoration:none;font-size:14px;flex-shrink:0';
+    const telBtn=c.tel?`<a href="tel:${c.tel}" style="${circleBtnBase};background:var(--green);color:#fff" title="Appeler">📞</a>`:'';
+    const waBtn=c.tel?`<a href="https://wa.me/${c.tel.replace(/[^0-9]/g,'')}" target="_blank" style="${circleBtnBase};background:#128c4a;color:#fff;margin-left:6px" title="WhatsApp">💬</a>`:'';
+    const prixAchat=c.prixAchat||0;
+    const profit=(c.prix||0)-prixAchat;
+    const profitColor=profit>=0?'var(--green)':'var(--red)';
     return `<div class="sale-card" style="margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:15px;color:var(--text)">👤 ${c.nom}</div>
           <div style="font-size:13px;color:var(--muted);margin-top:2px">🛒 ${c.model}</div>
           ${c.ville?`<div style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${c.ville}</div>`:''}
-          ${c.tel?`<div style="font-size:12px;margin-top:2px">📞 ${telLink}${waLink}</div>`:''}
+          ${c.tel?`<div style="display:flex;align-items:center;margin-top:6px">${telBtn}${waBtn}<span style="font-size:12px;color:var(--muted);margin-left:8px">${c.tel}</span></div>`:''}
           ${c.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">📝 ${c.notes}</div>`:''}
         </div>
         <div style="text-align:right;flex-shrink:0">
           <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--accent)">${fmt(c.prix)}</div>
+          ${prixAchat?`<div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:1px">Achat: ${fmt(prixAchat)}</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${profitColor};margin-top:1px">${profit>=0?'+':''}${fmt(profit)}</div>`:''}
           <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.createdAt||''}</div>
-          <button onclick="deleteCommande('${c.id}')" style="margin-top:8px;background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">🗑️ Supprimer</button>
+          <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">
+            <button onclick="editCommande('${c.id}')" style="background:transparent;border:1px solid rgba(59,130,246,.4);color:#3b82f6;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">✏️ Modifier</button>
+            <button onclick="deleteCommande('${c.id}')" style="background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">🗑️</button>
+          </div>
         </div>
       </div>
     </div>`;
