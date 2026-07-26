@@ -13,10 +13,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 [data-theme="dark"]{
-  --bg:#000000;--surface:#141414;--surface2:#1c1c1c;
-  --border:#262626;--text:#f5f5f5;--muted:#8a8a8a;
-  --header-bg:linear-gradient(180deg,#0a0a0a,#000000);
-  --shadow:0 2px 14px rgba(0,0,0,.7);
+  --bg:#0d0f1a;--surface:#151929;--surface2:#1c2033;
+  --border:#252a3d;--text:#f0f0f0;--muted:#666;
+  --header-bg:linear-gradient(180deg,#0d0f1a,#0a0c18);
+  --shadow:0 2px 12px rgba(0,0,0,.6);
 }
 [data-theme="light"]{
   --bg:#f0ebe4;--surface:#fdfaf6;--surface2:#f5f0ea;
@@ -151,11 +151,6 @@ button{-webkit-tap-highlight-color:transparent}
 .sale-card{transition:transform .18s ease,box-shadow .18s ease}
 .sale-card:hover{transform:scale(1.02);box-shadow:0 6px 20px rgba(0,0,0,.18)}
 .sale-card:active{transform:scale(.985);box-shadow:none}
-.oc-call-btn{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#10b981,#0ea86f);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;text-decoration:none;box-shadow:0 4px 12px rgba(16,185,129,.4);transition:transform .15s ease,box-shadow .15s ease}
-.oc-call-btn:hover{transform:scale(1.08);box-shadow:0 6px 16px rgba(16,185,129,.55)}
-.oc-call-btn:active{transform:scale(.95)}
-.oc-icon-btn{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;text-decoration:none;border:1px solid transparent;margin-left:6px;vertical-align:middle}
-.oc-statut-select{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;appearance:none;-webkit-appearance:none}
 /* KPI cards pulse on load */
 .kpi{transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s ease}
 .kpi:hover{transform:scale(1.03);box-shadow:0 6px 20px rgba(0,0,0,.18)}
@@ -242,7 +237,7 @@ input:focus,select:focus{transform:translateY(-1px);box-shadow:0 4px 12px rgba(2
 .gsearch-highlight{color:var(--accent);font-weight:700}
 /* Skeleton — shimmer */
 :root{
-  --sk-base:#141414;--sk-shine:#1c1c1c;--sk-accent:rgba(255,122,0,.15);
+  --sk-base:#151929;--sk-shine:#1c2033;--sk-accent:rgba(255,122,0,.15);
 }
 @keyframes shimmer{
   0%{background-position:200% 0}
@@ -1074,19 +1069,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Téléphone</label><input type="tel" id="ocTel" placeholder="+216 XX XXX XXX"></div>
       <div><label>Ville</label><div class="sac-wrap"><input type="text" id="ocVille" placeholder="Tunis" autocomplete="off" style="width:100%"><div class="sac-dropdown" id="ocVille-dd"></div></div><datalist id="ocVilleList"></datalist></div>
       <div><label>Modèle demandé</label><input type="text" id="ocModel" placeholder="iPhone 15 Pro Max"></div>
-      <div><label>Prix d'achat (DT)</label><input type="number" id="ocPrixAchat" placeholder="380.000" step="0.001"></div>
       <div><label>Prix de vente (DT)</label><input type="number" id="ocPrix" placeholder="450.000" step="0.001"></div>
-      <div><label>Statut</label>
-        <select id="ocStatut">
-          <option value="attente">🟡 En attente</option>
-          <option value="cours">🟠 En cours</option>
-          <option value="livre">🟢 Livré</option>
-        </select>
-      </div>
       <div class="form-full"><label>Notes (optionnel)</label><input type="text" id="ocNotes" placeholder="Couleur, capacité, préférences..."></div>
     </div>
-    <button class="btn-add" id="ocSaveBtn" onclick="addCommande()" style="background:linear-gradient(135deg,#ff7a00,#ff9a3c)">🛒 Enregistrer la commande</button>
-    <button class="btn-add" id="ocCancelBtn" onclick="cancelEditCommande()" style="display:none;margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--muted)">✖️ Annuler la modification</button>
+    <button class="btn-add" onclick="addCommande()" style="background:linear-gradient(135deg,#ff7a00,#ff9a3c)">🛒 Enregistrer la commande</button>
   </div>
 
   <!-- Recherche commandes -->
@@ -1897,6 +1883,89 @@ const DRAWER_LABELS = {
   rapport:'📊 Rapport', annuel:'📅 Annuel', calendrier:'🗓️ Calendrier', 'cartes-rapport':'💳 Rentabilité Cartes', dashboard:'🗺️ Dashboard', backup:'💾 Backup'
 };
 
+// ── MINI CHART 7 JOURS ────────────────────────────────────────────────────
+function drawMiniChart7d(){
+  const canvas=document.getElementById('miniChart7d');
+  if(!canvas) return;
+  const today=new Date();
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(today); d.setDate(today.getDate()-i);
+    const str=typeof localDateStr==='function'?localDateStr(d):d.toISOString().slice(0,10);
+    const benef=(typeof sales!=='undefined'?sales:[]).filter(s=>s.date===str).reduce((a,s)=>a+benefNet(s),0);
+    const label=i===0?'Auj.':(i===1?'Hier':d.toLocaleDateString('fr-TN',{weekday:'short'}));
+    days.push({label,benef});
+  }
+  const total7d=days.reduce((a,d)=>a+d.benef,0);
+  const totalEl=document.getElementById('miniChart7dTotal');
+  if(totalEl) totalEl.textContent=(total7d>=0?'+':'')+((typeof fmt==='function')?fmt(total7d):total7d.toFixed(3));
+  const maxVal=Math.max(...days.map(d=>d.benef),1);
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth||320; const H=52;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const barW=Math.floor((W-28)/7)-4;
+  const gap=(W-28-(barW*7))/6;
+  const chartH=H-18;
+  days.forEach((d,i)=>{
+    const x=14+i*(barW+gap);
+    const isToday=i===6;
+    const bH=Math.max(2,(d.benef/maxVal)*chartH);
+    const y=chartH-bH;
+    const grad=ctx.createLinearGradient(0,y,0,chartH);
+    if(isToday){grad.addColorStop(0,'#ff7a00');grad.addColorStop(1,'rgba(255,122,0,0.3)');}
+    else{grad.addColorStop(0,isDark?'rgba(255,122,0,0.6)':'rgba(255,122,0,0.5)');grad.addColorStop(1,'rgba(255,122,0,0.1)');}
+    ctx.fillStyle=grad;
+    ctx.beginPath();
+    if(bH<6){ctx.rect(x,y,barW,bH);}
+    else{const r=3;ctx.moveTo(x+r,y);ctx.lineTo(x+barW-r,y);ctx.arcTo(x+barW,y,x+barW,y+r,r);ctx.lineTo(x+barW,y+bH);ctx.lineTo(x,y+bH);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+    ctx.fill();
+    ctx.fillStyle=isToday?'#ff7a00':(isDark?'rgba(255,255,255,0.4)':'rgba(0,0,0,0.4)');
+    ctx.font=`${isToday?'700':'500'} 9px sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(d.label, x+barW/2, chartH+3);
+  });
+}
+
+// ── HEATMAP ───────────────────────────────────────────────────────────────
+function renderHeatmap(){
+  const grid=document.getElementById('heatmapGrid');
+  const legend=document.getElementById('heatmapLegend');
+  if(!grid) return;
+  const _sales=typeof sales!=='undefined'?sales:[];
+  if(!_sales.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px;font-size:13px">Aucune vente.</div>';return;}
+  const dayNames=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const dayStats=Array(7).fill(null).map(()=>({count:0,benef:0}));
+  _sales.forEach(s=>{
+    if(!s.date) return;
+    const dow=new Date(s.date+'T12:00:00').getDay();
+    dayStats[dow].count++;
+    dayStats[dow].benef+=benefNet(s);
+  });
+  const maxCount=Math.max(...dayStats.map(d=>d.count),1);
+  const bestDayIdx=dayStats.indexOf(dayStats.reduce((a,b)=>b.count>a.count?b:a));
+  const _fmt=typeof fmt==='function'?fmt:(v=>v.toFixed(3));
+  grid.innerHTML=dayStats.map((d,i)=>{
+    const intensity=d.count/maxCount;
+    const alpha=0.08+intensity*0.82;
+    const isToday=new Date().getDay()===i;
+    const isBest=i===bestDayIdx&&d.count>0;
+    const bg=d.count===0?'var(--surface2)':`rgba(255,122,0,${alpha.toFixed(2)})`;
+    const textColor=intensity>0.5?'#fff':'var(--text)';
+    const border=isToday?'2px solid var(--accent)':isBest?'2px solid #10b981':'1px solid var(--border)';
+    const avgBenef=d.count>0?(d.benef/d.count):0;
+    return `<div class="heatmap-cell" style="background:${bg};border:${border}">
+      <div class="heatmap-day" style="color:${d.count>0?textColor:'var(--muted)'}">${dayNames[i]}</div>
+      <div class="heatmap-count" style="color:${d.count>0?textColor:'var(--muted)'}">${d.count}</div>
+      <div class="heatmap-benef" style="color:${d.count>0?(intensity>0.5?'rgba(255,255,255,0.8)':'var(--green)'):'var(--muted)'}">${d.count>0?_fmt(avgBenef):''}</div>
+    </div>`;
+  }).join('');
+  if(legend&&dayStats[bestDayIdx].count>0) legend.innerHTML=`🏆 Meilleur jour: <strong style="color:var(--accent)">${dayNames[bestDayIdx]}</strong> (${dayStats[bestDayIdx].count} ventes)`;
+}
+
 function openDrawer(){
   document.getElementById('sideDrawer').classList.add('open');
   document.getElementById('drawerOverlay').classList.add('open');
@@ -1994,7 +2063,6 @@ let achats = JSON.parse(localStorage.getItem('flousFlowAchats') || '[]');
 let stockItems = JSON.parse(localStorage.getItem('flousFlowStock') || '[]');
 let clients = JSON.parse(localStorage.getItem('flousFlowClients') || '[]');
 let commandes = JSON.parse(localStorage.getItem('flousFlowCommandes') || '[]');
-let editingCommandeId = null;
 let partenaireDeals = JSON.parse(localStorage.getItem('flousFlowPartenaire') || '[]');
 let theme  = localStorage.getItem('flousFlowTheme') || localStorage.getItem('coquesTheme') || 'light';
 
@@ -2197,20 +2265,6 @@ async function fsPullNow(silent){
   return data;
 }
 
-// Redessine l'entête (KPIs, cartes, mini-graphe) + l'onglet actuellement ouvert.
-// Appelée après application de données distantes (Firestore) pour éviter
-// d'avoir à faire un refresh manuel de la page.
-function refreshAllViews(){
-  try{ if(typeof updateKPIs==='function') updateKPIs(); }catch(e){ console.warn('refreshAllViews/updateKPIs:',e); }
-  try{
-    const active=document.querySelector('.section.active');
-    if(active && typeof showTab==='function'){
-      const id=active.id.replace('tab-','');
-      showTab(id, null, false);
-    }
-  }catch(e){ console.warn('refreshAllViews/showTab:',e); }
-}
-
 function fsApplyRemoteData(data){
   if(!data) return;
   sales = data.sales||[];
@@ -2265,8 +2319,7 @@ async function fsInitialSync(){
     // Le cloud a une version qu'on n'a jamais encore appliquée sur cet appareil.
     fsApplyRemoteData(remote);
     localStorage.setItem('flousFlowFsLastApplied', remoteTs);
-    if(typeof refreshAllViews==='function') refreshAllViews();
-    if(typeof showToast==='function') showToast('☁️ Données synchronisées');
+    if(typeof showToast==='function') showToast('☁️ Nouvelles données disponibles (actualisez pour les voir)');
   } else if(remoteTs > lastAppliedTs){
     // Le cloud a changé mais ce n'est pas "nouveau" pour nous (ex: on vient
     // soi-même de pousser cette version) — on note juste qu'on est à jour,
@@ -2895,75 +2948,21 @@ function deleteClient(id){
 // ── COMMANDES (notes libres, sans lien avec clients/ventes) ────────────────
 function saveCommandes(){ localStorage.setItem('flousFlowCommandes', JSON.stringify(commandes)); localStorage.setItem('flousFlowLastSave', Date.now()); scheduleFirestoreSync(); }
 
-const COMMANDE_STATUTS={
-  attente:{label:'En attente',emoji:'🟡',color:'#f59e0b'},
-  cours:{label:'En cours',emoji:'🟠',color:'#ff7a00'},
-  livre:{label:'Livré',emoji:'🟢',color:'#10b981'}
-};
-
 function addCommande(){
   const nom=document.getElementById('ocNom').value.trim();
   const tel=document.getElementById('ocTel').value.trim();
   const ville=document.getElementById('ocVille').value.trim();
   const model=document.getElementById('ocModel').value.trim();
-  const prixAchat=parseFloat(document.getElementById('ocPrixAchat').value)||0;
-  const prix=parseFloat(document.getElementById('ocPrix').value)||0;
-  const statut=document.getElementById('ocStatut').value||'attente';
+  const prixRaw=document.getElementById('ocPrix').value;
+  const prix=parseFloat(prixRaw)||0;
   const notes=document.getElementById('ocNotes').value.trim();
   if(!nom){showToast('⚠️ Nom obligatoire!',true);return;}
   if(!model){showToast('⚠️ Modèle obligatoire!',true);return;}
-
-  if(editingCommandeId){
-    const c=commandes.find(x=>x.id===editingCommandeId);
-    if(c){
-      Object.assign(c,{nom,tel,ville,model,prixAchat,prix,statut,notes});
-      saveCommandes();
-      showToast(`✅ Commande de ${nom} modifiée!`);
-    }
-    cancelEditCommande();
-  } else {
-    commandes.push({id:uid(),nom,tel,ville,model,prixAchat,prix,statut,notes,createdAt:new Date().toISOString().split('T')[0]});
-    saveCommandes();
-    showToast(`✅ Commande pour ${nom} ajoutée!`);
-  }
-  ['ocNom','ocTel','ocVille','ocModel','ocPrixAchat','ocPrix','ocNotes'].forEach(i=>document.getElementById(i).value='');
-  document.getElementById('ocStatut').value='attente';
-  renderCommandes();
-}
-
-function editCommande(id){
-  const c=commandes.find(x=>x.id===id);
-  if(!c) return;
-  editingCommandeId=id;
-  document.getElementById('ocNom').value=c.nom||'';
-  document.getElementById('ocTel').value=c.tel||'';
-  document.getElementById('ocVille').value=c.ville||'';
-  document.getElementById('ocModel').value=c.model||'';
-  document.getElementById('ocPrixAchat').value=c.prixAchat||'';
-  document.getElementById('ocPrix').value=c.prix||'';
-  document.getElementById('ocStatut').value=c.statut||'attente';
-  document.getElementById('ocNotes').value=c.notes||'';
-  document.getElementById('ocSaveBtn').innerHTML='💾 Modifier la commande';
-  document.getElementById('ocCancelBtn').style.display='block';
-  document.querySelector('#tab-commandes .form-card').scrollIntoView({behavior:'smooth',block:'start'});
-  showToast('✏️ Mode modification activé');
-}
-
-function cancelEditCommande(){
-  editingCommandeId=null;
-  ['ocNom','ocTel','ocVille','ocModel','ocPrixAchat','ocPrix','ocNotes'].forEach(i=>document.getElementById(i).value='');
-  document.getElementById('ocStatut').value='attente';
-  document.getElementById('ocSaveBtn').innerHTML='🛒 Enregistrer la commande';
-  document.getElementById('ocCancelBtn').style.display='none';
-}
-
-function updateCommandeStatut(id,statut){
-  const c=commandes.find(x=>x.id===id);
-  if(!c) return;
-  c.statut=statut;
+  commandes.push({id:uid(),nom,tel,ville,model,prix,notes,createdAt:new Date().toISOString().split('T')[0]});
   saveCommandes();
+  ['ocNom','ocTel','ocVille','ocModel','ocPrix','ocNotes'].forEach(i=>document.getElementById(i).value='');
   renderCommandes();
-  showToast(`✅ Statut mis à jour: ${COMMANDE_STATUTS[statut]?.label||statut}`);
+  showToast(`✅ Commande pour ${nom} ajoutée!`);
 }
 
 function deleteCommande(id){
@@ -2993,40 +2992,21 @@ function renderCommandes(){
   const sorted=[...filtered].sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
 
   el.innerHTML=sorted.map(c=>{
-    const telClean=c.tel?c.tel.replace(/[^0-9+]/g,''):'';
-    const waLink=c.tel?`<a href="https://wa.me/${c.tel.replace(/[^0-9]/g,'')}" target="_blank" class="oc-icon-btn" style="background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.3);color:#25d366">💬</a>`:'';
-    const callBtn=c.tel?`<a href="tel:${telClean}" class="oc-call-btn" title="Appeler ${c.nom}">📞</a>`:'';
-    const st=COMMANDE_STATUTS[c.statut||'attente']||COMMANDE_STATUTS.attente;
-    const prixAchat=c.prixAchat||0;
-    const marge=(c.prix||0)-prixAchat;
+    const telLink=c.tel?`<a href="tel:${c.tel}" style="color:var(--accent);text-decoration:none">${c.tel}</a>`:'';
+    const waLink=c.tel?`<a href="https://wa.me/${c.tel.replace(/[^0-9]/g,'')}" target="_blank" style="color:var(--green);text-decoration:none;margin-left:8px">💬</a>`:'';
     return `<div class="sale-card" style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
         <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <div style="font-weight:700;font-size:15px;color:var(--text)">👤 ${c.nom}</div>
-            <select onchange="updateCommandeStatut('${c.id}',this.value)" class="oc-statut-select" style="background:${st.color}22;color:${st.color};border:1px solid ${st.color}55">
-              ${Object.entries(COMMANDE_STATUTS).map(([k,v])=>`<option value="${k}" ${k===(c.statut||'attente')?'selected':''}>${v.emoji} ${v.label}</option>`).join('')}
-            </select>
-          </div>
-          <div style="font-size:13px;color:var(--muted);margin-top:4px">🛒 ${c.model}</div>
+          <div style="font-weight:700;font-size:15px;color:var(--text)">👤 ${c.nom}</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:2px">🛒 ${c.model}</div>
           ${c.ville?`<div style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${c.ville}</div>`:''}
-          ${c.tel?`<div style="font-size:12px;margin-top:2px;color:var(--muted)">📱 ${c.tel}${waLink}</div>`:''}
+          ${c.tel?`<div style="font-size:12px;margin-top:2px">📞 ${telLink}${waLink}</div>`:''}
           ${c.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">📝 ${c.notes}</div>`:''}
-          <div style="display:flex;gap:12px;margin-top:6px;font-size:12px;color:var(--muted)">
-            ${prixAchat?`<span>Achat: <b style="color:var(--text)">${fmt(prixAchat)}</b></span>`:''}
-            ${prixAchat?`<span>Marge: <b style="color:${marge>=0?'var(--green)':'var(--red)'}">${fmt(marge)}</b></span>`:''}
-          </div>
         </div>
-        <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-          ${callBtn}
-          <div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--accent)">${fmt(c.prix)}</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.createdAt||''}</div>
-          </div>
-          <div style="display:flex;gap:6px">
-            <button onclick="editCommande('${c.id}')" style="background:transparent;border:1px solid rgba(255,122,0,.4);color:var(--accent);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">✏️ Modifier</button>
-            <button onclick="deleteCommande('${c.id}')" style="background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">🗑️</button>
-          </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--accent)">${fmt(c.prix)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.createdAt||''}</div>
+          <button onclick="deleteCommande('${c.id}')" style="margin-top:8px;background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">🗑️ Supprimer</button>
         </div>
       </div>
     </div>`;
@@ -5361,8 +5341,6 @@ function renderCartesRapport(){
       const posStats=stats.filter(c=>c.benefNet>0);
       const total=posStats.reduce((a,c)=>a+c.benefNet,0)||1;
       const cx=W/2, cy=SIZE/2, R=SIZE/2-14;
-      const isDarkPie=document.documentElement.getAttribute('data-theme')==='dark';
-      const holeColor=isDarkPie?'#000000':'#fdfaf6';
 
       // Draw pie slices
       let angle=-Math.PI/2;
@@ -5374,7 +5352,7 @@ function renderCartesRapport(){
         ctx.closePath();
         ctx.fillStyle=COLORS[i%COLORS.length];
         ctx.fill();
-        ctx.strokeStyle=holeColor;
+        ctx.strokeStyle='#0d0f1a';
         ctx.lineWidth=2;
         ctx.stroke();
 
@@ -5396,7 +5374,7 @@ function renderCartesRapport(){
       // Center donut hole
       ctx.beginPath();
       ctx.arc(cx,cy,R*0.42,0,Math.PI*2);
-      ctx.fillStyle=holeColor;
+      ctx.fillStyle='#0d0f1a';
       ctx.fill();
       // Center text
       ctx.fillStyle='#ff7a00';
@@ -7657,7 +7635,6 @@ function _redrawActiveTab(){
   if(id==='rapport')   setTimeout(()=>renderRapport(), 100);
   if(id==='annuel')    setTimeout(()=>renderAnnuel(), 100);
   if(id==='calendrier') setTimeout(()=>renderCalendrier(), 100);
-  if(id==='commandes') setTimeout(()=>renderCommandes(), 100);
   if(id==='marques')   setTimeout(()=>renderMarques(), 100);
   if(id==='cartes-rapport') setTimeout(()=>renderCartesRapport(), 100);
 }
