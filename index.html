@@ -1071,6 +1071,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Modèle demandé</label><input type="text" id="ocModel" placeholder="iPhone 15 Pro Max"></div>
       <div><label>Prix de vente (DT)</label><input type="number" id="ocPrix" placeholder="450.000" step="0.001"></div>
       <div><label>Prix d'achat (DT)</label><input type="number" id="ocPrixAchat" placeholder="380.000" step="0.001"></div>
+      <div><label>N° de suivi (colis)</label><input type="text" id="ocSuivi" placeholder="EE123456789TN"></div>
       <div class="form-full"><label>Notes (optionnel)</label><input type="text" id="ocNotes" placeholder="Couleur, capacité, préférences..."></div>
     </div>
     <button class="btn-add" id="ocSubmitBtn" onclick="addCommande()" style="background:linear-gradient(135deg,#ff7a00,#ff9a3c)">🛒 Enregistrer la commande</button>
@@ -2960,13 +2961,14 @@ function addCommande(){
   const prix=parseFloat(prixRaw)||0;
   const prixAchatRaw=document.getElementById('ocPrixAchat').value;
   const prixAchat=parseFloat(prixAchatRaw)||0;
+  const suivi=document.getElementById('ocSuivi').value.trim();
   const notes=document.getElementById('ocNotes').value.trim();
   if(!nom){showToast('⚠️ Nom obligatoire!',true);return;}
   if(!model){showToast('⚠️ Modèle obligatoire!',true);return;}
 
   if(editingCommandeId){
     const c=commandes.find(x=>x.id===editingCommandeId);
-    if(c){ Object.assign(c,{nom,tel,ville,model,prix,prixAchat,notes}); }
+    if(c){ Object.assign(c,{nom,tel,ville,model,prix,prixAchat,suivi,notes}); }
     saveCommandes();
     cancelEditCommande();
     renderCommandes();
@@ -2974,9 +2976,9 @@ function addCommande(){
     return;
   }
 
-  commandes.push({id:uid(),nom,tel,ville,model,prix,prixAchat,notes,createdAt:new Date().toISOString().split('T')[0]});
+  commandes.push({id:uid(),nom,tel,ville,model,prix,prixAchat,suivi,notes,createdAt:new Date().toISOString().split('T')[0]});
   saveCommandes();
-  ['ocNom','ocTel','ocVille','ocModel','ocPrix','ocPrixAchat','ocNotes'].forEach(i=>document.getElementById(i).value='');
+  ['ocNom','ocTel','ocVille','ocModel','ocPrix','ocPrixAchat','ocSuivi','ocNotes'].forEach(i=>document.getElementById(i).value='');
   renderCommandes();
   showToast(`✅ Commande pour ${nom} ajoutée!`);
 }
@@ -2991,6 +2993,7 @@ function editCommande(id){
   document.getElementById('ocModel').value=c.model||'';
   document.getElementById('ocPrix').value=c.prix||'';
   document.getElementById('ocPrixAchat').value=c.prixAchat||'';
+  document.getElementById('ocSuivi').value=c.suivi||'';
   document.getElementById('ocNotes').value=c.notes||'';
   const btn=document.getElementById('ocSubmitBtn');
   if(btn){ btn.innerHTML='✏️ Mettre à jour la commande'; btn.style.background='linear-gradient(135deg,#3b82f6,#60a5fa)'; }
@@ -2999,7 +3002,7 @@ function editCommande(id){
 
 function cancelEditCommande(){
   editingCommandeId=null;
-  ['ocNom','ocTel','ocVille','ocModel','ocPrix','ocPrixAchat','ocNotes'].forEach(i=>document.getElementById(i).value='');
+  ['ocNom','ocTel','ocVille','ocModel','ocPrix','ocPrixAchat','ocSuivi','ocNotes'].forEach(i=>document.getElementById(i).value='');
   const btn=document.getElementById('ocSubmitBtn');
   if(btn){ btn.innerHTML='🛒 Enregistrer la commande'; btn.style.background='linear-gradient(135deg,#ff7a00,#ff9a3c)'; }
 }
@@ -3044,6 +3047,7 @@ function renderCommandes(){
           <div style="font-size:13px;color:var(--muted);margin-top:2px">🛒 ${c.model}</div>
           ${c.ville?`<div style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${c.ville}</div>`:''}
           ${c.tel?`<div style="display:flex;align-items:center;margin-top:6px">${telBtn}${waBtn}<span style="font-size:12px;color:var(--muted);margin-left:8px">${c.tel}</span></div>`:''}
+          ${c.suivi?`<div style="margin-top:6px"><a href="http://www.rapidposte.poste.tn/fr/Item_Events.asp?ItemId=${encodeURIComponent(c.suivi)}&submit=Valider" target="_blank" style="font-size:12px;color:var(--accent);text-decoration:none;background:rgba(255,122,0,.12);padding:3px 10px;border-radius:8px;display:inline-block">📦 ${c.suivi}</a></div>`:''}
           ${c.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">📝 ${c.notes}</div>`:''}
         </div>
         <div style="text-align:right;flex-shrink:0">
