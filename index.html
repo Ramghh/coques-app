@@ -2951,6 +2951,21 @@ function deleteClient(id){
 function saveCommandes(){ localStorage.setItem('flousFlowCommandes', JSON.stringify(commandes)); localStorage.setItem('flousFlowLastSave', Date.now()); scheduleFirestoreSync(); }
 
 let editingCommandeId=null;
+let showArchivedCommandes=false;
+
+function toggleLivreCommande(id){
+  const c=commandes.find(x=>x.id===id);
+  if(!c) return;
+  c.livre=!c.livre;
+  saveCommandes();
+  renderCommandes();
+  showToast(c.livre?`✅ ${c.nom} marqué comme livré!`:`↩️ ${c.nom} réactivé`);
+}
+
+function toggleArchivedCommandes(){
+  showArchivedCommandes=!showArchivedCommandes;
+  renderCommandes();
+}
 
 function addCommande(){
   const nom=document.getElementById('ocNom').value.trim();
@@ -3032,18 +3047,20 @@ function renderCommandes(){
   }
 
   const sorted=[...filtered].sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+  const active=sorted.filter(c=>!c.livre);
+  const archived=sorted.filter(c=>c.livre);
 
-  el.innerHTML=sorted.map(c=>{
+  const cardHtml=(c)=>{
     const circleBtnBase='display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;text-decoration:none;font-size:14px;flex-shrink:0';
     const telBtn=c.tel?`<a href="tel:${c.tel}" style="${circleBtnBase};background:var(--green);color:#fff" title="Appeler">📞</a>`:'';
     const waBtn=c.tel?`<a href="https://wa.me/${c.tel.replace(/[^0-9]/g,'')}" target="_blank" style="${circleBtnBase};background:#128c4a;color:#fff;margin-left:6px" title="WhatsApp">💬</a>`:'';
     const prixAchat=c.prixAchat||0;
     const profit=(c.prix||0)-prixAchat;
     const profitColor=profit>=0?'var(--green)':'var(--red)';
-    return `<div class="sale-card" style="margin-bottom:10px">
+    return `<div class="sale-card" style="margin-bottom:10px${c.livre?';opacity:.7;border-left:3px solid var(--green)':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
         <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:15px;color:var(--text)">👤 ${c.nom}</div>
+          <div style="font-weight:700;font-size:15px;color:var(--text)">👤 ${c.nom} ${c.livre?'<span style="font-size:11px;color:var(--green);font-weight:700;margin-left:4px">✅ Livré</span>':''}</div>
           <div style="font-size:13px;color:var(--muted);margin-top:2px">🛒 ${c.model}</div>
           ${c.ville?`<div style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${c.ville}</div>`:''}
           ${c.tel?`<div style="display:flex;align-items:center;margin-top:6px">${telBtn}${waBtn}<span style="font-size:12px;color:var(--muted);margin-left:8px">${c.tel}</span></div>`:''}
@@ -3054,14 +3071,33 @@ function renderCommandes(){
           <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--accent)">${fmt(c.prix)}</div>
           ${prixAchat?`<div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:1px">Achat: ${fmt(prixAchat)}</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${profitColor};margin-top:1px">${profit>=0?'+':''}${fmt(profit)}</div>`:''}
           <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.createdAt||''}</div>
-          <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;justify-content:flex-end">
+            ${c.livre?
+              `<button onclick="toggleLivreCommande('${c.id}')" style="background:transparent;border:1px solid rgba(148,163,184,.4);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">↩️ Réactiver</button>`:
+              `<button onclick="toggleLivreCommande('${c.id}')" style="background:transparent;border:1px solid rgba(16,185,129,.4);color:var(--green);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">✅ Livré</button>`
+            }
             <button onclick="editCommande('${c.id}')" style="background:transparent;border:1px solid rgba(59,130,246,.4);color:#3b82f6;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">✏️ Modifier</button>
             <button onclick="deleteCommande('${c.id}')" style="background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">🗑️</button>
           </div>
         </div>
       </div>
     </div>`;
-  }).join('');
+  };
+
+  let html=active.map(cardHtml).join('');
+  if(!active.length && archived.length){
+    html+='<div class="empty"><span class="empty-icon">🛒</span><div class="empty-text">Aucune commande en cours</div></div>';
+  }
+  if(archived.length){
+    html+=`<div onclick="toggleArchivedCommandes()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-top:14px;background:rgba(148,163,184,.08);border-radius:12px;cursor:pointer">
+      <span style="font-size:13px;font-weight:600;color:var(--muted)">📦 Livrées / Archivées (${archived.length})</span>
+      <span style="font-size:12px;color:var(--muted)">${showArchivedCommandes?'▲ Cacher':'▼ Afficher'}</span>
+    </div>`;
+    if(showArchivedCommandes){
+      html+=`<div style="margin-top:8px">${archived.map(cardHtml).join('')}</div>`;
+    }
+  }
+  el.innerHTML=html;
 }
 
 function getClientSales(client){
