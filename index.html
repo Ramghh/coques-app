@@ -1083,6 +1083,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <input type="text" class="search-input" id="commandeSearch" placeholder="Rechercher nom, téléphone, modèle..." oninput="renderCommandes()">
   </div>
 
+  <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+    <button id="commandesArchiveToggle" onclick="showCommandesArchive(!commandesViewArchive)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif">📦 Archive (0)</button>
+  </div>
+
   <!-- Liste commandes -->
   <div id="commandesList"></div>
 </div>
@@ -2065,6 +2069,7 @@ let achats = JSON.parse(localStorage.getItem('flousFlowAchats') || '[]');
 let stockItems = JSON.parse(localStorage.getItem('flousFlowStock') || '[]');
 let clients = JSON.parse(localStorage.getItem('flousFlowClients') || '[]');
 let commandes = JSON.parse(localStorage.getItem('flousFlowCommandes') || '[]');
+let commandesArchive = JSON.parse(localStorage.getItem('flousFlowCommandesArchive') || '[]');
 let partenaireDeals = JSON.parse(localStorage.getItem('flousFlowPartenaire') || '[]');
 let theme  = localStorage.getItem('flousFlowTheme') || localStorage.getItem('coquesTheme') || 'light';
 
@@ -2214,6 +2219,7 @@ function fsCollectPayload(){
     stockItems: stockItems||[],
     clients: clients||[],
     commandes: commandes||[],
+    commandesArchive: commandesArchive||[],
     partenaireDeals: partenaireDeals||[],
     partagePayments: (typeof partagePayments!=='undefined'?partagePayments:[])||[],
     theme: theme||'light',
@@ -2275,6 +2281,7 @@ function fsApplyRemoteData(data){
   stockItems = data.stockItems||[];
   clients = data.clients||[];
   commandes = data.commandes||[];
+  commandesArchive = data.commandesArchive||[];
   partenaireDeals = data.partenaireDeals||[];
   partagePayments = data.partagePayments||[];
   theme = data.theme||theme;
@@ -2284,6 +2291,7 @@ function fsApplyRemoteData(data){
   localStorage.setItem('flousFlowStock',JSON.stringify(stockItems));
   localStorage.setItem('flousFlowClients',JSON.stringify(clients));
   localStorage.setItem('flousFlowCommandes',JSON.stringify(commandes));
+  localStorage.setItem('flousFlowCommandesArchive',JSON.stringify(commandesArchive));
   localStorage.setItem('flousFlowPartenaire',JSON.stringify(partenaireDeals));
   localStorage.setItem('flousFlowPartagePayments',JSON.stringify(partagePayments));
   localStorage.setItem('flousFlowTheme',theme);
@@ -2949,6 +2957,7 @@ function deleteClient(id){
 
 // ── COMMANDES (notes libres, sans lien avec clients/ventes) ────────────────
 function saveCommandes(){ localStorage.setItem('flousFlowCommandes', JSON.stringify(commandes)); localStorage.setItem('flousFlowLastSave', Date.now()); scheduleFirestoreSync(); }
+function saveCommandesArchive(){ localStorage.setItem('flousFlowCommandesArchive', JSON.stringify(commandesArchive)); localStorage.setItem('flousFlowLastSave', Date.now()); scheduleFirestoreSync(); }
 
 let editingCommandeId=null;
 
@@ -2976,7 +2985,7 @@ function addCommande(){
     return;
   }
 
-  commandes.push({id:uid(),nom,tel,ville,model,prix,prixAchat,suivi,notes,createdAt:new Date().toISOString().split('T')[0]});
+  commandes.push({id:uid(),nom,tel,ville,model,prix,prixAchat,suivi,notes,statut:'cours',createdAt:new Date().toISOString().split('T')[0]});
   saveCommandes();
   ['ocNom','ocTel','ocVille','ocModel','ocPrix','ocPrixAchat','ocSuivi','ocNotes'].forEach(i=>document.getElementById(i).value='');
   renderCommandes();
@@ -3014,12 +3023,59 @@ function deleteCommande(id){
   showToast('✅ Commande supprimée!');
 }
 
+function toggleCommandeStatut(id){
+  const c=commandes.find(x=>x.id===id);
+  if(!c) return;
+  c.statut = c.statut==='livre' ? 'cours' : 'livre';
+  saveCommandes();
+  renderCommandes();
+}
+
+let commandesViewArchive=false;
+
+function showCommandesArchive(show){
+  commandesViewArchive=show;
+  renderCommandes();
+}
+
+function archiveCommande(id){
+  const idx=commandes.findIndex(x=>x.id===id);
+  if(idx===-1) return;
+  const c=commandes[idx];
+  c.archivedAt=new Date().toISOString().split('T')[0];
+  commandesArchive.push(c);
+  commandes.splice(idx,1);
+  saveCommandes(); saveCommandesArchive(); renderCommandes();
+  showToast('📦 Commande archivée!');
+}
+
+function restoreCommande(id){
+  const idx=commandesArchive.findIndex(x=>x.id===id);
+  if(idx===-1) return;
+  const c=commandesArchive[idx];
+  delete c.archivedAt;
+  commandes.push(c);
+  commandesArchive.splice(idx,1);
+  saveCommandes(); saveCommandesArchive(); renderCommandes();
+  showToast('↩️ Commande restaurée!');
+}
+
+function deleteCommandeArchive(id){
+  if(!confirm('Supprimer définitivement cette commande archivée?')) return;
+  commandesArchive=commandesArchive.filter(c=>c.id!==id);
+  saveCommandesArchive(); renderCommandes();
+  showToast('✅ Commande supprimée de l\'archive!');
+}
+
 function renderCommandes(){
   const el=document.getElementById('commandesList');
   if(!el) return;
   const q=(document.getElementById('commandeSearch')?.value||'').toLowerCase().trim();
+  const source = commandesViewArchive ? commandesArchive : commandes;
+  const archiveToggleBtn=document.getElementById('commandesArchiveToggle');
+  if(archiveToggleBtn) archiveToggleBtn.innerHTML = commandesViewArchive ? `⬅️ Retour aux commandes` : `📦 Archive (${commandesArchive.length})`;
 
-  const filtered=commandes.filter(c=>
+  const filtered=source.filter(c=>
     !q || (c.nom||'').toLowerCase().includes(q) ||
     (c.tel||'').includes(q) ||
     (c.ville||'').toLowerCase().includes(q) ||
@@ -3027,11 +3083,13 @@ function renderCommandes(){
   );
 
   if(!filtered.length){
-    el.innerHTML='<div class="empty"><span class="empty-icon">🛒</span><div class="empty-text">Aucune commande enregistrée</div><div class="empty-sub">Ajoute la demande d\'un client ci-dessus</div></div>';
+    el.innerHTML = commandesViewArchive
+      ? '<div class="empty"><span class="empty-icon">📦</span><div class="empty-text">Aucune commande archivée</div><div class="empty-sub">Les colis livrés que tu archives apparaissent ici</div></div>'
+      : '<div class="empty"><span class="empty-icon">🛒</span><div class="empty-text">Aucune commande enregistrée</div><div class="empty-sub">Ajoute la demande d\'un client ci-dessus</div></div>';
     return;
   }
 
-  const sorted=[...filtered].sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+  const sorted=[...filtered].sort((a,b)=>new Date((b.archivedAt||b.createdAt)||0)-new Date((a.archivedAt||a.createdAt)||0));
 
   el.innerHTML=sorted.map(c=>{
     const circleBtnBase='display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;text-decoration:none;font-size:14px;flex-shrink:0';
@@ -3040,6 +3098,15 @@ function renderCommandes(){
     const prixAchat=c.prixAchat||0;
     const profit=(c.prix||0)-prixAchat;
     const profitColor=profit>=0?'var(--green)':'var(--red)';
+    const statutTag = c.statut==='livre'
+      ? `<span class="tag status-livre" ${commandesViewArchive?'':`onclick="toggleCommandeStatut('${c.id}')"`} style="margin-top:6px;display:inline-block">✅ Livré</span>`
+      : `<span class="tag status-attente" ${commandesViewArchive?'':`onclick="toggleCommandeStatut('${c.id}')"`} style="margin-top:6px;display:inline-block;color:#3b82f6;border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.12)">🔵 En cours</span>`;
+    const actionBtns = commandesViewArchive
+      ? `<button onclick="restoreCommande('${c.id}')" style="background:transparent;border:1px solid rgba(16,185,129,.4);color:var(--green);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">↩️ Restaurer</button>
+         <button onclick="deleteCommandeArchive('${c.id}')" style="background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">🗑️</button>`
+      : `<button onclick="editCommande('${c.id}')" style="background:transparent;border:1px solid rgba(59,130,246,.4);color:#3b82f6;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">✏️ Modifier</button>
+         ${c.statut==='livre'?`<button onclick="archiveCommande('${c.id}')" style="background:transparent;border:1px solid rgba(245,158,11,.4);color:#f59e0b;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">📦 Archiver</button>`:''}
+         <button onclick="deleteCommande('${c.id}')" style="background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">🗑️</button>`;
     return `<div class="sale-card" style="margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
         <div style="flex:1;min-width:0">
@@ -3049,14 +3116,14 @@ function renderCommandes(){
           ${c.tel?`<div style="display:flex;align-items:center;margin-top:6px">${telBtn}${waBtn}<span style="font-size:12px;color:var(--muted);margin-left:8px">${c.tel}</span></div>`:''}
           ${c.suivi?`<div style="margin-top:6px"><a href="http://www.rapidposte.poste.tn/fr/Item_Events.asp?ItemId=${encodeURIComponent(c.suivi)}&submit=Valider" target="_blank" style="font-size:12px;color:var(--accent);text-decoration:none;background:rgba(255,122,0,.12);padding:3px 10px;border-radius:8px;display:inline-block">📦 ${c.suivi}</a></div>`:''}
           ${c.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">📝 ${c.notes}</div>`:''}
+          ${statutTag}
         </div>
         <div style="text-align:right;flex-shrink:0">
           <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--accent)">${fmt(c.prix)}</div>
           ${prixAchat?`<div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:1px">Achat: ${fmt(prixAchat)}</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${profitColor};margin-top:1px">${profit>=0?'+':''}${fmt(profit)}</div>`:''}
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.createdAt||''}</div>
-          <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">
-            <button onclick="editCommande('${c.id}')" style="background:transparent;border:1px solid rgba(59,130,246,.4);color:#3b82f6;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">✏️ Modifier</button>
-            <button onclick="deleteCommande('${c.id}')" style="background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">🗑️</button>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${commandesViewArchive?(c.archivedAt||''):(c.createdAt||'')}</div>
+          <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;flex-wrap:wrap">
+            ${actionBtns}
           </div>
         </div>
       </div>
