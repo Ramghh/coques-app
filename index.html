@@ -2388,11 +2388,11 @@ if(!CanvasRenderingContext2D.prototype.roundRect){
   };
 }
 
-// Restaurer dernier onglet
-const lastTab=localStorage.getItem('flousFlowLastTab');
-if(lastTab){
-  showTab(lastTab, null, false);
-}
+// Restaurer dernier onglet — désactivé: l'app ouvre toujours sur Ventes
+// const lastTab=localStorage.getItem('flousFlowLastTab');
+// if(lastTab){
+//   showTab(lastTab, null, false);
+// }
 // Force refresh today/week/month cards after full init
 setTimeout(()=>updateTodayCard(), 100);
 // Re-build year select after data is loaded
