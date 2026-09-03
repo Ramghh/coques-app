@@ -2388,11 +2388,11 @@ if(!CanvasRenderingContext2D.prototype.roundRect){
   };
 }
 
-// Restaurer dernier onglet — désactivé: l'app ouvre toujours sur Ventes
-// const lastTab=localStorage.getItem('flousFlowLastTab');
-// if(lastTab){
-//   showTab(lastTab, null, false);
-// }
+// Restaurer dernier onglet
+const lastTab=localStorage.getItem('flousFlowLastTab');
+if(lastTab){
+  showTab(lastTab, null, false);
+}
 // Force refresh today/week/month cards after full init
 setTimeout(()=>updateTodayCard(), 100);
 // Re-build year select after data is loaded
@@ -6921,9 +6921,9 @@ function initTunisiaMap(){
   if(!container) return;
   if(tunisiaMap){ tunisiaMap.remove(); tunisiaMap=null; }
   tunisiaMap=L.map(container).setView([34.0,9.5],7);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-    subdomains:'abcd', maxZoom:12
+    subdomains:'abc', maxZoom:19
   }).addTo(tunisiaMap);
   const cityStats={};
   sales.forEach(sale=>{
