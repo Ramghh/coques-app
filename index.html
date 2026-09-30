@@ -1083,7 +1083,8 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <input type="text" class="search-input" id="commandeSearch" placeholder="Rechercher nom, téléphone, modèle..." oninput="renderCommandes()">
   </div>
 
-  <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap">
+    <div id="commandesTotalAchats" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:7px 14px"></div>
     <button id="commandesArchiveToggle" onclick="showCommandesArchive(!commandesViewArchive)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif">📦 Archive (0)</button>
   </div>
 
@@ -3078,6 +3079,12 @@ function renderCommandes(){
     (c.ville||'').toLowerCase().includes(q) ||
     (c.model||'').toLowerCase().includes(q)
   );
+
+  const totalAchatsEl=document.getElementById('commandesTotalAchats');
+  if(totalAchatsEl){
+    const totalAchats=filtered.reduce((a,c)=>a+(c.prixAchat||0),0);
+    totalAchatsEl.innerHTML=`🛍️ Total achats: <span style="color:var(--accent)">${fmt(totalAchats)}</span>`;
+  }
 
   if(!filtered.length){
     el.innerHTML = commandesViewArchive
