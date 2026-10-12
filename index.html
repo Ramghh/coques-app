@@ -1612,6 +1612,11 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <div class="city-list" id="cityList"></div>
   </div>
   <div class="dash-section">
+    <div class="dash-title">🏛️ Par Gouvernorat</div>
+    <div id="dashGouvChart"></div>
+    <div class="city-list" id="gouvList"></div>
+  </div>
+  <div class="dash-section">
     <div class="dash-title">📱 Par Modèle</div>
     <div id="dashModelChart"></div>
     <div class="city-list" id="modelList"></div>
@@ -6154,18 +6159,21 @@ function renderDash(){
   const gtChk=document.getElementById('groupGrandTunis');
   const groupGT=localStorage.getItem('flousFlowGroupGT')==='1';
   if(gtChk) gtChk.checked=groupGT;
-  const cm={},mm={},mq={};
+  const cm={},mm={},mq={},gm={};
   sales.forEach(s=>{
     const vRaw=s.ville||'Non spécifié';
     const v=(groupGT && isGreaterTunis(vRaw))?GT_LABEL:vRaw;
     const m=s.model||'Autre';
     const q=getMarque(s.model);
+    const g=CITY_GOVERNORATE[Object.keys(CITY_COORDS).find(c=>c.toLowerCase()===vRaw.toLowerCase())] || 'Non spécifié';
     if(!cm[v]) cm[v]={count:0,revenu:0,benef:0};
     cm[v].count++;cm[v].revenu+=s.revenu;cm[v].benef+=benefNet(s);
     if(!mm[m]) mm[m]={count:0,revenu:0,benef:0};
     mm[m].count++;mm[m].revenu+=s.revenu;mm[m].benef+=benefNet(s);
     if(!mq[q]) mq[q]={count:0,revenu:0,benef:0};
     mq[q].count++;mq[q].revenu+=s.revenu;mq[q].benef+=benefNet(s);
+    if(!gm[g]) gm[g]={count:0,revenu:0,benef:0};
+    gm[g].count++;gm[g].revenu+=s.revenu;gm[g].benef+=benefNet(s);
   });
   const rg=map=>{
     const mx=Math.max(...Object.values(map).map(c=>c.benef),1);
@@ -6205,17 +6213,33 @@ function renderDash(){
 
   const c1=document.getElementById('cityList'),c2=document.getElementById('modelList');
   const vc1=document.getElementById('dashVilleChart'),vc2=document.getElementById('dashModelChart');
+  const c3=document.getElementById('gouvList'),vc3=document.getElementById('dashGouvChart');
 
   if(!sales.length){
     c1.innerHTML='<div class="empty"><div class="empty-icon">🗺️</div><div class="empty-text">Aucune donnée.</div></div>';
     c2.innerHTML='';
     if(vc1) vc1.innerHTML='';
     if(vc2) vc2.innerHTML='';
+    if(c3) c3.innerHTML='';
+    if(vc3) vc3.innerHTML='';
   } else {
     if(vc1) vc1.innerHTML=cssBarChart(cm);
     if(vc2) vc2.innerHTML=cssBarChart(mm);
     c1.innerHTML=rg(cm);
     c2.innerHTML=rg(mm);
+    if(vc3) vc3.innerHTML=cssBarChart(gm);
+    if(c3){
+      const mxG=Math.max(...Object.values(gm).map(d=>d.benef),1);
+      c3.innerHTML=Object.entries(gm).sort((a,b)=>b[1].benef-a[1].benef).map(([n,d])=>`
+        <div class="city-row">
+          <div>
+            <div class="city-name">${n}</div>
+            <div class="city-stats">${d.count} vente${d.count>1?'s':''} · ${fmt(d.revenu)}</div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:${Math.max(4,(d.benef/mxG)*100)}%;background:linear-gradient(90deg,var(--accent),var(--green))"></div></div>
+          </div>
+          <div class="city-benef">${fmt(d.benef)}</div>
+        </div>`).join('');
+    }
   }
 
   // Charts and map are called from showTab with setTimeout
@@ -6873,6 +6897,64 @@ const CITY_COORDS={
   'Tataouine':[32.9297,10.4518],'Remada':[32.3333,10.4000],'Ghomrassen':[33.0592,10.3400],
   'Smar':[32.7167,10.8833],'Dehiba':[32.0000,10.7167],'Bir Lahmar':[33.1787,10.4421],
   'Ksar Ouled Soltane':[32.7500,10.5500]
+};
+
+// ── Ville → Gouvernorat (pour les statistiques par gouvernorat) ────────────
+const CITY_GOVERNORATE={
+  'Tunis':'Tunis','La Marsa':'Tunis','Sidi Bou Said':'Tunis','Carthage':'Tunis','Gammarth':'Tunis',
+  'El Aouina':'Tunis','Djebel Jelloud':'Tunis','Ain Zaghouan':'Tunis',
+  'Ariana':'Ariana','Ettadhamen':'Ariana','Kalaat Landlous':'Ariana',
+  'Ben Arous':'Ben Arous','Rades':'Ben Arous','Megrine':'Ben Arous','Hammam Chott':'Ben Arous',
+  'Hammam Lif':'Ben Arous','Borj Cedria':'Ben Arous','Boumhal':'Ben Arous','Bir El Bey':'Ben Arous',
+  'Fouchana':'Ben Arous','Mohamedia':'Ben Arous','El Mourouj':'Ben Arous',
+  'Manouba':'Manouba','Douar Hicher':'Manouba','Tebourba':'Manouba',
+  'Bizerte':'Bizerte','Menzel Bourguiba':'Bizerte','Ras Jebel':'Bizerte','Menzel Jemil':'Bizerte',
+  'Menzel Abderrahmane':'Bizerte','Mateur':'Bizerte','Matir':'Bizerte','Sejnane':'Bizerte',
+  'Ghezala':'Bizerte','Utique':'Bizerte','Joumine':'Bizerte',
+  'Nabeul':'Nabeul','Hammamet':'Nabeul','Kelibia':'Nabeul','Korba':'Nabeul','Menzel Temime':'Nabeul',
+  'Menzel Bouzelfa':'Nabeul','Haouaria':'Nabeul','Béni Khalled':'Nabeul','Beni Khalled':'Nabeul',
+  'Dar Chaabane':'Nabeul','Grombalia':'Nabeul','Bou Argoub':'Nabeul','Soliman':'Nabeul',
+  'Bir Bouregba':'Nabeul','Tazarka':'Nabeul','Hammam Ghezaz':'Nabeul','Maamoura':'Nabeul',
+  'El Maamoura':'Nabeul','Menzel Horr':'Nabeul',
+  'El Fahs':'Zaghouan','Zaghouan':'Zaghouan',
+  'Béja':'Béja','Balta':'Béja','Testour':'Béja','Medjez El Bab':'Béja','Dougga':'Béja','Nefza':'Béja',
+  'Jendouba':'Jendouba','Tabarka':'Jendouba','Ain Draham':'Jendouba','Fernana':'Jendouba',
+  'Bou Salem':'Jendouba','Ghardimaou':'Jendouba',
+  'Kef':'Kef','El Kef':'Kef','Al-Kaf':'Kef','Le Kef':'Kef','Nebeur':'Kef','Sakiet Sidi Youssef':'Kef',
+  'Dahmani':'Kef','Kalaat Khasba':'Kef','Tajerouine':'Kef',
+  'Siliana':'Siliana','Bargou':'Siliana','Kesra':'Siliana','Rohia':'Siliana','Makthar':'Siliana',
+  'Sousse':'Sousse','Kalaa Kebira':'Sousse','Kalaa Srira':'Sousse','Msaken':'Sousse',
+  'Hammam Sousse':'Sousse','Akouda':'Sousse','Enfidha':'Sousse','Hergla':'Sousse',
+  'Sidi Bou Ali':'Sousse','Chott Meriem':'Sousse','Bouficha':'Sousse','Takrouna':'Sousse',
+  'Ain Garci':'Sousse','Mseddine':'Sousse','El Mseddine':'Sousse','Sidi El Heni':'Sousse','Kondar':'Sousse',
+  'Monastir':'Monastir','Beni Hassane':'Monastir','Moknine':'Monastir','Jemmal':'Monastir',
+  'Bembla':'Monastir','Zeramdine':'Monastir','Teboulba':'Monastir','Bekalta':'Monastir',
+  'Ksibet El Mediouni':'Monastir',
+  'Mahdia':'Mahdia','El Jem':'Mahdia','Chebba':'Mahdia','Ksour Essef':'Mahdia','Sidi Alouane':'Mahdia',
+  'Kairouan':'Kairouan','Sbikha':'Kairouan','Haffouz':'Kairouan','Nasrallah':'Kairouan',
+  'Oued Haffouz':'Kairouan','Bouhajla':'Kairouan','Hajeb El Ayoun':'Kairouan','El Alaa':'Kairouan',
+  'Menzel Mehiri':'Kairouan',
+  'Sidi Bouzid':'Sidi Bouzid','Regueb':'Sidi Bouzid','Bir El Hafey':'Sidi Bouzid','Meknassy':'Sidi Bouzid',
+  'Mezzouna':'Sidi Bouzid','Menzel Bouzaiane':'Sidi Bouzid','Ouled Haffouz':'Sidi Bouzid',
+  'Sidi Ali Ben Aoun':'Sidi Bouzid',
+  'Kasserine':'Kasserine','Sbeitla':'Kasserine','Sbeïtla':'Kasserine','Thala':'Kasserine',
+  'Feriana':'Kasserine','Foussana':'Kasserine','Majel Bel Abbes':'Kasserine','Hidra':'Kasserine',
+  'El Ayoun':'Kasserine','Hassi El Frid':'Kasserine',
+  'Sfax':'Sfax','Sakiet Ezzit':'Sfax','Sakiet Eddaier':'Sfax','Bir Ali Ben Khalifa':'Sfax',
+  'Agareb':'Sfax','Jebiniana':'Sfax','El Amra':'Sfax','El Hencha':'Sfax','Menzel Chaker':'Sfax',
+  'Ghraiba':'Sfax','Mahres':'Sfax','Skhira':'Sfax','Thyna':'Sfax','Kerkennah':'Sfax','Kerkenah':'Sfax',
+  'Gafsa':'Gafsa','El Guettar':'Gafsa','Metlaoui':'Gafsa','Redeyef':'Gafsa','Mdhilla':'Gafsa',
+  'Om El Araies':'Gafsa','Sidi Aich':'Gafsa','Belkhir':'Gafsa','Sened':'Gafsa',
+  'Tozeur':'Tozeur','Nefta':'Tozeur','Degache':'Tozeur','Tamerza':'Tozeur','Chebika':'Tozeur','Midès':'Tozeur',
+  'Kebili':'Kébili','Douz':'Kébili','Souk Lahad':'Kébili','El Faouar':'Kébili','Ksar Ghilane':'Kébili',
+  'Gabès':'Gabès','El Hamma':'Gabès','Mareth':'Gabès','Ghannouche':'Gabès','Ghannouch':'Gabès',
+  'El Metouia':'Gabès','Matmata':'Gabès','Nouvelle Matmata':'Gabès','Kettana':'Gabès',
+  'Menzel El Habib':'Gabès','Oudhref':'Gabès',
+  'Médenine':'Médenine','Zarzis':'Médenine','Ben Gardane':'Médenine','Jerba':'Médenine',
+  'Djerba':'Médenine','Houmt Souk':'Médenine','Midoun':'Médenine','Ajim':'Médenine','Aghir':'Médenine',
+  'Beni Khedache':'Médenine','Sidi Makhlouf':'Médenine',
+  'Tataouine':'Tataouine','Remada':'Tataouine','Ghomrassen':'Tataouine','Smar':'Tataouine',
+  'Dehiba':'Tataouine','Bir Lahmar':'Tataouine','Ksar Ouled Soltane':'Tataouine'
 };
 
 // ── GREATER TUNIS (تونس الكبرى) — Tunis + Ariana + Ben Arous governorates ──
