@@ -1273,6 +1273,24 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
 
   <!-- Liste achats -->
   <div class="sales-list" id="achatsList"></div>
+
+  <!-- ── SPONSORING ─────────────────────────────────────────────────── -->
+  <div class="form-card" style="margin-top:20px">
+    <div class="form-title">📢 Sponsoring (Pub)</div>
+    <div class="form-grid">
+      <div><label>Date</label><input type="date" id="spnDate"></div>
+      <div><label>Montant (DT)</label><input type="number" id="spnMontant" placeholder="50.000" step="0.001"></div>
+      <div class="form-full"><label>Note (optionnel)</label>
+        <input type="text" id="spnNote" placeholder="Facebook Ads, campagne octobre...">
+      </div>
+    </div>
+    <button class="btn-add" onclick="submitSponsoring()" style="background:linear-gradient(135deg,#d97706,#f59e0b)">📢 Enregistrer la dépense</button>
+  </div>
+  <div style="margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)">
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Total Sponsoring</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--red)" id="sponsoringTotalEl">0 DT</div>
+  </div>
+  <div class="sales-list" id="sponsoringList"></div>
 </div>
 
 <!-- VENTES -->
@@ -2018,7 +2036,7 @@ function showTab(id,btn,pushHistory=true){
   if(id==='clients') renderClients();
   if(id==='commandes') renderCommandes();
   if(id==='ventes') { refreshFilterSelects(); renderSales(); }
-  if(id==='achats') { refreshAchatFournSelect(); renderAchats(); }
+  if(id==='achats') { refreshAchatFournSelect(); renderAchats(); renderSponsoring(); }
   if(id==='top') setTimeout(()=>renderTop(), 50);
   if(id==='fournisseurs') renderFournTab();
   if(id==='partage') renderPartageTab();
@@ -2072,6 +2090,7 @@ try{ localStorage.removeItem('ff_snapshots'); localStorage.removeItem('ff_lastSn
 let sales  = loadData('flousFlowSales', 'coquesSales');
 let fourns = loadData('flousFlowFourns', 'coquesFourns');
 let achats = JSON.parse(localStorage.getItem('flousFlowAchats') || '[]');
+let sponsoring = JSON.parse(localStorage.getItem('flousFlowSponsoring') || '[]');
 let stockItems = JSON.parse(localStorage.getItem('flousFlowStock') || '[]');
 let clients = JSON.parse(localStorage.getItem('flousFlowClients') || '[]');
 let commandes = JSON.parse(localStorage.getItem('flousFlowCommandes') || '[]');
@@ -2222,6 +2241,7 @@ function fsCollectPayload(){
     sales: sales||[],
     fourns: fourns||[],
     achats: achats||[],
+    sponsoring: (typeof sponsoring!=='undefined'?sponsoring:[])||[],
     stockItems: stockItems||[],
     clients: clients||[],
     commandes: commandes||[],
@@ -2284,6 +2304,7 @@ function fsApplyRemoteData(data){
   sales = data.sales||[];
   fourns = data.fourns||[];
   achats = data.achats||[];
+  sponsoring = data.sponsoring||[];
   stockItems = data.stockItems||[];
   clients = data.clients||[];
   commandes = data.commandes||[];
@@ -2294,6 +2315,7 @@ function fsApplyRemoteData(data){
   localStorage.setItem('flousFlowSales',JSON.stringify(sales));
   localStorage.setItem('flousFlowFourns',JSON.stringify(fourns));
   localStorage.setItem('flousFlowAchats',JSON.stringify(achats));
+  localStorage.setItem('flousFlowSponsoring',JSON.stringify(sponsoring));
   localStorage.setItem('flousFlowStock',JSON.stringify(stockItems));
   localStorage.setItem('flousFlowClients',JSON.stringify(clients));
   localStorage.setItem('flousFlowCommandes',JSON.stringify(commandes));
@@ -3250,6 +3272,55 @@ function renderClients(){
 // ── ACHATS ────────────────────────────────────────────────────────────────
 function saveAchats(){ localStorage.setItem('flousFlowAchats',JSON.stringify(achats)); localStorage.setItem('flousFlowLastSave', Date.now()); scheduleFirestoreSync(); }
 
+// ── SPONSORING ───────────────────────────────────────────────────────────
+function saveSponsoring(){ localStorage.setItem('flousFlowSponsoring',JSON.stringify(sponsoring)); localStorage.setItem('flousFlowLastSave', Date.now()); scheduleFirestoreSync(); }
+function addSponsoring(date,montant,note){
+  sponsoring.push({id:'spn_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), date:date, montant:parseFloat(montant)||0, note:note||''});
+  saveSponsoring();
+}
+function deleteSponsoring(id){
+  sponsoring=sponsoring.filter(s=>s.id!==id);
+  saveSponsoring();
+}
+// Total sponsoring dépensé sur une période (dates incluses, format YYYY-MM-DD)
+function sponsoringTotal(startDate,endDate){
+  return sponsoring.filter(s=>s.date && s.date>=startDate && s.date<=endDate).reduce((a,s)=>a+s.montant,0);
+}
+function submitSponsoring(){
+  const d=document.getElementById('spnDate').value || localDateStr(new Date());
+  const m=parseFloat(document.getElementById('spnMontant').value);
+  const n=document.getElementById('spnNote').value.trim();
+  if(!m || m<=0){ if(typeof showToast==='function') showToast('⚠️ Entrez un montant valide',true); return; }
+  addSponsoring(d,m,n);
+  document.getElementById('spnDate').value='';
+  document.getElementById('spnMontant').value='';
+  document.getElementById('spnNote').value='';
+  renderSponsoring();
+  updateTodayCard();
+}
+function renderSponsoring(){
+  const totalEl=document.getElementById('sponsoringTotalEl');
+  const listEl=document.getElementById('sponsoringList');
+  if(!totalEl||!listEl) return;
+  const total=sponsoring.reduce((a,s)=>a+s.montant,0);
+  totalEl.textContent=fmt(total);
+  if(!sponsoring.length){
+    listEl.innerHTML='<div class="empty"><div class="empty-icon">📢</div><div class="empty-text">Aucune dépense sponsoring.</div></div>';
+    return;
+  }
+  listEl.innerHTML=[...sponsoring].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(s=>`
+    <div class="sale-card" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div>
+        <div style="font-weight:700;font-size:14px">${s.date||'—'}</div>
+        <div style="font-size:12px;color:var(--muted)">${s.note?s.note:'—'}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--red)">-${fmt(s.montant)}</div>
+        <button onclick="if(confirm('Supprimer cette dépense ?')){deleteSponsoring('${s.id}');renderSponsoring();updateTodayCard();}" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
 function addAchat(){
   const date=document.getElementById('aDate').value;
   const produit=document.getElementById('aProduit').value.trim();
@@ -3765,8 +3836,8 @@ function updateTodayCard(){
   const yesterday=localDateStr(yestD);
   const todaySales=sales.filter(s=>s.date===today);
   const yestSales=sales.filter(s=>s.date===yesterday);
-  const todayB=todaySales.reduce((a,s)=>a+benefNet(s),0);
-  const yestB=yestSales.reduce((a,s)=>a+benefNet(s),0);
+  const todayB=todaySales.reduce((a,s)=>a+benefNet(s),0) - sponsoringTotal(today,today);
+  const yestB=yestSales.reduce((a,s)=>a+benefNet(s),0) - sponsoringTotal(yesterday,yesterday);
   const n=todaySales.length;
   const el=id=>document.getElementById(id);
   if(el('todayVentes')) el('todayVentes').textContent=n+' vente'+(n>1?'s':'');
@@ -3799,8 +3870,8 @@ function updateTodayCard(){
     const d=new Date(s.date); d.setHours(12,0,0,0);
     return d>=startOfLastWeek && d<startOfWeek;
   });
-  const weekB=weekSales.reduce((a,s)=>a+benefNet(s),0);
-  const lastWeekB=lastWeekSales.reduce((a,s)=>a+benefNet(s),0);
+  const weekB=weekSales.reduce((a,s)=>a+benefNet(s),0) - sponsoringTotal(localDateStr(startOfWeek),localDateStr(now));
+  const lastWeekB=lastWeekSales.reduce((a,s)=>a+benefNet(s),0) - sponsoringTotal(localDateStr(startOfLastWeek),localDateStr(new Date(startOfWeek.getTime()-86400000)));
   const nw=weekSales.length;
   if(el('weekVentes')) el('weekVentes').textContent=nw+' vente'+(nw>1?'s':'');
   if(el('weekBenef')) el('weekBenef').textContent=(weekB>=0?'+':'')+fmt(weekB);
@@ -3820,8 +3891,8 @@ function updateTodayCard(){
   const lastMonth=localDateStr(lastMonthDate).slice(0,7);
   const monthSales=sales.filter(s=>s.date&&s.date.slice(0,7)===thisMonth);
   const lastMonthSales=sales.filter(s=>s.date&&s.date.slice(0,7)===lastMonth);
-  const monthB=monthSales.reduce((a,s)=>a+benefNet(s),0);
-  const lastMonthB=lastMonthSales.reduce((a,s)=>a+benefNet(s),0);
+  const monthB=monthSales.reduce((a,s)=>a+benefNet(s),0) - sponsoringTotal(thisMonth+'-01',thisMonth+'-31');
+  const lastMonthB=lastMonthSales.reduce((a,s)=>a+benefNet(s),0) - sponsoringTotal(lastMonth+'-01',lastMonth+'-31');
   const nm=monthSales.length;
   if(el('monthVentes')) el('monthVentes').textContent=nm+' vente'+(nm>1?'s':'');
   if(el('monthBenef')) el('monthBenef').textContent=(monthB>=0?'+':'')+fmt(monthB);
@@ -3840,7 +3911,8 @@ function updateTodayCard(){
 function updateKPIs(){
   const tv=sales.reduce((a,s)=>a+s.revenu,0);
   const benefVentes=sales.reduce((a,s)=>a+benefNet(s),0);
-  const benef=benefVentes;
+  const totalSponsoring=(typeof sponsoring!=='undefined'?sponsoring:[]).reduce((a,s)=>a+s.montant,0);
+  const benef=benefVentes - totalSponsoring;
   const cout=sales.reduce((a,s)=>a+s.coutTotal,0);
   const mg=tv>0?benef/tv:0;
   document.getElementById('kpiVentes').textContent=fmt(tv);
