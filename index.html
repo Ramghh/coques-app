@@ -998,6 +998,10 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
     <div class="cost-card-label">📢 Total Sponsoring</div>
     <div class="cost-card-val" id="kpiSponsoring">0.000 DT</div>
   </div>
+  <div class="cost-card cost-card-livr">
+    <div class="cost-card-label">📅 Sponsoring Ce Mois</div>
+    <div class="cost-card-val" id="kpiSponsoringMois">0.000 DT</div>
+  </div>
 </div>
 
 <div id="cartesBanner" style="margin:0 0 14px;border-radius:var(--radius);padding:16px 18px;display:none">
@@ -3919,6 +3923,11 @@ function updateKPIs(){
   const totalSponsoring=(typeof sponsoring!=='undefined'?sponsoring:[]).reduce((a,s)=>a+s.montant,0);
   const benef=benefVentes - totalSponsoring;
   if(document.getElementById('kpiSponsoring')) document.getElementById('kpiSponsoring').textContent=fmt(totalSponsoring);
+  if(document.getElementById('kpiSponsoringMois')){
+    const curMonth=new Date().toISOString().slice(0,7);
+    const sponsMois=(typeof sponsoring!=='undefined'?sponsoring:[]).filter(s=>s.date&&s.date.slice(0,7)===curMonth).reduce((a,s)=>a+s.montant,0);
+    document.getElementById('kpiSponsoringMois').textContent=fmt(sponsMois);
+  }
   const cout=sales.reduce((a,s)=>a+s.coutTotal,0);
   const mg=tv>0?benef/tv:0;
   document.getElementById('kpiVentes').textContent=fmt(tv);
