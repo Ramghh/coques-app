@@ -324,6 +324,8 @@ input:focus,select:focus{outline:none;border-color:var(--accent)!important;box-s
 .tag.status-attente{color:#f59e0b;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.12);cursor:pointer;font-weight:600}
 .tag.status-livre{color:#10b981;border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.12);cursor:pointer;font-weight:600}
 .tag.status-retourne{color:#f87171;border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.12);cursor:pointer;font-weight:600}
+.tag.src-spn{color:#a78bfa;border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.12);font-weight:600}
+.tag.src-org{color:#14b8a6;border-color:rgba(20,184,166,.4);background:rgba(20,184,166,.12);font-weight:600}
 .sale-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:7px}
 .num-item{text-align:center;background:var(--surface2);border-radius:8px;padding:5px 4px}
 .num-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
@@ -997,10 +999,12 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   </div>
   <div class="cost-card cost-card-livr">
     <div class="cost-card-label">📢 Total Sponsoring</div>
+    <div id="kpiSponsoringVentes" style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:3px"></div>
     <div class="cost-card-val" id="kpiSponsoring">0.000 DT</div>
   </div>
   <div class="cost-card cost-card-livr">
     <div class="cost-card-label">📅 Sponsoring Ce Mois</div>
+    <div id="kpiSponsoringMoisVentes" style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:3px"></div>
     <div class="cost-card-val" id="kpiSponsoringMois">0.000 DT</div>
   </div>
 </div>
@@ -3995,6 +3999,14 @@ function updateKPIs(){
     const sponsMois=(typeof sponsoring!=='undefined'?sponsoring:[]).filter(s=>s.date&&s.date.slice(0,7)===curMonth).reduce((a,s)=>a+s.montant,0);
     document.getElementById('kpiSponsoringMois').textContent=fmt(sponsMois);
   }
+  // Ventes réalisées via sponsoring (nombre + revenu) au-dessus des montants
+  const spnSales=sales.filter(s=>s.source==='sponsoring');
+  const spnLine=(arr)=>'🛍️ '+arr.length+' vente'+(arr.length>1?'s':'')+' · '+fmt(arr.reduce((a,s)=>a+(s.revenu||0),0));
+  if(document.getElementById('kpiSponsoringVentes')) document.getElementById('kpiSponsoringVentes').textContent=spnLine(spnSales);
+  if(document.getElementById('kpiSponsoringMoisVentes')){
+    const cm=localDateStr(new Date()).slice(0,7);
+    document.getElementById('kpiSponsoringMoisVentes').textContent=spnLine(spnSales.filter(s=>s.date&&s.date.slice(0,7)===cm));
+  }
   const cout=sales.reduce((a,s)=>a+s.coutTotal,0);
   const mg=tv>0?benef/tv:0;
   document.getElementById('kpiVentes').textContent=fmt(tv);
@@ -4468,6 +4480,7 @@ function cardHTML(s,q='',delay=0){
       ${s.ville?`<span class="tag city">📍 ${hl(s.ville,q)}</span>`:''}
       ${s.client?`<span class="tag client">👤 ${hl(s.client,q)}</span>`:''}
       ${s.phone?`<a href="tel:${s.phone.replace(/\\s/g,'')}" class="tag tag-sec" style="color:var(--green);background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);text-decoration:none;display:inline-flex;align-items:center;gap:4px">📞 ${s.phone}</a><button onclick="openWaSheet('${s.phone}','${(s.client||'').replace(/'/g,"\\'")}','${(s.model||'').replace(/'/g,"\\'")}','${s.prix}')" class="tag tag-sec wa-icon-btn" style="color:#25d366;background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.3);cursor:pointer;border:1px solid rgba(37,211,102,.3);border-radius:7px;padding:2px 4px;display:inline-flex;align-items:center"><img src=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2325d366'%3E%3Cpath d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z'/%3E%3Cpath d='M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 0 0 .606.633l6.284-1.634A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.013-1.376l-.36-.214-3.732.97.999-3.63-.235-.374A9.818 9.818 0 1 1 12 21.818z'/%3E%3C/svg%3E\" width=\"15\" height=\"15\" style=\"display:block\"></button>`:''}
+      ${s.source==='sponsoring'?`<span class="tag src-spn">📢 Sponsoring</span>`:s.source==='organique'?`<span class="tag src-org">🌱 Organique</span>`:''}
       ${fNom?`<span class="tag fourn tag-sec">🧑‍💼 ${hl(fNom,q)}</span>`:''}
       ${carteObj?`<span class="tag carte tag-sec">💳 ${carteObj.label}</span>`:''}
       ${partageTag}
