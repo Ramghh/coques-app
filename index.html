@@ -1204,6 +1204,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Coût Achat (DT/u)</label><input type="number" id="fCout" placeholder="11.450" step="0.001" oninput="updatePartagePreview()"></div>
       <div class="form-full"><label>Frais Envoi (DT)</label><input type="number" id="fEnvoi" placeholder="9.150" step="0.001" oninput="updatePartagePreview()"></div>
       <div class="form-full"><label>Statut</label><select id="fStatus" onchange="toggleFraisRetour('fFraisRetourWrap',this.value)" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'Outfit',sans-serif"><option value="">— Aucun —</option><option value="attente">🟡 En attente</option><option value="cours">🔵 En cours</option><option value="livre">✅ Livré</option><option value="retourne">↩️ Retourné</option><option value="annule">❌ Annulé</option></select></div>
+      <div class="form-full"><label>Source</label><select id="fSource" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'Outfit',sans-serif"><option value="">— Non défini —</option><option value="sponsoring">📢 Sponsoring</option><option value="organique">🌱 Organique</option></select></div>
       <div id="fFraisRetourWrap" style="display:none" class="form-full"><label>Frais Retour (DT)</label><input type="number" id="fFraisRetour" placeholder="0.000" step="0.001"></div>
       <div id="fPartageWrapper" style="display:none" class="form-full">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -1475,6 +1476,24 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
   <div style="background:var(--surface);border:1px solid var(--green);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);margin-bottom:14px">
     <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">✅ Net Encaissé (Ventes − Livraison)</div>
     <div id="rvNet" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--green)">0.000 DT</div>
+  </div>
+  <div class="form-card" style="margin-bottom:14px">
+    <div class="form-title">📢 Ventes via Sponsoring</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Ventes</div>
+        <div id="rvSpnCount" style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--accent)">0</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Total</div>
+        <div id="rvSpnVentes" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--accent)">0.000 DT</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Bénéfice</div>
+        <div id="rvSpnBenef" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--green)">0.000 DT</div>
+      </div>
+    </div>
+    <div id="rvSpnNote" style="font-size:11px;color:var(--muted);margin-top:8px"></div>
   </div>
   <div class="form-card" style="margin-bottom:14px">
     <div class="form-title" id="rvChartATitle">📊 Ventes vs Net Encaissé</div>
@@ -1869,6 +1888,7 @@ mark.hl{background:rgba(255,122,0,.3);border-radius:3px;color:inherit}
       <div><label>Coût Achat (DT/u)</label><input type="number" id="eCout" step="0.001" style="margin-top:5px"></div>
       <div class="edit-full"><label>Frais Envoi (DT)</label><input type="number" id="eEnvoi" step="0.001" style="margin-top:5px"></div>
       <div class="edit-full"><label>Statut</label><select id="eStatus" onchange="toggleFraisRetour('eFraisRetourWrap',this.value)" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;margin-top:5px"><option value="">— Aucun —</option><option value="attente">🟡 En attente</option><option value="cours">🔵 En cours</option><option value="livre">✅ Livré</option><option value="retourne">↩️ Retourné</option><option value="annule">❌ Annulé</option></select></div>
+      <div class="edit-full"><label>Source</label><select id="eSource" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;margin-top:5px"><option value="">— Non défini —</option><option value="sponsoring">📢 Sponsoring</option><option value="organique">🌱 Organique</option></select></div>
       <div id="eFraisRetourWrap" style="display:none" class="edit-full"><label>Frais Retour (DT)</label><input type="number" id="eFraisRetour" placeholder="0.000" step="0.001" style="margin-top:5px"></div>
       <div id="ePartageWrapper" style="display:none" class="edit-full">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:5px">
@@ -3542,12 +3562,13 @@ function addSale(){
   const partageF=document.getElementById('fPartageF')?.value||'';
   const partageP=parseFloat(document.getElementById('fPartageP')?.value)||0;
   const status=document.getElementById('fStatus')?.value||'';
+  const source=document.getElementById('fSource')?.value||'';
   const fraisRetour=status==='retourne'?parseFloat(document.getElementById('fFraisRetour')?.value)||0:0;
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
   const invYear=date.slice(0,4);
   const invCount=sales.filter(s=>s.invNum&&s.invNum.startsWith('INV-'+invYear)).length+1;
   const invNum=`INV-${invYear}-${String(invCount).padStart(3,'0')}`;
-  sales.push({id:Date.now(),invNum,date,model,color,ville,client,phone,fourn,carteId,qty,categorie,prix,cout,envoi,partageF,partageP,status,fraisRetour,...calc(qty,prix,cout,envoi)});
+  sales.push({id:Date.now(),invNum,date,model,color,ville,client,phone,fourn,carteId,qty,categorie,prix,cout,envoi,partageF,partageP,status,source,fraisRetour,...calc(qty,prix,cout,envoi)});
   // Mettre à jour stock si ce modèle existe
   const stockItem=stockItems.find(s=>s.model.toLowerCase()===model.toLowerCase());
   if(stockItem){
@@ -3560,6 +3581,7 @@ function addSale(){
   save(); updateKPIs(); refreshFilterSelects(); refreshStockModelList();
   ['fModel','fColor','fVille','fClient','fPhone','fEnvoi','fQty','fPrix','fCout'].forEach(i=>document.getElementById(i).value='');
   if(document.getElementById('fStatus')) document.getElementById('fStatus').value='';
+  if(document.getElementById('fSource')) document.getElementById('fSource').value='';
   if(document.getElementById('fFraisRetour')) document.getElementById('fFraisRetour').value='';
   if(document.getElementById('fFraisRetourWrap')) document.getElementById('fFraisRetourWrap').style.display='none';
   document.getElementById('fFourn').value='';
@@ -3594,6 +3616,7 @@ function readSaleFormItem(){
     partageF:document.getElementById('fPartageF')?.value||'',
     partageP:parseFloat(document.getElementById('fPartageP')?.value)||0,
     status:document.getElementById('fStatus')?.value||'',
+    source:document.getElementById('fSource')?.value||'',
     fraisRetour:document.getElementById('fStatus')?.value==='retourne'?(parseFloat(document.getElementById('fFraisRetour')?.value)||0):0
   };
 }
@@ -3601,6 +3624,7 @@ function readSaleFormItem(){
 function clearProductFields(){
   ['fModel','fColor','fEnvoi','fQty','fPrix','fCout'].forEach(i=>{const el=document.getElementById(i); if(el) el.value='';});
   if(document.getElementById('fStatus')) document.getElementById('fStatus').value='';
+  if(document.getElementById('fSource')) document.getElementById('fSource').value='';
   if(document.getElementById('fFraisRetour')) document.getElementById('fFraisRetour').value='';
   if(document.getElementById('fFraisRetourWrap')) document.getElementById('fFraisRetourWrap').style.display='none';
   if(document.getElementById('fPartageF')) document.getElementById('fPartageF').value='';
@@ -3673,7 +3697,7 @@ function checkoutPanier(){
   panierItems.forEach((it,i)=>{
     const s={id:baseId+i,invNum,date,model:it.model,color:it.color,ville,client,phone,
       fourn:it.fourn,carteId:it.carteId,qty:it.qty,categorie:it.categorie,prix:it.prix,cout:it.cout,envoi:it.envoi,
-      partageF:it.partageF,partageP:it.partageP,status:it.status,fraisRetour:it.fraisRetour,
+      partageF:it.partageF,partageP:it.partageP,status:it.status,source:it.source||'',fraisRetour:it.fraisRetour,
       ...calc(it.qty,it.prix,it.cout,it.envoi)};
     sales.push(s);
     newSales.push(s);
@@ -6713,6 +6737,7 @@ function openEditModal(id){
   document.getElementById('eCout').value=s.cout||'';
   document.getElementById('eEnvoi').value=s.envoi||'';
   if(document.getElementById('eStatus')) document.getElementById('eStatus').value=s.status||'';
+  if(document.getElementById('eSource')) document.getElementById('eSource').value=s.source||'';
   toggleFraisRetour('eFraisRetourWrap', s.status||'');
   if(document.getElementById('eFraisRetour')) document.getElementById('eFraisRetour').value=s.fraisRetour||'';
   if(s.fourn){
@@ -6747,9 +6772,10 @@ function saveEdit(){
   const partageF=document.getElementById('ePartageF')?.value||'';
   const partageP=parseFloat(document.getElementById('ePartageP')?.value)||0;
   const status=document.getElementById('eStatus')?.value||'';
+  const source=document.getElementById('eSource')?.value||'';
   const fraisRetour=status==='retourne'?parseFloat(document.getElementById('eFraisRetour')?.value)||0:0;
   if(!model||!prix){showToast('⚠️ Modèle et Prix obligatoires!',true);return;}
-  sales[idx]={...sales[idx],date,model,color,ville,client,phone,fourn,carteId,qty,categorie,prix,cout,envoi,partageF,partageP,status,fraisRetour,...calc(qty,prix,cout,envoi)};
+  sales[idx]={...sales[idx],date,model,color,ville,client,phone,fourn,carteId,qty,categorie,prix,cout,envoi,partageF,partageP,status,source,fraisRetour,...calc(qty,prix,cout,envoi)};
   save(); updateKPIs(); renderSales(); closeEditModal();
   showToast('✅ Vente modifiée!');
 }
@@ -7286,6 +7312,12 @@ function renderRapportVentes(){
   el('rvLivraison').textContent=fmt(liv);
   el('rvNet').textContent=fmt(tv-liv);
   el('rvCount').textContent=list.length+' vente'+(list.length>1?'s':'');
+  const spn=list.filter(s=>s.source==='sponsoring');
+  const sansSource=list.filter(s=>!s.source).length;
+  el('rvSpnCount').textContent=spn.length;
+  el('rvSpnVentes').textContent=fmt(spn.reduce((a,s)=>a+(s.revenu||0),0));
+  el('rvSpnBenef').textContent=fmt(spn.reduce((a,s)=>a+benefNet(s),0));
+  el('rvSpnNote').textContent=sansSource>0?('⚠️ '+sansSource+' vente'+(sansSource>1?'s':'')+' sans source sur cette période (non comptée'+(sansSource>1?'s':'')+')'):'';
   if(typeof Chart==='undefined') return;
 
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
